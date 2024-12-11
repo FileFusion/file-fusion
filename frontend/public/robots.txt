@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /api/
+Disallow: /doc/
+Disallow: /actuator/
+Disallow: /h2-console/

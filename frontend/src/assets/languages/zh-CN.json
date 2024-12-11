@@ -1,0 +1,129 @@
+{
+  "common": {
+    "slogans": "珍藏美好生活",
+    "workflows": "流水线",
+    "plugins": "插件",
+    "docs": "文档",
+    "setting": "系统设置",
+    "empty": "无",
+    "save": "保存",
+    "edit": "编辑",
+    "delete": "删除",
+    "deleteConfirm": "确认删除吗？",
+    "batchDeleteConfirm": "确认删除所选择的吗？",
+    "saveSuccess": "保存成功",
+    "addSuccess": "添加成功",
+    "deleteSuccess": "删除成功",
+    "yes": "是",
+    "no": "否",
+    "user": "用户",
+    "role": "角色",
+    "org": "组织",
+    "search": "搜索",
+    "description": "描述",
+    "add": "新增",
+    "options": "操作",
+    "total": "总数",
+    "cancel": "取消",
+    "confirm": "确认",
+    "info": "信息",
+    "success": "成功",
+    "warning": "警告",
+    "error": "错误"
+  },
+  "theme": {
+    "syncSystem": "跟随系统",
+    "light": "浅色",
+    "dark": "深色"
+  },
+  "router": {
+    "notLogin": "请先登录",
+    "reLogin": "请重新登录",
+    "isLogin": "已登录",
+    "requestFailed": "请检查网络链接状态"
+  },
+  "login": {
+    "login": "登录",
+    "username": "用户名",
+    "password": "密码",
+    "remember": "记住我",
+    "success": "登录成功",
+    "validator": {
+      "username": "请输入用户名",
+      "password": "请输入密码"
+    },
+    "welcomeBack": "欢迎回来"
+  },
+  "navigationBar": {
+    "logout": "登出",
+    "about": "关于",
+    "authorizedTo": "授予",
+    "workflowQuantity": "流水线限额",
+    "authorizationTime": "授予时间",
+    "expirationTime": "过期时间",
+    "edition": "版本",
+    "version": "版本号",
+    "indefinitely": "无限期",
+    "logoutConfirm": "确认登出吗？"
+  },
+  "userSettings": {
+    "title": "用户中心",
+    "profile": {
+      "title": "个人信息",
+      "username": "登录名",
+      "originalPassword": "原密码",
+      "newPassword": "新密码",
+      "name": "姓名",
+      "email": "邮箱",
+      "areaCode": "区号",
+      "phone": "手机号",
+      "accountInfo": "帐号信息",
+      "changePassword": "修改密码",
+      "validator": {
+        "usernameEmpty": "请输入登录名",
+        "nameEmpty": "请输入姓名",
+        "emailError": "邮箱格式不正确",
+        "phoneError": "手机号格式不正确",
+        "areaCodeEmpty": "请选择区号",
+        "passwordEmpty": "请输入密码",
+        "passwordError": "密码6-64位，且必须包含大小写字母和数字"
+      },
+      "accountStatus": {
+        "title": "帐号状态",
+        "systemdUser": "系统用户",
+        "enabled": "启用",
+        "nonExpired": "未过期",
+        "credentialsNonExpired": "认证未过期",
+        "nonLocked": "未锁定"
+      }
+    }
+  },
+  "systemSettings": {
+    "org": {
+      "orgName": "组织名称",
+      "orgNameValidator": "请输入组织名称",
+      "orgUsers": "组织内用户",
+      "chooseOrgFirst": "请在左侧选择组织来查看详情",
+      "addUserToOrg": "添加用户到组织",
+      "selectAddUser": "请选择需要添加的用户",
+      "orgUsersDeleteConfirm": "确认从组织中删除所选用户吗？",
+      "orgUsersDeleteSelectCheck": "请选择需要从组织中删除的用户"
+    },
+    "role": {
+      "roleName": "角色名称",
+      "roleNameValidator": "请输入角色名称",
+      "rolePermissions": "角色权限",
+      "chooseRoleFirst": "请在左侧选择角色来查看详情",
+      "systemRole": "系统角色"
+    },
+    "user": {
+      "resetPassword": "重置密码",
+      "usersDeleteSelectCheck": "请选择需要删除的用户",
+      "userRolesSelectPlaceholder": "选择用户角色"
+    }
+  },
+  "noFound": {
+    "title": "404 未找到页面",
+    "backHome": "返回首页"
+  }
+}

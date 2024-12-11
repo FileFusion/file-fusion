@@ -1,0 +1,31 @@
+{
+  "pathPrefix": "/api",
+  "isStrict": true,
+  "allInOne": true,
+  "outPath": "./src/main/resources/static/doc",
+  "coverOld": true,
+  "createDebugPage": true,
+  "packageFilters": "com.github.filefusion.*.controller.*",
+  "inlineEnum": true,
+  "allInOneDocFileName": "index.html",
+  "requestHeaders": [
+    {
+      "name": "Authorization",
+      "type": "string",
+      "desc": "authentication key",
+      "value": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsIm5iZiI6MTY4OTkyNDQzNCwiZXhwIjoxNjkyNTE2NDM0fQ.X7W_Q9-x8JLCPwNy0Lkc2-AMox1wM5vjhw_vS_rBOt0",
+      "required": true,
+      "since": "-",
+      "excludePathPatterns": "/api/user/_login"
+    }
+  ],
+  "revisionLogs": [
+    {
+      "version": "1.0.0",
+      "revisionTime": "2022-04-01 00:00:00",
+      "status": "create",
+      "author": "hackyo",
+      "remarks": "release"
+    }
+  ]
+}

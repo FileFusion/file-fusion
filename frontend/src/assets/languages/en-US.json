@@ -1,0 +1,129 @@
+{
+  "common": {
+    "slogans": "Cherish the Beautiful Life",
+    "workflows": "Workflows",
+    "plugins": "Plugins",
+    "docs": "Docs",
+    "setting": "Setting",
+    "empty": "N/A",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteConfirm": "Confirm deletion?",
+    "batchDeleteConfirm": "Confirm the deletion of the selected?",
+    "saveSuccess": "Save success",
+    "addSuccess": "Add success",
+    "deleteSuccess": "Delete success",
+    "yes": "Yes",
+    "no": "No",
+    "user": "User",
+    "role": "Role",
+    "org": "Organization",
+    "search": "Search",
+    "description": "Description",
+    "add": "Add",
+    "options": "Options",
+    "total": "Total",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "info": "Info",
+    "success": "Success",
+    "warning": "Warning",
+    "error": "Error"
+  },
+  "theme": {
+    "syncSystem": "Sync with system",
+    "light": "Day theme",
+    "dark": "Night theme"
+  },
+  "router": {
+    "notLogin": "Please login first",
+    "reLogin": "Please login again",
+    "isLogin": "Is login",
+    "requestFailed": "Please check the network link status"
+  },
+  "login": {
+    "login": "Sign in",
+    "username": "Username",
+    "password": "Password",
+    "remember": "Remember",
+    "success": "Sign in success",
+    "validator": {
+      "username": "Please enter username",
+      "password": "Please enter password"
+    },
+    "welcomeBack": "Welcome back"
+  },
+  "navigationBar": {
+    "logout": "Sign out",
+    "about": "About",
+    "authorizedTo": "Authorized to",
+    "workflowQuantity": "Workflow quantity",
+    "authorizationTime": "Authorization time",
+    "expirationTime": "Expiration time",
+    "edition": "Edition",
+    "version": "Version",
+    "indefinitely": "Indefinitely",
+    "logoutConfirm": "Confirm to log out?"
+  },
+  "userSettings": {
+    "title": "User center",
+    "profile": {
+      "title": "Profile",
+      "username": "Login name",
+      "originalPassword": "Original password",
+      "newPassword": "New password",
+      "name": "Name",
+      "email": "Email",
+      "areaCode": "Area code",
+      "phone": "Phone",
+      "accountInfo": "Account info",
+      "changePassword": "Change password",
+      "validator": {
+        "usernameEmpty": "Please enter login name",
+        "nameEmpty": "Please enter name",
+        "emailError": "Email format is incorrect",
+        "phoneError": "Phone format is incorrect",
+        "areaCodeEmpty": "Please select an area code",
+        "passwordEmpty": "Please enter password",
+        "passwordError": "Password 6-64 characters and must contain uppercase and lowercase letters and numbers"
+      },
+      "accountStatus": {
+        "title": "Account status",
+        "systemdUser": "System user",
+        "enabled": "Enabled",
+        "nonExpired": "Non expired",
+        "credentialsNonExpired": "Credentials non expired",
+        "nonLocked": "Non locked"
+      }
+    }
+  },
+  "systemSettings": {
+    "org": {
+      "orgName": "Organization name",
+      "orgNameValidator": "Please enter organization name",
+      "orgUsers": "Users in the organization",
+      "chooseOrgFirst": "Please select the organization on the left to view details",
+      "addUserToOrg": "Add user to organization",
+      "selectAddUser": "Please select the user to be added",
+      "orgUsersDeleteConfirm": "Confirm to remove the selected user from the organization?",
+      "orgUsersDeleteSelectCheck": "Please select the users that need to be removed from the organization"
+    },
+    "role": {
+      "roleName": "Role name",
+      "roleNameValidator": "Please enter role name",
+      "rolePermissions": "Role permissions",
+      "chooseRoleFirst": "Please select the role on the left to view details",
+      "systemRole": "System role"
+    },
+    "user": {
+      "resetPassword": "Reset password",
+      "usersDeleteSelectCheck": "Please select the user to be deleted",
+      "userRolesSelectPlaceholder": "Select user role"
+    }
+  },
+  "noFound": {
+    "title": "404 Page not found",
+    "backHome": "Back to home"
+  }
+}

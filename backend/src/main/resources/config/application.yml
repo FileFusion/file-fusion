@@ -1,0 +1,51 @@
+server:
+  shutdown: GRACEFUL
+  compression:
+    enabled: true
+    mime-types:
+      - text/html
+      - text/xml
+      - text/plain
+      - text/css
+      - text/javascript
+      - application/json
+      - application/xml
+      - image/vnd.microsoft.icon
+      - image/svg+xml
+  ssl:
+    key-store-type: PKCS12
+spring:
+  application:
+    name: file-fusion
+  config:
+    # Configuration file path
+    import: optional:file:${FF_CONFIG_FILE:/opt/file_fusion/conf.properties}
+  threads:
+    virtual:
+      enabled: true
+  messages:
+    basename: i18n/messages
+    fallback-to-system-locale: false
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+  jpa:
+    open-in-view: true
+  flyway:
+    locations: classpath:/db/migration
+    table: db_version
+logging:
+  level:
+    org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver: ERROR
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    health:
+      show-details: always
+security:
+  all-whitelist:
+  whitelist:
+    POST:
+      - /user/_login

@@ -1,0 +1,76 @@
+#splash {
+  position: absolute;
+  inset: 0;
+  z-index: 9999;
+  text-align: center;
+  background-color: #fff;
+}
+
+#splash > div {
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+#splash > div > img {
+  width: 300px;
+}
+
+#splash > div > .splash-image-black {
+  display: inline-block;
+}
+
+#splash > div > .splash-image-white {
+  display: none;
+}
+
+#splash > div > .splash-loading {
+  margin-top: 60px;
+}
+
+#splash > div > .splash-loading > div {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background-color: #000;
+  border-radius: 100%;
+  animation: splash-loading-keyframes 1.4s infinite ease-in-out both;
+}
+
+#splash > div > .splash-loading > div:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+#splash > div > .splash-loading > div:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes splash-loading-keyframes {
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+  }
+
+  40% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  #splash {
+    background-color: #18181c;
+  }
+
+  #splash > div > .splash-loading > div {
+    background-color: #fff;
+  }
+
+  #splash > div > .splash-image-black {
+    display: none;
+  }
+
+  #splash > div > .splash-image-white {
+    display: inline-block;
+  }
+}

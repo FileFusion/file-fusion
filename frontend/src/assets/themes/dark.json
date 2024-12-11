@@ -1,0 +1,28 @@
+{
+  "common": {
+    "fontFamily": "AlibabaPuHuiTi, PingFangSC-Regular, 'Microsoft Yahei', sans-serif",
+    "fontFamilyMono": "JetBrainsMono, Menlo, 'DejaVu Sans Mono', monospace",
+    "fontWeight": "550",
+    "fontWeightStrong": "850",
+    "primaryColor": "#0ea5e9",
+    "primaryColorHover": "#38bdf8",
+    "primaryColorPressed": "#0284c7",
+    "primaryColorSuppl": "#38bdf8",
+    "infoColor": "#10b981",
+    "infoColorHover": "#34d399",
+    "infoColorPressed": "#059669",
+    "infoColorSuppl": "#34d399",
+    "successColor": "#10b981",
+    "successColorHover": "#34d399",
+    "successColorPressed": "#059669",
+    "successColorSuppl": "#34d399",
+    "warningColor": "#eab308",
+    "warningColorHover": "#facc15",
+    "warningColorPressed": "#ca8a04",
+    "warningColorSuppl": "#facc15",
+    "errorColor": "#ef4444",
+    "errorColorHover": "#f87171",
+    "errorColorPressed": "#dc2626",
+    "errorColorSuppl": "#f87171"
+  }
+}
