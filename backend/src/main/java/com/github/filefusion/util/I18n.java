@@ -22,10 +22,13 @@ public class I18n {
     }
 
     public static String get(String message) {
-        return get(message, null);
+        return get(message, new Object[]{});
     }
 
     public static String get(String message, Object[] args) {
+        if (args == null) {
+            args = new Object[]{};
+        }
         return MESSAGE_SOURCE.getMessage(message, args, LocaleContextHolder.getLocale());
     }
 

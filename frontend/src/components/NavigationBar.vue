@@ -6,9 +6,7 @@
           <n-gi :span="6" class="h-8 pl-6">
             <img
               class="h-8 object-contain"
-              :src="
-                theme === SupportThemes.DARK ? logoTitleWhite : logoTitleBlack
-              "
+              :src="theme === SupportThemes.DARK ? logoTitleWhite : logoTitle"
               alt="title logo" />
           </n-gi>
           <n-gi :span="14">
@@ -56,9 +54,7 @@
                   <img
                     class="h-8 object-contain !w-unset"
                     :src="
-                      theme === SupportThemes.DARK
-                        ? logoTitleWhite
-                        : logoTitleBlack
+                      theme === SupportThemes.DARK ? logoTitleWhite : logoTitle
                     "
                     alt="title logo" />
                 </n-gi>
@@ -117,8 +113,8 @@ import { useRouter } from 'vue-router';
 import { useRequest } from 'alova/client';
 import { mainStore } from '@/store';
 import { renderIconMethod } from '@/commons/utils';
+import logoTitle from '@/assets/images/logo-title.png';
 import logoTitleWhite from '@/assets/images/logo-title-white.png';
-import logoTitleBlack from '@/assets/images/logo-title-black.png';
 import packageInfo from '../../package.json';
 import { SupportThemes } from '@/commons/theme.ts';
 

@@ -16,7 +16,7 @@
   width: 300px;
 }
 
-#splash > div > .splash-image-black {
+#splash > div > .splash-image {
   display: inline-block;
 }
 
@@ -66,7 +66,7 @@
     background-color: #fff;
   }
 
-  #splash > div > .splash-image-black {
+  #splash > div > .splash-image {
     display: none;
   }
 

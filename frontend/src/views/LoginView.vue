@@ -17,9 +17,7 @@
             <div class="text-center">
               <img
                 class="h-10 object-contain"
-                :src="
-                  theme === SupportThemes.DARK ? logoTitleWhite : logoTitleBlack
-                "
+                :src="theme === SupportThemes.DARK ? logoTitleWhite : logoTitle"
                 alt="title logo" />
             </div>
             <div class="mt-1 text-center">
@@ -98,7 +96,7 @@ import { useI18n } from 'vue-i18n';
 import { useRequest } from 'alova/client';
 import { mainStore } from '@/store';
 import loginSide from '@/assets/images/login-side.png';
-import logoTitleBlack from '@/assets/images/logo-title-black.png';
+import logoTitle from '@/assets/images/logo-title.png';
 import logoTitleWhite from '@/assets/images/logo-title-white.png';
 import { SupportThemes } from '@/commons/theme.ts';
 
