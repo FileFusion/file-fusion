@@ -56,10 +56,10 @@
     "logout": "Sign out",
     "about": "About",
     "authorizedTo": "Authorized to",
-    "workflowQuantity": "Workflow quantity",
     "authorizationTime": "Authorization time",
     "expirationTime": "Expiration time",
     "edition": "Edition",
+    "license": "License",
     "version": "Version",
     "indefinitely": "Indefinitely",
     "logoutConfirm": "Confirm to log out?"

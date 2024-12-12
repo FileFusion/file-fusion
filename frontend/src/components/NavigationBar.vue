@@ -70,10 +70,6 @@
                 {{ license.authorizedTo }}
               </n-descriptions-item>
               <n-descriptions-item
-                :label="$t('navigationBar.workflowQuantity')">
-                {{ license.workflowQuantity }}
-              </n-descriptions-item>
-              <n-descriptions-item
                 :label="$t('navigationBar.authorizationTime')">
                 <n-time
                   v-if="license.startDate"
@@ -90,6 +86,9 @@
               </n-descriptions-item>
               <n-descriptions-item :label="$t('navigationBar.edition')">
                 {{ license.edition }}
+              </n-descriptions-item>
+              <n-descriptions-item :label="$t('navigationBar.license')">
+                GPL-3.0
               </n-descriptions-item>
               <n-descriptions-item :label="$t('navigationBar.version')">
                 V{{ packageInfo.version }}
@@ -158,7 +157,6 @@ const {
   immediate: false,
   initialData: {
     authorizedTo: undefined,
-    workflowQuantity: null,
     startDate: null,
     endDate: null,
     edition: null

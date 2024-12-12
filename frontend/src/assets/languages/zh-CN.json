@@ -56,10 +56,10 @@
     "logout": "登出",
     "about": "关于",
     "authorizedTo": "授予",
-    "workflowQuantity": "流水线限额",
     "authorizationTime": "授予时间",
     "expirationTime": "过期时间",
     "edition": "版本",
+    "license": "开源许可",
     "version": "版本号",
     "indefinitely": "无限期",
     "logoutConfirm": "确认登出吗？"

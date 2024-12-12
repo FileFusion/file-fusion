@@ -22,11 +22,6 @@ public class License extends BaseEntity {
     private String authorizedTo;
 
     /**
-     * workflow quantity
-     */
-    private Integer workflowQuantity;
-
-    /**
      * edition
      */
     private String edition;
