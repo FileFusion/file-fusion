@@ -1,17 +1,13 @@
 import type { Component } from 'vue';
 import type { RouteLocationNormalized } from 'vue-router';
 import { createRouter, createWebHistory } from 'vue-router';
-import IconBranchOne from '~icons/icon-park-outline/branch-one';
-import IconPlug from '~icons/icon-park-outline/plug';
 import IconDocumentFolder from '~icons/icon-park-outline/document-folder';
 import IconPeople from '~icons/icon-park-outline/people';
 import IconSettingTwo from '~icons/icon-park-outline/setting-two';
 import { mainStore } from '@/store';
 import { hasPermission } from '@/commons/permission';
 import routerViewContent from '@/components/RouterViewContent.vue';
-import workflows from '@/router/workflows';
-import plugins from '@/router/plugins';
-import docs from '@/router/docs';
+import files from '@/router/files';
 import systemSettings from '@/router/system-settings';
 import userSettings from '@/router/user-settings';
 
@@ -31,40 +27,18 @@ const routes = [
     name: 'home',
     meta: { requiresAuth: true },
     component: () => import('@/views/HomeView.vue'),
-    redirect: '/workflows',
+    redirect: '/files',
     children: [
       {
-        path: '/workflows',
-        name: 'workflows',
+        path: '/files',
+        name: 'files',
         meta: {
           requiresAuth: true,
-          title: 'common.workflows',
-          icon: IconBranchOne
-        },
-        component: routerViewContent,
-        children: workflows
-      },
-      {
-        path: '/plugins',
-        name: 'plugins',
-        meta: {
-          requiresAuth: true,
-          title: 'common.plugins',
-          icon: IconPlug
-        },
-        component: routerViewContent,
-        children: plugins
-      },
-      {
-        path: '/docs',
-        name: 'docs',
-        meta: {
-          requiresAuth: true,
-          title: 'common.docs',
+          title: 'common.files',
           icon: IconDocumentFolder
         },
         component: routerViewContent,
-        children: docs
+        children: files
       },
       {
         path: '/system-settings',

@@ -1,9 +1,7 @@
 {
   "common": {
     "slogans": "珍藏美好生活",
-    "workflows": "流水线",
-    "plugins": "插件",
-    "docs": "文档",
+    "files": "文件",
     "setting": "系统设置",
     "empty": "无",
     "save": "保存",

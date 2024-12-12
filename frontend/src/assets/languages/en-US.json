@@ -1,9 +1,7 @@
 {
   "common": {
     "slogans": "Cherish the Beautiful Life",
-    "workflows": "Workflows",
-    "plugins": "Plugins",
-    "docs": "Docs",
+    "files": "Files",
     "setting": "Setting",
     "empty": "N/A",
     "save": "Save",
