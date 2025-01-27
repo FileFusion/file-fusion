@@ -5,7 +5,7 @@ import IconPeoples from '~icons/icon-park-outline/peoples';
 export default [
   {
     path: 'org',
-    name: 'org',
+    name: 'system-settings-org',
     meta: {
       requiresAuth: true,
       title: 'common.org',
@@ -16,7 +16,7 @@ export default [
   },
   {
     path: 'role',
-    name: 'role',
+    name: 'system-settings-role',
     meta: {
       requiresAuth: true,
       title: 'common.role',
@@ -27,7 +27,7 @@ export default [
   },
   {
     path: 'user',
-    name: 'user',
+    name: 'system-settings-user',
     meta: {
       requiresAuth: true,
       title: 'common.user',

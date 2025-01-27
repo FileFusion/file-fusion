@@ -35,7 +35,13 @@ const routes = [
         meta: {
           requiresAuth: true,
           title: 'common.files',
-          icon: IconDocumentFolder
+          icon: IconDocumentFolder,
+          permission: [
+            'personal_file:read',
+            'org_file:read',
+            'recycle_bin_file:read'
+          ],
+          permissionOr: true
         },
         component: routerViewContent,
         children: files

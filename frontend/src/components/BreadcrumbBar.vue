@@ -37,8 +37,6 @@ function clickBreadcrumb(breadcrumb: any, index: number) {
   if (index === breadcrumb.length - 1) {
     return;
   }
-  router.push({
-    path: breadcrumb.path
-  });
+  router.push(breadcrumb.path);
 }
 </script>

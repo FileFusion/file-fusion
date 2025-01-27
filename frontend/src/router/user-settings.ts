@@ -6,28 +6,28 @@ import IconEditName from '~icons/icon-park-outline/edit-name';
 export default [
   {
     path: 'profile',
-    name: 'profile',
+    name: 'user-settings-profile',
     meta: {
       requiresAuth: true,
       title: 'userSettings.profile.title',
       icon: IconUser
     },
     component: () => import('@/views/user-settings/ProfileTabs.vue'),
-    redirect: '/user-settings/profile/user-info',
+    redirect: '/user-settings/profile/account-info',
     children: [
       {
-        path: 'user-info',
-        name: 'user-info',
+        path: 'account-info',
+        name: 'user-settings-profile-account-info',
         meta: {
           requiresAuth: true,
           title: 'userSettings.profile.accountInfo',
           icon: IconEditName
         },
-        component: () => import('@/views/user-settings/profile/UserInfo.vue')
+        component: () => import('@/views/user-settings/profile/AccountInfo.vue')
       },
       {
         path: 'change-password',
-        name: 'change-password',
+        name: 'user-settings-profile-change-password',
         meta: {
           requiresAuth: true,
           title: 'userSettings.profile.changePassword',
@@ -39,7 +39,7 @@ export default [
       },
       {
         path: 'account-status',
-        name: 'account-status',
+        name: 'user-settings-profile-account-status',
         meta: {
           requiresAuth: true,
           title: 'userSettings.profile.accountStatus.title',

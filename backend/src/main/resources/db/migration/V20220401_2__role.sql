@@ -28,6 +28,7 @@ INSERT INTO role_permission
 VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'user:edit');
 INSERT INTO role_permission
 VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'user:change_password');
+
 INSERT INTO role_permission
 VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'org');
 INSERT INTO role_permission
@@ -38,6 +39,7 @@ INSERT INTO role_permission
 VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'org:add');
 INSERT INTO role_permission
 VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'org:delete');
+
 INSERT INTO role_permission
 VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'user_management');
 INSERT INTO role_permission
@@ -48,6 +50,7 @@ INSERT INTO role_permission
 VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'user_management:add');
 INSERT INTO role_permission
 VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'user_management:delete');
+
 INSERT INTO role_permission
 VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'role');
 INSERT INTO role_permission
@@ -58,3 +61,34 @@ INSERT INTO role_permission
 VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'role:add');
 INSERT INTO role_permission
 VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'role:delete');
+
+INSERT INTO role_permission
+VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'personal_file');
+INSERT INTO role_permission
+VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'personal_file:read');
+INSERT INTO role_permission
+VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'personal_file:edit');
+INSERT INTO role_permission
+VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'personal_file:add');
+INSERT INTO role_permission
+VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'personal_file:delete');
+
+INSERT INTO role_permission
+VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'org_file');
+INSERT INTO role_permission
+VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'org_file:read');
+INSERT INTO role_permission
+VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'org_file:edit');
+INSERT INTO role_permission
+VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'org_file:add');
+INSERT INTO role_permission
+VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'org_file:delete');
+
+INSERT INTO role_permission
+VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'recycle_bin_file');
+INSERT INTO role_permission
+VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'recycle_bin_file:read');
+INSERT INTO role_permission
+VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'recycle_bin_file:delete');
+INSERT INTO role_permission
+VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'recycle_bin_file:restore');
