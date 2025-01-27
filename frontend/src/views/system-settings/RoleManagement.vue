@@ -144,7 +144,7 @@ import type { FormRules } from 'naive-ui';
 import { computed, h, ref } from 'vue';
 import { NText } from 'naive-ui';
 import { useI18n } from 'vue-i18n';
-import { v4 as uuidv4 } from 'uuid';
+import { ulid } from 'ulidx';
 import { useRequest } from 'alova/client';
 import { arrayToTreeCustom } from '@/commons/utils';
 
@@ -306,7 +306,7 @@ function updateAllPermission(disabled: boolean) {
 }
 
 function addRole() {
-  const id = uuidv4();
+  const id = ulid();
   roles.value.push({
     id: id,
     name: 'New role',

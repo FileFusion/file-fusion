@@ -213,7 +213,7 @@ import { NButton } from 'naive-ui';
 import { computed, h, ref } from 'vue';
 import IconAdd from '~icons/icon-park-outline/add';
 import { useI18n } from 'vue-i18n';
-import { v4 as uuidv4 } from 'uuid';
+import { ulid } from 'ulidx';
 import { useRequest, usePagination } from 'alova/client';
 import { hasPermission } from '@/commons/permission';
 import { arrayToTree, renderIconMethod, treeForeach } from '@/commons/utils';
@@ -468,7 +468,7 @@ function expandOrg(value: any) {
 }
 
 function addOrg(parentOrg: any) {
-  const id = uuidv4();
+  const id = ulid();
   const newOrg = {
     id: id,
     parentId: parentOrg.id,

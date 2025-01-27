@@ -13,7 +13,7 @@
     "alova": "3.2.8",
     "date-fns": "4.1.0",
     "pinia": "2.3.1",
-    "uuid": "11.0.5",
+    "ulidx": "2.4.1",
     "vue": "3.5.13",
     "vue-i18n": "11.0.1",
     "vue-router": "4.5.0"
@@ -22,7 +22,6 @@
     "@eslint/js": "9.19.0",
     "@iconify-json/icon-park-outline": "1.2.2",
     "@types/node": "22.10.10",
-    "@types/uuid": "10.0.0",
     "@unocss/eslint-config": "65.4.3",
     "@unocss/preset-rem-to-px": "65.4.3",
     "@vitejs/plugin-vue": "5.2.1",

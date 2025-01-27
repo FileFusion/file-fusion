@@ -32,6 +32,13 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>de.huxhorn.sulky</groupId>
+            <artifactId>de.huxhorn.sulky.ulid</artifactId>
+            <version>${de.huxhorn.sulky.ulid.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
@@ -77,6 +84,7 @@
             <version>${h2.version}</version>
             <scope>runtime</scope>
         </dependency>
+
         <dependency>
             <groupId>com.github.filefusion</groupId>
             <artifactId>frontend</artifactId>

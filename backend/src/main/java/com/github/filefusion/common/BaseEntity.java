@@ -1,10 +1,10 @@
 package com.github.filefusion.common;
 
+import com.github.filefusion.config.UlidGeneratorType;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import lombok.Data;
-import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -29,7 +29,7 @@ public abstract class BaseEntity implements Serializable {
      * id
      */
     @Id
-    @UuidGenerator
+    @UlidGeneratorType.UlidGenerator
     private String id;
 
     /**

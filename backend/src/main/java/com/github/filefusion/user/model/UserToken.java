@@ -2,13 +2,13 @@ package com.github.filefusion.user.model;
 
 import com.github.filefusion.util.EncryptUtil;
 import com.github.filefusion.util.Json;
+import com.github.filefusion.util.ULID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.UUID;
 
 /**
  * UserToken
@@ -33,7 +33,7 @@ public class UserToken implements Serializable {
     }
 
     public static String encoder(String userId) {
-        UserToken userToken = new UserToken(userId, new Date(), UUID.randomUUID().toString());
+        UserToken userToken = new UserToken(userId, new Date(), ULID.randomULID());
         return TOKEN_HEADER + EncryptUtil.aesEncoder(Json.toJsonString(userToken));
     }
 
