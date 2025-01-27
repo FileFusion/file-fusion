@@ -3,13 +3,13 @@ package com.github.filefusion.config;
 import com.github.filefusion.user.entity.UserInfo;
 import com.github.filefusion.user.model.UserToken;
 import com.github.filefusion.util.I18n;
+import jakarta.annotation.Nonnull;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.AccountStatusException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -37,7 +37,7 @@ public final class AuthenticationTokenFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain chain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, @Nonnull HttpServletResponse response, @Nonnull FilterChain chain) throws ServletException, IOException {
         String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (StringUtils.hasLength(authorization)) {
             UserToken token;
@@ -65,7 +65,7 @@ public final class AuthenticationTokenFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
+    protected boolean shouldNotFilter(@Nonnull HttpServletRequest request) {
         String lookupPath = UrlPathHelper.defaultInstance.getLookupPathForRequest(request);
         return !PATH_MATCHER.match(ApiPrefixConfig.CONTEXT_PATH + "/**", lookupPath);
     }

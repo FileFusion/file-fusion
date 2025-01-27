@@ -2,6 +2,8 @@ package com.github.filefusion.config;
 
 import com.github.filefusion.common.BaseResult;
 import com.github.filefusion.common.HttpException;
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
@@ -10,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
-import org.springframework.lang.NonNull;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -100,8 +101,8 @@ public class GlobalExceptionHandler implements ResponseBodyAdvice<Object> {
      * @return support
      */
     @Override
-    public boolean supports(@NonNull MethodParameter returnType,
-                            @NonNull Class<? extends HttpMessageConverter<?>> converterType) {
+    public boolean supports(@Nonnull MethodParameter returnType,
+                            @Nonnull Class<? extends HttpMessageConverter<?>> converterType) {
         return true;
     }
 
@@ -117,12 +118,12 @@ public class GlobalExceptionHandler implements ResponseBodyAdvice<Object> {
      * @return return value
      */
     @Override
-    @NonNull
-    public Object beforeBodyWrite(@NonNull Object body,
-                                  @NonNull MethodParameter returnType, @NonNull MediaType selectedContentType,
-                                  @NonNull Class<? extends HttpMessageConverter<?>> selectedConverterType,
-                                  @NonNull ServerHttpRequest request, @NonNull ServerHttpResponse response) {
-        if (BaseResult.class.isAssignableFrom(body.getClass())) {
+    @Nonnull
+    public Object beforeBodyWrite(@Nullable Object body,
+                                  @Nonnull MethodParameter returnType, @Nonnull MediaType selectedContentType,
+                                  @Nonnull Class<? extends HttpMessageConverter<?>> selectedConverterType,
+                                  @Nonnull ServerHttpRequest request, @Nonnull ServerHttpResponse response) {
+        if (body != null && BaseResult.class.isAssignableFrom(body.getClass())) {
             return body;
         }
         return BaseResult.ok(body);

@@ -23,7 +23,7 @@ spring:
       max-request-size: ${FF_MAX_REQUEST_SIZE:4096MB}
   datasource:
     driver-class-name: ${FF_DATASOURCE_DRIVER:org.h2.Driver}
-    url: ${FF_DATASOURCE_URL:jdbc:h2:file:/opt/file_fusion/data/database;DATABASE_TO_UPPER=FALSE;CASE_INSENSITIVE_IDENTIFIERS=TRUE}
+    url: ${FF_DATASOURCE_URL:jdbc:h2:file:/opt/file_fusion/data/db/database;DATABASE_TO_UPPER=FALSE;CASE_INSENSITIVE_IDENTIFIERS=TRUE}
     username: ${FF_DATASOURCE_USERNAME:file_fusion}
     password: ${FF_DATASOURCE_PASSWORD:file_fusion}
 security:
