@@ -6,7 +6,6 @@ import IconPeople from '~icons/icon-park-outline/people';
 import IconSettingTwo from '~icons/icon-park-outline/setting-two';
 import { mainStore } from '@/store';
 import { hasPermission } from '@/commons/permission';
-import routerViewContent from '@/components/RouterViewContent.vue';
 import files from '@/router/files';
 import systemSettings from '@/router/system-settings';
 import userSettings from '@/router/user-settings';
@@ -43,7 +42,6 @@ const routes = [
           ],
           permissionOr: true
         },
-        component: routerViewContent,
         children: files
       },
       {
@@ -56,7 +54,6 @@ const routes = [
           permission: ['org:read', 'role:read', 'user_management:read'],
           permissionOr: true
         },
-        component: routerViewContent,
         children: systemSettings
       },
       {
@@ -67,7 +64,6 @@ const routes = [
           title: 'userSettings.title',
           icon: IconPeople
         },
-        component: routerViewContent,
         children: userSettings
       }
     ]

@@ -64,6 +64,34 @@
     "indefinitely": "无限期",
     "logoutConfirm": "确认登出吗？"
   },
+  "noFound": {
+    "title": "404 未找到页面",
+    "backHome": "返回首页"
+  },
+  "systemSettings": {
+    "org": {
+      "orgName": "组织名称",
+      "orgNameValidator": "请输入组织名称",
+      "orgUsers": "组织内用户",
+      "chooseOrgFirst": "请在左侧选择组织来查看详情",
+      "addUserToOrg": "添加用户到组织",
+      "selectAddUser": "请选择需要添加的用户",
+      "orgUsersDeleteConfirm": "确认从组织中删除所选用户吗？",
+      "orgUsersDeleteSelectCheck": "请选择需要从组织中删除的用户"
+    },
+    "role": {
+      "roleName": "角色名称",
+      "roleNameValidator": "请输入角色名称",
+      "rolePermissions": "角色权限",
+      "chooseRoleFirst": "请在左侧选择角色来查看详情",
+      "systemRole": "系统角色"
+    },
+    "user": {
+      "resetPassword": "重置密码",
+      "usersDeleteSelectCheck": "请选择需要删除的用户",
+      "userRolesSelectPlaceholder": "选择用户角色"
+    }
+  },
   "userSettings": {
     "title": "用户中心",
     "profile": {
@@ -96,32 +124,9 @@
       }
     }
   },
-  "systemSettings": {
-    "org": {
-      "orgName": "组织名称",
-      "orgNameValidator": "请输入组织名称",
-      "orgUsers": "组织内用户",
-      "chooseOrgFirst": "请在左侧选择组织来查看详情",
-      "addUserToOrg": "添加用户到组织",
-      "selectAddUser": "请选择需要添加的用户",
-      "orgUsersDeleteConfirm": "确认从组织中删除所选用户吗？",
-      "orgUsersDeleteSelectCheck": "请选择需要从组织中删除的用户"
-    },
-    "role": {
-      "roleName": "角色名称",
-      "roleNameValidator": "请输入角色名称",
-      "rolePermissions": "角色权限",
-      "chooseRoleFirst": "请在左侧选择角色来查看详情",
-      "systemRole": "系统角色"
-    },
-    "user": {
-      "resetPassword": "重置密码",
-      "usersDeleteSelectCheck": "请选择需要删除的用户",
-      "userRolesSelectPlaceholder": "选择用户角色"
-    }
-  },
-  "noFound": {
-    "title": "404 未找到页面",
-    "backHome": "返回首页"
+  "files": {
+    "personalFile": "个人文件",
+    "orgFile": "组织文件",
+    "recycleBin": "回收站"
   }
 }

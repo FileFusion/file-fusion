@@ -8,7 +8,7 @@ export default [
     name: 'files-personal',
     meta: {
       requiresAuth: true,
-      title: 'common.org',
+      title: 'files.personalFile',
       icon: IconBuildingOne,
       permission: 'personal_file:read'
     },
@@ -19,7 +19,7 @@ export default [
     name: 'files-org',
     meta: {
       requiresAuth: true,
-      title: 'common.role',
+      title: 'files.orgFile',
       icon: IconPermissions,
       permission: 'org_file:read'
     },
@@ -30,7 +30,7 @@ export default [
     name: 'files-recycle-bin',
     meta: {
       requiresAuth: true,
-      title: 'common.user',
+      title: 'files.recycleBin',
       icon: IconPeoples,
       permission: 'recycle_bin_file:read'
     },

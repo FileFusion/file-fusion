@@ -64,6 +64,34 @@
     "indefinitely": "Indefinitely",
     "logoutConfirm": "Confirm to log out?"
   },
+  "noFound": {
+    "title": "404 Page not found",
+    "backHome": "Back to home"
+  },
+  "systemSettings": {
+    "org": {
+      "orgName": "Organization name",
+      "orgNameValidator": "Please enter organization name",
+      "orgUsers": "Users in the organization",
+      "chooseOrgFirst": "Please select the organization on the left to view details",
+      "addUserToOrg": "Add user to organization",
+      "selectAddUser": "Please select the user to be added",
+      "orgUsersDeleteConfirm": "Confirm to remove the selected user from the organization?",
+      "orgUsersDeleteSelectCheck": "Please select the users that need to be removed from the organization"
+    },
+    "role": {
+      "roleName": "Role name",
+      "roleNameValidator": "Please enter role name",
+      "rolePermissions": "Role permissions",
+      "chooseRoleFirst": "Please select the role on the left to view details",
+      "systemRole": "System role"
+    },
+    "user": {
+      "resetPassword": "Reset password",
+      "usersDeleteSelectCheck": "Please select the user to be deleted",
+      "userRolesSelectPlaceholder": "Select user role"
+    }
+  },
   "userSettings": {
     "title": "User center",
     "profile": {
@@ -96,32 +124,9 @@
       }
     }
   },
-  "systemSettings": {
-    "org": {
-      "orgName": "Organization name",
-      "orgNameValidator": "Please enter organization name",
-      "orgUsers": "Users in the organization",
-      "chooseOrgFirst": "Please select the organization on the left to view details",
-      "addUserToOrg": "Add user to organization",
-      "selectAddUser": "Please select the user to be added",
-      "orgUsersDeleteConfirm": "Confirm to remove the selected user from the organization?",
-      "orgUsersDeleteSelectCheck": "Please select the users that need to be removed from the organization"
-    },
-    "role": {
-      "roleName": "Role name",
-      "roleNameValidator": "Please enter role name",
-      "rolePermissions": "Role permissions",
-      "chooseRoleFirst": "Please select the role on the left to view details",
-      "systemRole": "System role"
-    },
-    "user": {
-      "resetPassword": "Reset password",
-      "usersDeleteSelectCheck": "Please select the user to be deleted",
-      "userRolesSelectPlaceholder": "Select user role"
-    }
-  },
-  "noFound": {
-    "title": "404 Page not found",
-    "backHome": "Back to home"
+  "files": {
+    "personalFile": "Personal file",
+    "orgFile": "Organization file",
+    "recycleBin": "Recycle bin"
   }
 }
