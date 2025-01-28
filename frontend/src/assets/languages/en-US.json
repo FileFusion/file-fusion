@@ -126,6 +126,15 @@
   },
   "files": {
     "personalFile": "Personal file",
+    "personal": {
+      "upload": "Upload",
+      "fileName": "Filename",
+      "size": "Size",
+      "createdDate": "Created date",
+      "modifiedDate": "Modified date",
+      "rename": "Rename",
+      "fileDeleteSelectCheck": "Please select the file to be deleted"
+    },
     "orgFile": "Organization file",
     "recycleBin": "Recycle bin"
   }

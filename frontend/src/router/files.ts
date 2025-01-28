@@ -1,6 +1,6 @@
-import IconBuildingOne from '~icons/icon-park-outline/building-one';
-import IconPermissions from '~icons/icon-park-outline/permissions';
-import IconPeoples from '~icons/icon-park-outline/peoples';
+import IconLog from '~icons/icon-park-outline/log';
+import IconTableReport from '~icons/icon-park-outline/table-report';
+import IconRecycleBin from '~icons/icon-park-outline/recycle-bin';
 
 export default [
   {
@@ -9,7 +9,7 @@ export default [
     meta: {
       requiresAuth: true,
       title: 'files.personalFile',
-      icon: IconBuildingOne,
+      icon: IconLog,
       permission: 'personal_file:read'
     },
     component: () => import('@/views/files/PersonalFile.vue')
@@ -20,7 +20,7 @@ export default [
     meta: {
       requiresAuth: true,
       title: 'files.orgFile',
-      icon: IconPermissions,
+      icon: IconTableReport,
       permission: 'org_file:read'
     },
     component: () => import('@/views/files/OrgFile.vue')
@@ -31,7 +31,7 @@ export default [
     meta: {
       requiresAuth: true,
       title: 'files.recycleBin',
-      icon: IconPeoples,
+      icon: IconRecycleBin,
       permission: 'recycle_bin_file:read'
     },
     component: () => import('@/views/files/RecycleBinFile.vue')

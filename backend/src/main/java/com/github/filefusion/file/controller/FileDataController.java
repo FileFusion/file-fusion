@@ -12,6 +12,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * FileDataController
  *
@@ -41,7 +43,7 @@ public class FileDataController {
      * @return file list
      */
     @GetMapping("/{page}/{pageSize}")
-    @PreAuthorize("hasAuthority('user_management:read')")
+    @PreAuthorize("hasAuthority('personal_file:read')")
     public Page<FileData> get(@PathVariable Integer page, @PathVariable Integer pageSize,
                               @RequestParam(required = false) String path,
                               @RequestParam(required = false) String name,
@@ -60,5 +62,18 @@ public class FileDataController {
         }
         return fileDataService.get(PageRequest.of(page - 1, pageSize, sorterOrder.order(), sorter), path, name);
     }
+
+
+    /**
+     * batch delete file
+     *
+     * @param fileIds file ids
+     */
+    @PostMapping("_batch_delete")
+    @PreAuthorize("hasAuthority('personal_file:delete')")
+    public void batchDelete(@RequestBody List<String> fileIds) {
+        fileDataService.batchDelete(fileIds);
+    }
+
 
 }

@@ -118,6 +118,7 @@
                     v-model:value="userPattern"
                     :placeholder="
                       $t('common.search') +
+                      ' ' +
                       $t('userSettings.profile.username') +
                       '/' +
                       $t('userSettings.profile.name') +
@@ -280,19 +281,23 @@ const userTableColumns = computed<DataTableColumn<any>[]>(() => [
   },
   {
     title: t('userSettings.profile.username'),
-    key: 'username'
+    key: 'username',
+    resizable: true
   },
   {
     title: t('userSettings.profile.name'),
-    key: 'name'
+    key: 'name',
+    resizable: true
   },
   {
     title: t('userSettings.profile.email'),
-    key: 'email'
+    key: 'email',
+    resizable: true
   },
   {
     title: t('userSettings.profile.phone'),
     key: 'phone',
+    resizable: true,
     render: (row: any) => {
       if (row.areaCode && row.phone) {
         return row.areaCode + row.phone;

@@ -31,6 +31,7 @@
               v-model:value="userPattern"
               :placeholder="
                 $t('common.search') +
+                ' ' +
                 $t('userSettings.profile.username') +
                 '/' +
                 $t('userSettings.profile.name') +
@@ -521,20 +522,24 @@ const userTableColumns = computed(() => {
     {
       title: t('userSettings.profile.username'),
       key: 'username',
+      resizable: true,
       sorter: true
     },
     {
       title: t('userSettings.profile.name'),
       key: 'name',
+      resizable: true,
       sorter: true
     },
     {
       title: t('userSettings.profile.email'),
-      key: 'email'
+      key: 'email',
+      resizable: true
     },
     {
       title: t('userSettings.profile.phone'),
       key: 'phone',
+      resizable: true,
       render: (row: any) => {
         if (row.areaCode && row.phone) {
           return row.areaCode + row.phone;
@@ -545,6 +550,7 @@ const userTableColumns = computed(() => {
     {
       title: t('common.role'),
       key: 'roles',
+      resizable: true,
       render: (row: any) => {
         let roles = [];
         for (const role of row.roles) {
@@ -574,6 +580,7 @@ const userTableColumns = computed(() => {
     {
       title: t('userSettings.profile.accountStatus.enabled'),
       key: 'enabled',
+      width: 80,
       sorter: true,
       render: (row: any) => {
         return h(
@@ -595,7 +602,7 @@ const userTableColumns = computed(() => {
     tableColumn.push({
       title: t('common.options'),
       key: 'options',
-      align: 'center',
+      width: 100,
       render: (row: any) => {
         return h(
           NDropdown,
