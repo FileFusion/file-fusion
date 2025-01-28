@@ -4,9 +4,9 @@
     <n-layout class="absolute inset-0 top-16" has-sider>
       <side-menu></side-menu>
       <n-layout :native-scrollbar="false">
-        <breadcrumb-bar class="p-2"></breadcrumb-bar>
+        <breadcrumb-bar class="m-2"></breadcrumb-bar>
         <n-layout-content class="content-min-height" embedded>
-          <div class="p-2">
+          <div class="m-2">
             <router-view-content></router-view-content>
           </div>
         </n-layout-content>

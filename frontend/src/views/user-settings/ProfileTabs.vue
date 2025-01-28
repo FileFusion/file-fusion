@@ -12,7 +12,7 @@
         :tab="$t('userSettings.profile.accountStatus.title')"
         name="/user-settings/profile/account-status"></n-tab>
     </n-tabs>
-    <div class="pt-6">
+    <div class="mt-6">
       <router-view-content></router-view-content>
     </div>
   </n-card>
