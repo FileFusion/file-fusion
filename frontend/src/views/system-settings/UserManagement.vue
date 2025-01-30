@@ -3,27 +3,26 @@
     <n-card hoverable>
       <n-grid :cols="24">
         <n-gi :span="14">
-          <n-space>
-            <n-button
-              v-permission="'user_management:add'"
-              type="primary"
-              @click="addUser()">
-              {{ $t('common.add') }}
-            </n-button>
-            <n-popconfirm
-              :positive-button-props="{ type: 'error' }"
-              @positive-click="deleteUsers(userTableCheck)">
-              <template #trigger>
-                <n-button
-                  v-permission="'user_management:delete'"
-                  :loading="deleteUserLoading"
-                  type="error">
-                  {{ $t('common.delete') }}
-                </n-button>
-              </template>
-              {{ $t('common.batchDeleteConfirm') }}
-            </n-popconfirm>
-          </n-space>
+          <n-button
+            v-permission="'user_management:add'"
+            type="primary"
+            class="mr-3"
+            @click="addUser()">
+            {{ $t('common.add') }}
+          </n-button>
+          <n-popconfirm
+            :positive-button-props="{ type: 'error' }"
+            @positive-click="deleteUsers(userTableCheck)">
+            <template #trigger>
+              <n-button
+                v-permission="'user_management:delete'"
+                :loading="deleteUserLoading"
+                type="error">
+                {{ $t('common.delete') }}
+              </n-button>
+            </template>
+            {{ $t('common.batchDeleteConfirm') }}
+          </n-popconfirm>
         </n-gi>
         <n-gi :span="10">
           <n-input-group>

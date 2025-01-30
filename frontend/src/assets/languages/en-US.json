@@ -133,7 +133,10 @@
       "createdDate": "Created date",
       "modifiedDate": "Modified date",
       "rename": "Rename",
-      "fileDeleteSelectCheck": "Please select the file to be deleted"
+      "fileDeleteSelectCheck": "Please select the file to be deleted",
+      "uploadFile": "Upload file",
+      "uploadFolder": "Upload folder",
+      "newFolder": "New folder"
     },
     "orgFile": "Organization file",
     "recycleBin": "Recycle bin"

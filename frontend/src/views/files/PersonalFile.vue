@@ -3,27 +3,30 @@
     <n-card hoverable>
       <n-grid :cols="24">
         <n-gi :span="14">
-          <n-space>
+          <n-dropdown
+            :options="uploadOptions"
+            :show-arrow="true"
+            trigger="hover">
             <n-button
               v-permission="'personal_file:add'"
               type="primary"
-              @click="uploadFile()">
-              {{ $t('files.personal.upload') }}
-            </n-button>
-            <n-popconfirm
-              :positive-button-props="{ type: 'error' }"
-              @positive-click="deleteFiles(fileTableCheck)">
-              <template #trigger>
-                <n-button
-                  v-permission="'personal_file:delete'"
-                  :loading="deleteFileLoading"
-                  type="error">
-                  {{ $t('common.delete') }}
-                </n-button>
-              </template>
-              {{ $t('common.batchDeleteConfirm') }}
-            </n-popconfirm>
-          </n-space>
+              class="mr-3"
+              >{{ $t('files.personal.upload') }}</n-button
+            >
+          </n-dropdown>
+          <n-popconfirm
+            :positive-button-props="{ type: 'error' }"
+            @positive-click="deleteFiles(fileTableCheck)">
+            <template #trigger>
+              <n-button
+                v-permission="'personal_file:delete'"
+                :loading="deleteFileLoading"
+                type="error">
+                {{ $t('common.delete') }}
+              </n-button>
+            </template>
+            {{ $t('common.batchDeleteConfirm') }}
+          </n-popconfirm>
         </n-gi>
         <n-gi :span="10">
           <n-input-group>
@@ -63,7 +66,7 @@
             return t('common.total') + ': ' + pagination.itemCount;
           }
         }"
-        :row-key="(row: any) => row.id"
+        :row-key="(row: any) => row.path"
         remote
         class="mt-3"
         @update:sorter="fileTableHandleSorter"
@@ -75,7 +78,11 @@
 </template>
 
 <script lang="ts" setup>
-import type { DataTableColumn, DataTableSortState } from 'naive-ui';
+import type {
+  DataTableColumn,
+  DataTableSortState,
+  DropdownOption
+} from 'naive-ui';
 import { NButton, NDropdown } from 'naive-ui';
 import { computed, h, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -90,6 +97,22 @@ import { format } from 'date-fns';
 const { t } = useI18n();
 const http = window.$http;
 
+const uploadOptions = computed<DropdownOption[]>(() => {
+  return [
+    {
+      label: t('files.personal.uploadFile'),
+      key: 'file'
+    },
+    {
+      label: t('files.personal.uploadFolder'),
+      key: 'folder'
+    },
+    {
+      label: t('files.personal.newFolder'),
+      key: 'new_folder'
+    }
+  ];
+});
 const fileNamePattern = ref<string>('');
 const fileTableCheck = ref<string[]>([]);
 const fileTableSorter = ref<DataTableSortState | null>(null);
@@ -247,7 +270,8 @@ const {
 );
 
 const { loading: deleteFileLoading, send: doDeleteFile } = useRequest(
-  (fileIds: string[]) => http.Post('/file_data/_batch_delete', fileIds),
+  (filePathList: string[]) =>
+    http.Post('/file_data/_batch_delete', filePathList),
   {
     immediate: false
   }
@@ -292,17 +316,17 @@ function selectOptions(key: string, option: any) {
       positiveText: t('common.confirm'),
       negativeText: t('common.cancel'),
       onPositiveClick: () => {
-        deleteFiles([file.id]);
+        deleteFiles([file.path]);
       }
     });
   }
 }
 
-function deleteFiles(fileIds: any) {
-  if (!fileIds || fileIds.length === 0) {
+function deleteFiles(filePathList: string[]) {
+  if (!filePathList || filePathList.length === 0) {
     window.$msg.warning(t('files.personal.fileDeleteSelectCheck'));
     return;
   }
-  doDeleteFile(fileIds);
+  doDeleteFile(filePathList);
 }
 </script>

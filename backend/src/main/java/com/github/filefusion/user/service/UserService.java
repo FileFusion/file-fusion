@@ -129,6 +129,9 @@ public class UserService implements UserDetailsService {
 
     @Transactional(rollbackFor = HttpException.class)
     public UserInfo add(UserInfo user) {
+        if (userRepository.existsByUsername(user.getUsername())) {
+            throw new HttpException(I18n.get("usernameExits"));
+        }
         user.setId(null);
         user.setPassword(passwordEncoder.encode(EncryptUtil.sha256(user.getPassword())));
         user.setEarliestCredentials(new Date());

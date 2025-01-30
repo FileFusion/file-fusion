@@ -3,6 +3,7 @@ package com.github.filefusion.file.controller;
 import com.github.filefusion.constant.FileSeparator;
 import com.github.filefusion.constant.SorterOrder;
 import com.github.filefusion.file.entity.FileData;
+import com.github.filefusion.file.model.NewFolderModel;
 import com.github.filefusion.file.service.FileDataService;
 import com.github.filefusion.util.CurrentUser;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,13 +68,30 @@ public class FileDataController {
     /**
      * batch delete file
      *
-     * @param fileIds file ids
+     * @param filePathList file path list
      */
     @PostMapping("_batch_delete")
     @PreAuthorize("hasAuthority('personal_file:delete')")
-    public void batchDelete(@RequestBody List<String> fileIds) {
-        fileDataService.batchDelete(fileIds);
+    public void batchDelete(@RequestBody List<String> filePathList) {
+        fileDataService.batchDelete(CurrentUser.get().getId(), filePathList);
     }
 
+    /**
+     * new folder
+     *
+     * @param newFolder folder info
+     */
+    @PostMapping("_new_folder")
+    @PreAuthorize("hasAuthority('personal_file:add')")
+    public void newFolder(@RequestBody NewFolderModel newFolder) {
+        String path = newFolder.getPath();
+        if (!StringUtils.hasLength(path)) {
+            path = CurrentUser.get().getId() + FileSeparator.VALUE;
+        } else {
+            path = CurrentUser.get().getId() + FileSeparator.VALUE + path;
+        }
+        String folderName = newFolder.getFolderName();
+        fileDataService.newFolder(path, folderName);
+    }
 
 }

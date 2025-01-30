@@ -55,4 +55,12 @@ public interface UserInfoRepository extends JpaRepository<UserInfo, String> {
     @Query("FROM user_info u WHERE u.username LIKE %?1% OR u.name LIKE %?1% OR u.email LIKE %?1% OR CONCAT(u.areaCode, u.phone) LIKE %?1%")
     Page<UserInfo> findAllOrderBySort(String search, PageRequest page);
 
+    /**
+     * existsByUsername
+     *
+     * @param username username
+     * @return exists
+     */
+    Boolean existsByUsername(String username);
+
 }
