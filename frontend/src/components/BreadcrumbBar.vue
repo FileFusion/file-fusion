@@ -4,12 +4,12 @@
       v-for="(b, index) in breadcrumb"
       :key="b.path"
       @click="clickBreadcrumb(b, index)">
-      <n-space :size="4">
+      <n-flex :size="4">
         <n-icon>
           <component :is="b.icon" />
         </n-icon>
         <n-text>{{ $t(b.label ? b.label : '') }}</n-text>
-      </n-space>
+      </n-flex>
     </n-breadcrumb-item>
   </n-breadcrumb>
 </template>

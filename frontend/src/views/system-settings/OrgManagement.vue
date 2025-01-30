@@ -3,7 +3,7 @@
     <n-card hoverable>
       <n-grid :cols="4" x-gap="24">
         <n-gi :span="1">
-          <n-space :size="12" vertical>
+          <n-flex :size="12" vertical>
             <n-input
               v-model:value="orgPattern"
               :placeholder="$t('common.search')"
@@ -28,7 +28,7 @@
                 @update:expanded-keys="expandOrg"
                 @update:selected-keys="selectedOrg" />
             </n-spin>
-          </n-space>
+          </n-flex>
         </n-gi>
         <n-gi v-if="currentOrg" :span="3">
           <n-spin :show="addOrgLoading || updateOrgLoading || deleteOrgLoading">
@@ -366,11 +366,11 @@ const {
 });
 
 function addOrUpdateOrgSuccess(res: any) {
+  window.$msg.success(t('common.saveSuccess'));
   doGetAllOrg();
   currentOrg.value = res;
   currentOrgId.value = res.id;
   userTableReload();
-  window.$msg.success(t('common.saveSuccess'));
 }
 
 const { loading: deleteOrgLoading, send: doDeleteOrg } = useRequest(
@@ -379,10 +379,10 @@ const { loading: deleteOrgLoading, send: doDeleteOrg } = useRequest(
     immediate: false
   }
 ).onSuccess(() => {
+  window.$msg.success(t('common.deleteSuccess'));
   doGetAllOrg();
   currentOrg.value = null;
   currentOrgId.value = '';
-  window.$msg.success(t('common.deleteSuccess'));
 });
 
 const {
@@ -432,9 +432,9 @@ const { loading: addUsersToOrgLoading, send: doAddUsersToOrg } = useRequest(
     immediate: false
   }
 ).onSuccess(() => {
+  window.$msg.success(t('common.addSuccess'));
   showAddOrgUsersModal.value = false;
   userTableReload();
-  window.$msg.success(t('common.addSuccess'));
 });
 
 const { loading: removeUsersFromOrgLoading, send: doRemoveUsersFromOrg } =
@@ -448,8 +448,8 @@ const { loading: removeUsersFromOrgLoading, send: doRemoveUsersFromOrg } =
       immediate: false
     }
   ).onSuccess(() => {
-    userTableReload();
     window.$msg.success(t('common.deleteSuccess'));
+    userTableReload();
   });
 
 function selectedOrg(value: any) {

@@ -46,6 +46,7 @@ public class FileDataService {
         return fileDataRepository.findAllByPathLikeAndNameLike(path, name, page);
     }
 
+    @Transactional(rollbackFor = HttpException.class)
     public void batchDelete(String userId, List<String> filePathList) {
         if (CollectionUtils.isEmpty(filePathList)) {
             return;

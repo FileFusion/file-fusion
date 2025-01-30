@@ -2,7 +2,7 @@
   <n-card hoverable>
     <n-grid :cols="4" x-gap="24">
       <n-gi :span="1">
-        <n-space :size="12" vertical>
+        <n-flex :size="12" vertical>
           <n-grid :cols="24" x-gap="12">
             <n-gi :span="17">
               <n-input
@@ -39,7 +39,7 @@
               label-field="name"
               @update:selected-keys="selectedRole" />
           </n-spin>
-        </n-space>
+        </n-flex>
       </n-gi>
       <n-gi v-if="currentRole" :span="3">
         <n-spin
@@ -102,7 +102,7 @@
             </div>
             <n-grid :cols="24" class="mt-3">
               <n-gi :span="24">
-                <n-space :size="12" vertical>
+                <n-flex :size="12" vertical>
                   <n-input
                     v-model:value="permissionPattern"
                     :placeholder="$t('common.search')"
@@ -125,7 +125,7 @@
                       label-field="name"
                       @update:checked-keys="updatePermissionsChecked" />
                   </n-spin>
-                </n-space>
+                </n-flex>
               </n-gi>
             </n-grid>
           </div>
@@ -242,10 +242,10 @@ const {
 });
 
 function addOrUpdateRoleSuccess(res: any) {
+  window.$msg.success(t('common.saveSuccess'));
   doGetAllRole();
   currentRole.value = res;
   currentRoleId.value = res.id;
-  window.$msg.success(t('common.saveSuccess'));
 }
 
 const { loading: deleteRoleLoading, send: doDeleteRole } = useRequest(
@@ -254,10 +254,10 @@ const { loading: deleteRoleLoading, send: doDeleteRole } = useRequest(
     immediate: false
   }
 ).onSuccess(() => {
+  window.$msg.success(t('common.deleteSuccess'));
   doGetAllRole();
   currentRole.value = null;
   currentRoleId.value = '';
-  window.$msg.success(t('common.deleteSuccess'));
 });
 
 const {

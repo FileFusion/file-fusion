@@ -11,6 +11,7 @@
     "batchDeleteConfirm": "Confirm the deletion of the selected?",
     "saveSuccess": "Save success",
     "addSuccess": "Add success",
+    "createSuccess": "Create Success",
     "deleteSuccess": "Delete success",
     "yes": "Yes",
     "no": "No",
@@ -129,6 +130,7 @@
     "personal": {
       "upload": "Upload",
       "fileName": "Filename",
+      "folderName": "Folder name",
       "size": "Size",
       "createdDate": "Created date",
       "modifiedDate": "Modified date",
@@ -136,7 +138,9 @@
       "fileDeleteSelectCheck": "Please select the file to be deleted",
       "uploadFile": "Upload file",
       "uploadFolder": "Upload folder",
-      "createFolder": "Create folder"
+      "createFolder": "Create folder",
+      "folderNameEmpty": "Please enter folder name",
+      "folderNameError": "The folder name needs to be less than 255 characters and cannot contain '/'"
     },
     "orgFile": "Organization file",
     "recycleBin": "Recycle bin"
