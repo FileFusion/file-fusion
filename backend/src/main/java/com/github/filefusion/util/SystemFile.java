@@ -6,7 +6,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Comparator;
+import java.util.stream.Stream;
 
 /**
  * SystemFile
@@ -25,12 +30,36 @@ public class SystemFile {
     }
 
     public static void createFolder(String folderPath) {
-        File folder = new File(FILE_DIR + FileAttribute.SEPARATOR + folderPath);
-        if (folder.exists()) {
+        folderPath = FILE_DIR + FileAttribute.SEPARATOR + folderPath;
+        Path path = Paths.get(folderPath).toAbsolutePath().normalize();
+        if (Files.exists(path)) {
             throw new HttpException(I18n.get("folderExits"));
         }
-        if (!folder.mkdirs()) {
-            throw new HttpException(I18n.get("folderCreationFailed"));
+        try {
+            Files.createDirectories(path);
+        } catch (IOException e) {
+            throw new HttpException(I18n.get("folderCreationFailed", e.getMessage()));
+        }
+    }
+
+    public static void delete(String filePath) {
+        filePath = FILE_DIR + FileAttribute.SEPARATOR + filePath;
+        Path targetPath = Paths.get(filePath).toAbsolutePath().normalize();
+        if (!Files.exists(targetPath)) {
+            return;
+        }
+        try (Stream<Path> pathStream = Files.walk(targetPath)) {
+            pathStream
+                    .sorted(Comparator.reverseOrder())
+                    .forEach(path -> {
+                        try {
+                            Files.delete(path);
+                        } catch (IOException e) {
+                            throw new HttpException(I18n.get("fileDeletionFailed", e.getMessage()));
+                        }
+                    });
+        } catch (IOException e) {
+            throw new HttpException(I18n.get("fileDeletionFailed", e.getMessage()));
         }
     }
 

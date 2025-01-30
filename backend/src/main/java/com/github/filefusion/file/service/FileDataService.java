@@ -54,8 +54,10 @@ public class FileDataService {
         for (String filePath : filePathList) {
             checkUserPermission(userId, filePath);
         }
-        // todo 删除磁盘文件
         fileDataRepository.deleteAllByPathIn(filePathList);
+        for (String filePath : filePathList) {
+            SystemFile.delete(filePath);
+        }
     }
 
     @Transactional(rollbackFor = HttpException.class)

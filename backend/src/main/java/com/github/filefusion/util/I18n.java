@@ -5,6 +5,8 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
+
 /**
  * I18n
  *
@@ -21,15 +23,10 @@ public class I18n {
         MESSAGE_SOURCE = messageSource;
     }
 
-    public static String get(String message) {
-        return get(message, new Object[]{});
-    }
-
-    public static String get(String message, Object[] args) {
-        if (args == null) {
-            args = new Object[]{};
-        }
-        return MESSAGE_SOURCE.getMessage(message, args, LocaleContextHolder.getLocale());
+    public static String get(String message, String... params) {
+        return MESSAGE_SOURCE.getMessage(message,
+                Arrays.copyOf(params, params.length, Object[].class),
+                LocaleContextHolder.getLocale());
     }
 
 }

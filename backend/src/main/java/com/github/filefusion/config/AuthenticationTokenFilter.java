@@ -44,7 +44,7 @@ public final class AuthenticationTokenFilter extends OncePerRequestFilter {
             try {
                 token = UserToken.decoder(authorization);
             } catch (Exception e) {
-                response.sendError(HttpStatus.UNAUTHORIZED.value(), I18n.get("tokenError"));
+                response.sendError(HttpStatus.UNAUTHORIZED.value(), I18n.get("tokenError", e.getMessage()));
                 return;
             }
             UserInfo user = (UserInfo) userDetailsService.loadUserByUsername(token.getUserId());
