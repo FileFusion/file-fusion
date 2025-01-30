@@ -4,10 +4,10 @@ import com.github.filefusion.common.HttpException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
 
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
@@ -25,7 +25,7 @@ import java.util.Base64;
  * @author hackyo
  * @since 2022/4/1
  */
-@Configuration
+@Component
 public class EncryptUtil {
 
     private static String SECRET_KEY;

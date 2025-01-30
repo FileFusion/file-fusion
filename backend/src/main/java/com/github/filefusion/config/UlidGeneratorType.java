@@ -16,6 +16,12 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import static org.hibernate.generator.EventTypeSets.INSERT_ONLY;
 
+/**
+ * UlidGeneratorType
+ *
+ * @author hackyo
+ * @since 2022/4/1
+ */
 public class UlidGeneratorType implements BeforeExecutionGenerator {
 
     @Override

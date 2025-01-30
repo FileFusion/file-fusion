@@ -62,7 +62,7 @@
           itemCount: fileTableTotal,
           showSizePicker: true,
           showQuickJumper: true,
-          prefix: (pagination: any) => {
+          prefix: (pagination: PaginationInfo) => {
             return t('common.total') + ': ' + pagination.itemCount;
           }
         }"
@@ -81,7 +81,8 @@
 import type {
   DataTableColumn,
   DataTableSortState,
-  DropdownOption
+  DropdownOption,
+  PaginationInfo
 } from 'naive-ui';
 import { NButton, NDropdown } from 'naive-ui';
 import { computed, h, ref } from 'vue';
@@ -127,8 +128,8 @@ const permission = ref({
   personalFileDelete: hasPermission('personal_file:delete')
 });
 
-const fileTableColumns = computed(() => {
-  const tableColumn: DataTableColumn<any>[] = [
+const fileTableColumns = computed<DataTableColumn[]>(() => {
+  const tableColumn: DataTableColumn[] = [
     {
       type: 'selection'
     },
@@ -189,7 +190,9 @@ const fileTableColumns = computed(() => {
                 key: 'edit',
                 label: t('files.personal.rename'),
                 props: {
-                  itemref: row
+                  onClick: () => {
+                    editFile(row);
+                  }
                 },
                 show: permission.value.personalFileEdit
               },
@@ -198,14 +201,15 @@ const fileTableColumns = computed(() => {
                 key: 'delete',
                 label: t('common.delete'),
                 props: {
-                  itemref: row
+                  onClick: () => {
+                    deleteFile(row);
+                  }
                 },
                 show: permission.value.personalFileDelete
               }
             ],
             showArrow: true,
-            trigger: 'click',
-            onSelect: selectOptions
+            trigger: 'click'
           },
           {
             default: () => {
@@ -280,7 +284,7 @@ const { loading: deleteFileLoading, send: doDeleteFile } = useRequest(
   fileTableReload();
 });
 
-function fileTableHandleCheck(rowKeys: any) {
+function fileTableHandleCheck(rowKeys: string[]) {
   fileTableCheck.value = rowKeys;
 }
 
@@ -304,22 +308,21 @@ function fileTableReload() {
   fileTableReloadEvent();
 }
 
-function selectOptions(key: string, option: any) {
-  const file = option.props.itemref;
-  if (key === 'edit') {
-    currentOptionFile.value = JSON.parse(JSON.stringify(file));
-    showFileEdit.value = true;
-  } else if (key === 'delete') {
-    window.$dialog.warning({
-      title: t('common.warning'),
-      content: t('common.deleteConfirm'),
-      positiveText: t('common.confirm'),
-      negativeText: t('common.cancel'),
-      onPositiveClick: () => {
-        deleteFiles([file.path]);
-      }
-    });
-  }
+function editFile(file: any) {
+  currentOptionFile.value = JSON.parse(JSON.stringify(file));
+  showFileEdit.value = true;
+}
+
+function deleteFile(file: any) {
+  window.$dialog.warning({
+    title: t('common.warning'),
+    content: t('common.deleteConfirm'),
+    positiveText: t('common.confirm'),
+    negativeText: t('common.cancel'),
+    onPositiveClick: () => {
+      deleteFiles([file.path]);
+    }
+  });
 }
 
 function deleteFiles(filePathList: string[]) {

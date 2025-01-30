@@ -154,7 +154,7 @@
                 itemCount: userTableTotal,
                 showSizePicker: true,
                 showQuickJumper: true,
-                prefix: (pagination: any) => {
+                prefix: (pagination: PaginationInfo) => {
                   return t('common.total') + ': ' + pagination.itemCount;
                 }
               }"
@@ -209,7 +209,12 @@
 </template>
 
 <script lang="ts" setup>
-import type { DataTableColumn, FormRules, FormItemRule } from 'naive-ui';
+import type {
+  DataTableColumn,
+  FormRules,
+  FormItemRule,
+  PaginationInfo
+} from 'naive-ui';
 import { NButton } from 'naive-ui';
 import { computed, h, ref } from 'vue';
 import IconAdd from '~icons/icon-park-outline/add';
@@ -275,7 +280,7 @@ const addOrgUsersFormRules = computed<FormRules>(() => {
   };
 });
 
-const userTableColumns = computed<DataTableColumn<any>[]>(() => [
+const userTableColumns = computed<DataTableColumn[]>(() => [
   {
     type: 'selection'
   },
@@ -468,7 +473,7 @@ function selectedOrg(value: any) {
   });
 }
 
-function expandOrg(value: any) {
+function expandOrg(value: string[]) {
   expandedOrg.value = value;
 }
 
@@ -547,7 +552,7 @@ function validateAddOrgUsersForm() {
   }
 }
 
-function userTableHandleCheck(rowKeys: any) {
+function userTableHandleCheck(rowKeys: string[]) {
   userTableCheck.value = rowKeys;
 }
 

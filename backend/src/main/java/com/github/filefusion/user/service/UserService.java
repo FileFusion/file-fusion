@@ -176,7 +176,6 @@ public class UserService implements UserDetailsService {
         return userRepository.save(oldUser);
     }
 
-    @Transactional(rollbackFor = HttpException.class)
     public void saveUserRoles(String userId, List<Role> roles) {
         if (CollectionUtils.isEmpty(roles)) {
             return;

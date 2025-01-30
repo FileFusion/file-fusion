@@ -66,7 +66,7 @@
           itemCount: userTableTotal,
           showSizePicker: true,
           showQuickJumper: true,
-          prefix: (pagination: any) => {
+          prefix: (pagination: PaginationInfo) => {
             return t('common.total') + ': ' + pagination.itemCount;
           }
         }"
@@ -239,7 +239,8 @@ import type {
   DataTableColumn,
   DataTableSortState,
   FormRules,
-  FormItemRule
+  FormItemRule,
+  PaginationInfo
 } from 'naive-ui';
 import { NButton, NDropdown, NGi, NGrid, NTag, NText } from 'naive-ui';
 import { computed, h, ref } from 'vue';
@@ -389,8 +390,8 @@ const emailAutoCompleteOptions = computed(() => {
   });
 });
 
-const userTableColumns = computed(() => {
-  const tableColumn: DataTableColumn<any>[] = [
+const userTableColumns = computed<DataTableColumn[]>(() => {
+  const tableColumn: DataTableColumn[] = [
     {
       type: 'selection'
     },
@@ -612,7 +613,9 @@ const userTableColumns = computed(() => {
                 key: 'edit',
                 label: t('common.edit'),
                 props: {
-                  itemref: row
+                  onClick: () => {
+                    editUser(row);
+                  }
                 },
                 show: permission.value.userManagementEdit
               },
@@ -621,14 +624,15 @@ const userTableColumns = computed(() => {
                 key: 'delete',
                 label: t('common.delete'),
                 props: {
-                  itemref: row
+                  onClick: () => {
+                    deleteUser(row);
+                  }
                 },
                 show: !row.systemdUser && permission.value.userManagementDelete
               }
             ],
             showArrow: true,
-            trigger: 'click',
-            onSelect: selectOptions
+            trigger: 'click'
           },
           {
             default: () => {
@@ -734,7 +738,7 @@ function addOrUpdateUserSuccess() {
   window.$msg.success(t('common.saveSuccess'));
 }
 
-function userTableHandleCheck(rowKeys: any) {
+function userTableHandleCheck(rowKeys: string[]) {
   userTableCheck.value = rowKeys;
 }
 
@@ -758,32 +762,6 @@ function userTableReload() {
   userTableReloadEvent();
 }
 
-function selectOptions(key: string, option: any) {
-  const user = option.props.itemref;
-  if (key === 'edit') {
-    currentOptionUser.value = JSON.parse(JSON.stringify(user));
-    currentOptionUser.value.roleIds = [];
-    for (const role of currentOptionUser.value.roles) {
-      currentOptionUser.value.roleIds.push(role.id);
-    }
-    changePassword.value = false;
-    newPassword.value = '';
-    doGetAllRoles();
-    showUserEditIsAdd.value = false;
-    showUserEdit.value = true;
-  } else if (key === 'delete') {
-    window.$dialog.warning({
-      title: t('common.warning'),
-      content: t('common.deleteConfirm'),
-      positiveText: t('common.confirm'),
-      negativeText: t('common.cancel'),
-      onPositiveClick: () => {
-        deleteUsers([user.id]);
-      }
-    });
-  }
-}
-
 function addUser() {
   currentOptionUser.value = {
     id: null,
@@ -803,7 +781,32 @@ function addUser() {
   showUserEdit.value = true;
 }
 
-function deleteUsers(userIds: any) {
+function editUser(user: any) {
+  currentOptionUser.value = JSON.parse(JSON.stringify(user));
+  currentOptionUser.value.roleIds = [];
+  for (const role of currentOptionUser.value.roles) {
+    currentOptionUser.value.roleIds.push(role.id);
+  }
+  changePassword.value = false;
+  newPassword.value = '';
+  doGetAllRoles();
+  showUserEditIsAdd.value = false;
+  showUserEdit.value = true;
+}
+
+function deleteUser(user: any) {
+  window.$dialog.warning({
+    title: t('common.warning'),
+    content: t('common.deleteConfirm'),
+    positiveText: t('common.confirm'),
+    negativeText: t('common.cancel'),
+    onPositiveClick: () => {
+      deleteUsers([user.id]);
+    }
+  });
+}
+
+function deleteUsers(userIds: string[]) {
   if (!userIds || userIds.length === 0) {
     window.$msg.warning(t('systemSettings.user.usersDeleteSelectCheck'));
     return;

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.springframework.context.annotation.Bean;
-import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * ObjectMapperConfig
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
  * @author hackyo
  * @since 2022/4/1
  */
-@Component
+@Configuration
 public class ObjectMapperConfig {
 
     @Bean

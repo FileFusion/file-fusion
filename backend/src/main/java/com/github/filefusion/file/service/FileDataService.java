@@ -1,10 +1,11 @@
 package com.github.filefusion.file.service;
 
 import com.github.filefusion.common.HttpException;
-import com.github.filefusion.constant.FileSeparator;
+import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.file.entity.FileData;
 import com.github.filefusion.file.repository.FileDataRepository;
 import com.github.filefusion.util.I18n;
+import com.github.filefusion.util.SystemFile;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -32,7 +34,7 @@ public class FileDataService {
     }
 
     private void checkUserPermission(String userId, String filePath) {
-        String userPath = userId + FileSeparator.VALUE;
+        String userPath = userId + FileAttribute.SEPARATOR;
         if (!StringUtils.startsWithIgnoreCase(filePath, userPath)) {
             throw new HttpException(I18n.get("noOperationPermission"));
         }
@@ -44,7 +46,6 @@ public class FileDataService {
         return fileDataRepository.findAllByPathLikeAndNameLike(path, name, page);
     }
 
-    @Transactional(rollbackFor = HttpException.class)
     public void batchDelete(String userId, List<String> filePathList) {
         if (CollectionUtils.isEmpty(filePathList)) {
             return;
@@ -56,7 +57,23 @@ public class FileDataService {
         fileDataRepository.deleteAllByPathIn(filePathList);
     }
 
+    @Transactional(rollbackFor = HttpException.class)
     public void newFolder(String filePath, String folderName) {
+        String path = filePath + folderName;
+        if (fileDataRepository.existsByPath(path)) {
+            throw new HttpException(I18n.get("folderExits"));
+        }
+        Date currentTime = new Date();
+        FileData fileData = new FileData();
+        fileData.setPath(path);
+        fileData.setName(folderName);
+        fileData.setType(FileAttribute.Type.FOLDER);
+        fileData.setSize(0L);
+        fileData.setEncrypted(false);
+        fileData.setFileCreatedDate(currentTime);
+        fileData.setFileLastModifiedDate(currentTime);
+        fileDataRepository.save(fileData);
+        SystemFile.createFolder(path);
     }
 
 }

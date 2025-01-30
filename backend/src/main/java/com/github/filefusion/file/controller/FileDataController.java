@@ -1,6 +1,6 @@
 package com.github.filefusion.file.controller;
 
-import com.github.filefusion.constant.FileSeparator;
+import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.constant.SorterOrder;
 import com.github.filefusion.file.entity.FileData;
 import com.github.filefusion.file.model.NewFolderModel;
@@ -57,9 +57,9 @@ public class FileDataController {
             sorterOrder = SorterOrder.ascend;
         }
         if (!StringUtils.hasLength(path)) {
-            path = CurrentUser.get().getId() + FileSeparator.VALUE;
+            path = CurrentUser.get().getId() + FileAttribute.SEPARATOR;
         } else {
-            path = CurrentUser.get().getId() + FileSeparator.VALUE + path;
+            path = CurrentUser.get().getId() + FileAttribute.SEPARATOR + path + FileAttribute.SEPARATOR;
         }
         return fileDataService.get(PageRequest.of(page - 1, pageSize, sorterOrder.order(), sorter), path, name);
     }
@@ -86,9 +86,9 @@ public class FileDataController {
     public void newFolder(@RequestBody NewFolderModel newFolder) {
         String filePath = newFolder.getPath();
         if (!StringUtils.hasLength(filePath)) {
-            filePath = CurrentUser.get().getId() + FileSeparator.VALUE;
+            filePath = CurrentUser.get().getId() + FileAttribute.SEPARATOR;
         } else {
-            filePath = CurrentUser.get().getId() + FileSeparator.VALUE + filePath;
+            filePath = CurrentUser.get().getId() + FileAttribute.SEPARATOR + filePath + FileAttribute.SEPARATOR;
         }
         String folderName = newFolder.getName();
         fileDataService.newFolder(filePath, folderName);

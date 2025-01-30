@@ -272,7 +272,7 @@ const {
   }
 );
 
-function selectedRole(value: any) {
+function selectedRole(value: string[]) {
   for (let i = 0; i < roles.value.length; i++) {
     if (roles.value[i].new && value[0] !== roles.value[i].id) {
       roles.value.splice(i, 1);
@@ -340,7 +340,7 @@ function deleteRole() {
   }
 }
 
-function updatePermissionsChecked(permissionIds: any) {
+function updatePermissionsChecked(permissionIds: string[]) {
   permissionsChecked.value = permissionIds;
 }
 </script>

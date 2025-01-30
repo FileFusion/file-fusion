@@ -23,6 +23,6 @@ import { mainStore } from '@/store';
 const mStore = mainStore();
 const http = window.$http;
 
-const res: any = await http.Get('/user/current');
+const res: any = await http.Get<any>('/user/current');
 mStore.setUser(res);
 </script>

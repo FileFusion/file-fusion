@@ -1,6 +1,7 @@
 package com.github.filefusion.file.entity;
 
 import com.github.filefusion.common.BaseEntity;
+import com.github.filefusion.constant.FileAttribute;
 import jakarta.persistence.Entity;
 import lombok.Data;
 
@@ -25,6 +26,11 @@ public class FileData extends BaseEntity {
      * name
      */
     private String name;
+
+    /**
+     * type
+     */
+    private FileAttribute.Type type;
 
     /**
      * mime type

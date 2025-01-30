@@ -23,6 +23,7 @@
 </template>
 
 <script lang="ts" setup>
+import type { RouteLocationMatched } from 'vue-router';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { computed, h, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -48,7 +49,7 @@ const currentSideMenus = ref<any[]>([]);
 
 watch(
   () => route.matched,
-  (matched: any) => {
+  (matched: RouteLocationMatched[]) => {
     if (matched.length === 2 || currentSideMenus.value.length === 0) {
       currentSideMenus.value = getCurrentSideMenus();
     }

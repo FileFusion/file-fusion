@@ -180,7 +180,7 @@ const { loading: getCurrentUserLoading, data: profileForm } = useRequest(
 });
 
 const { loading: saveProfileLoading, send: doSaveProfile } = useRequest(
-  () => http.Put<any>('/user/current', profileForm.value),
+  () => http.Put('/user/current', profileForm.value),
   {
     immediate: false
   }
