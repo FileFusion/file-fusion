@@ -136,6 +136,7 @@ public class OrgService {
         orgUserRepository.saveAll(orgUsers);
     }
 
+    @Transactional(rollbackFor = HttpException.class)
     public void deleteOrgUser(String orgId, List<String> userIds) {
         if (!StringUtils.hasLength(orgId) || CollectionUtils.isEmpty(userIds)) {
             return;
