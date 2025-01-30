@@ -84,14 +84,14 @@ public class FileDataController {
     @PostMapping("_new_folder")
     @PreAuthorize("hasAuthority('personal_file:add')")
     public void newFolder(@RequestBody NewFolderModel newFolder) {
-        String path = newFolder.getPath();
-        if (!StringUtils.hasLength(path)) {
-            path = CurrentUser.get().getId() + FileSeparator.VALUE;
+        String filePath = newFolder.getPath();
+        if (!StringUtils.hasLength(filePath)) {
+            filePath = CurrentUser.get().getId() + FileSeparator.VALUE;
         } else {
-            path = CurrentUser.get().getId() + FileSeparator.VALUE + path;
+            filePath = CurrentUser.get().getId() + FileSeparator.VALUE + filePath;
         }
-        String folderName = newFolder.getFolderName();
-        fileDataService.newFolder(path, folderName);
+        String folderName = newFolder.getName();
+        fileDataService.newFolder(filePath, folderName);
     }
 
 }
