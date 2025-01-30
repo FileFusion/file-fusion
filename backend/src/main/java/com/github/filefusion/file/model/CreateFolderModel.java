@@ -5,13 +5,13 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * NewFolderModel
+ * CreateFolderModel
  *
  * @author hackyo
  * @since 2022/4/1
  */
 @Data
-public class NewFolderModel implements Serializable {
+public class CreateFolderModel implements Serializable {
 
     /**
      * path

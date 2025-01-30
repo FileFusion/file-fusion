@@ -58,7 +58,7 @@ public class FileDataService {
     }
 
     @Transactional(rollbackFor = HttpException.class)
-    public void newFolder(String filePath, String folderName) {
+    public void createFolder(String filePath, String folderName) {
         String path = filePath + folderName;
         if (fileDataRepository.existsByPath(path)) {
             throw new HttpException(I18n.get("folderExits"));

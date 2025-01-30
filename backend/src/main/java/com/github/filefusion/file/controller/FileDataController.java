@@ -3,7 +3,7 @@ package com.github.filefusion.file.controller;
 import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.constant.SorterOrder;
 import com.github.filefusion.file.entity.FileData;
-import com.github.filefusion.file.model.NewFolderModel;
+import com.github.filefusion.file.model.CreateFolderModel;
 import com.github.filefusion.file.service.FileDataService;
 import com.github.filefusion.util.CurrentUser;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,21 +77,21 @@ public class FileDataController {
     }
 
     /**
-     * new folder
+     * create folder
      *
-     * @param newFolder folder info
+     * @param createFolder folder info
      */
-    @PostMapping("_new_folder")
+    @PostMapping("_create_folder")
     @PreAuthorize("hasAuthority('personal_file:add')")
-    public void newFolder(@RequestBody NewFolderModel newFolder) {
-        String filePath = newFolder.getPath();
+    public void createFolder(@RequestBody CreateFolderModel createFolder) {
+        String filePath = createFolder.getPath();
         if (!StringUtils.hasLength(filePath)) {
             filePath = CurrentUser.get().getId() + FileAttribute.SEPARATOR;
         } else {
             filePath = CurrentUser.get().getId() + FileAttribute.SEPARATOR + filePath + FileAttribute.SEPARATOR;
         }
-        String folderName = newFolder.getName();
-        fileDataService.newFolder(filePath, folderName);
+        String folderName = createFolder.getName();
+        fileDataService.createFolder(filePath, folderName);
     }
 
 }

@@ -17,8 +17,7 @@
               <n-dropdown
                 :options="userOptions"
                 :show-arrow="true"
-                trigger="hover"
-                @select="switchUserOptions">
+                trigger="hover">
                 <n-button text>
                   <n-icon :size="20">
                     <icon-people />
@@ -131,21 +130,30 @@ const userOptions = computed(() => [
   {
     label: user.value ? user.value.name : '',
     key: 'user',
-    icon: renderIconMethod(IconPeople)
+    icon: renderIconMethod(IconPeople),
+    props: {
+      onClick: goUserSettings
+    }
   },
   {
     label: t('navigationBar.about'),
     key: 'about',
-    icon: renderIconMethod(IconInfo)
+    icon: renderIconMethod(IconInfo),
+    props: {
+      onClick: openAbout
+    }
   },
   {
     type: 'divider',
-    key: 'd1'
+    key: 'divider'
   },
   {
     label: t('navigationBar.logout'),
     key: 'logout',
-    icon: renderIconMethod(IconBack)
+    icon: renderIconMethod(IconBack),
+    props: {
+      onClick: logout
+    }
   }
 ]);
 
@@ -163,23 +171,21 @@ const {
   }
 });
 
-function switchUserOptions(option: string) {
-  if (option === 'user') {
-    router.push('/user-settings');
-  } else if (option === 'logout') {
-    window.$dialog.warning({
-      title: t('common.info'),
-      content: t('navigationBar.logoutConfirm'),
-      positiveText: t('common.confirm'),
-      negativeText: t('common.cancel'),
-      onPositiveClick: () => {
-        router.push('/login');
-        mStore.setToken(null);
-      }
-    });
-  } else if (option === 'about') {
-    openAbout();
-  }
+function goUserSettings() {
+  router.push('/user-settings');
+}
+
+function logout() {
+  window.$dialog.warning({
+    title: t('common.info'),
+    content: t('navigationBar.logoutConfirm'),
+    positiveText: t('common.confirm'),
+    negativeText: t('common.cancel'),
+    onPositiveClick: () => {
+      router.push('/login');
+      mStore.setToken(null);
+    }
+  });
 }
 
 function openAbout() {

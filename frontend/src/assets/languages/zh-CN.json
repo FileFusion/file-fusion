@@ -136,7 +136,7 @@
       "fileDeleteSelectCheck": "请选择需要删除的文件",
       "uploadFile": "上传文件",
       "uploadFolder": "上传文件夹",
-      "newFolder": "新建文件夹"
+      "createFolder": "新建文件夹"
     },
     "orgFile": "组织文件",
     "recycleBin": "回收站"

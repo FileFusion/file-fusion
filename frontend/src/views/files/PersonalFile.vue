@@ -102,15 +102,18 @@ const uploadOptions = computed<DropdownOption[]>(() => {
   return [
     {
       label: t('files.personal.uploadFile'),
-      key: 'file'
+      key: 'uploadFile'
     },
     {
       label: t('files.personal.uploadFolder'),
-      key: 'folder'
+      key: 'uploadFolder'
     },
     {
-      label: t('files.personal.newFolder'),
-      key: 'new_folder'
+      label: t('files.personal.createFolder'),
+      key: 'createFolder',
+      props: {
+        onClick: createFolder
+      }
     }
   ];
 });
@@ -307,6 +310,8 @@ function fileTableReload() {
   fileTableCheck.value = [];
   fileTableReloadEvent();
 }
+
+function createFolder() {}
 
 function editFile(file: any) {
   currentOptionFile.value = JSON.parse(JSON.stringify(file));

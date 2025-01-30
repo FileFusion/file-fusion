@@ -136,7 +136,7 @@
       "fileDeleteSelectCheck": "Please select the file to be deleted",
       "uploadFile": "Upload file",
       "uploadFolder": "Upload folder",
-      "newFolder": "New folder"
+      "createFolder": "Create folder"
     },
     "orgFile": "Organization file",
     "recycleBin": "Recycle bin"
