@@ -117,7 +117,7 @@ const { loading: changePasswordLoading, send: doChangePassword } = useRequest(
 ).onSuccess(() => {
   window.$msg.success(t('common.saveSuccess'));
   window.$msg.info(t('router.reLogin'));
-  router.push('/login');
+  router.push({ name: 'login' });
   mStore.setToken(null);
 });
 

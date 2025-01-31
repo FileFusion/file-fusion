@@ -18,6 +18,6 @@ import { useRouter } from 'vue-router';
 const router = useRouter();
 
 function backHome() {
-  router.push('/');
+  router.push({ name: 'home' });
 }
 </script>

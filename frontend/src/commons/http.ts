@@ -35,10 +35,10 @@ const http = createAlova({
           const mStore = mainStore(window.$pinia);
           mStore.setToken(null);
           const currentRoute = router.currentRoute.value;
-          if (currentRoute.path !== '/login') {
+          if (currentRoute.name !== 'login') {
             router
               .push({
-                path: '/login',
+                name: 'login',
                 query: { redirect: currentRoute.path }
               })
               .then();

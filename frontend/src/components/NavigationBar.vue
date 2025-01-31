@@ -172,7 +172,9 @@ const {
 });
 
 function goUserSettings() {
-  router.push('/user-settings');
+  router.push({
+    name: 'user-settings'
+  });
 }
 
 function logout() {
@@ -182,7 +184,9 @@ function logout() {
     positiveText: t('common.confirm'),
     negativeText: t('common.cancel'),
     onPositiveClick: () => {
-      router.push('/login');
+      router.push({
+        name: 'login'
+      });
       mStore.setToken(null);
     }
   });

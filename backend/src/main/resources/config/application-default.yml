@@ -31,4 +31,4 @@ security:
     key: ${FF_SECRET_KEY:fDdXuRJmui73NjU9}
     iv: ${FF_SECRET_IV:t7M1BjL1wLKE6hyc}
 file:
-  dir: ${FF_FILE_DIR:/opt/file_fusion/file}
+  dir: ${FF_FILE_DIR:/opt/file_fusion/data/file}

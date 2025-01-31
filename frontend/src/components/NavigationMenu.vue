@@ -18,45 +18,43 @@ const { t } = useI18n();
 
 const menus = computed(() => {
   let newMenus = [];
-  for (const routerOption of router.options.routes) {
-    if (routerOption.path === '/' && routerOption.children) {
-      for (const ro of routerOption.children) {
-        if (ro.path !== '/user-settings' && ro.meta) {
-          let hasP = false;
-          if (ro.meta.permission) {
-            if (hasPermission(ro.meta.permission, ro.meta.permissionOr)) {
-              hasP = true;
-            }
-          } else {
-            hasP = true;
-          }
-          if (hasP) {
-            const title = ro.meta.title;
-            newMenus.push({
-              key: ro.path,
-              label: () =>
-                h(
-                  RouterLink,
-                  {
-                    to: ro.path
-                  },
-                  {
-                    default: () => t(title ? title : '')
-                  }
-                )
-            });
-          }
-        }
-      }
-      break;
+  for (const route of router.options.routes) {
+    if (route.name !== 'home' || !route.children) {
+      continue;
     }
+    for (const ro of route.children) {
+      if (ro.name === 'user-settings' || !ro.meta) {
+        continue;
+      }
+      if (
+        ro.meta.permission &&
+        !hasPermission(ro.meta.permission, ro.meta.permissionOr)
+      ) {
+        continue;
+      }
+      const roTitle = ro.meta.title;
+      newMenus.push({
+        key: ro.name,
+        label: () =>
+          h(
+            RouterLink,
+            {
+              to: { name: ro.name }
+            },
+            {
+              default: () => (roTitle ? t(roTitle) : '')
+            }
+          )
+      });
+    }
+    break;
   }
   return newMenus;
 });
 
 const activeMenu = computed(() => {
   if (route.matched.length >= 2) {
-    return route.matched[1].path;
+    return route.matched[1].name;
   }
   return '';
 });

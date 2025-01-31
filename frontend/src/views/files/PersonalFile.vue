@@ -116,24 +116,36 @@ import type {
   PaginationInfo
 } from 'naive-ui';
 import { NButton, NDropdown } from 'naive-ui';
-import { computed, h, ref } from 'vue';
+import { computed, h, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import IconDelete from '~icons/icon-park-outline/delete';
 import IconEditTwo from '~icons/icon-park-outline/edit-two';
 import IconDown from '~icons/icon-park-outline/down';
+import IconFolderClose from '~icons/icon-park-outline/folder-close';
 import { useRequest, usePagination } from 'alova/client';
 import { hasPermission } from '@/commons/permission';
 import { renderIconMethod } from '@/commons/utils';
 import { format } from 'date-fns';
+import { useRouter, useRoute } from 'vue-router';
 
 const { t } = useI18n();
 const http = window.$http;
+const router = useRouter();
+const route = useRoute();
+
 const createFolderFormRef = ref<HTMLFormElement>();
 
 const permission = ref({
   personalFileEdit: hasPermission('personal_file:edit'),
   personalFileDelete: hasPermission('personal_file:delete')
 });
+
+watch(
+  () => route.params.path,
+  () => {
+    fileTableReloadEvent();
+  }
+);
 
 const uploadOptions = computed<DropdownOption[]>(() => {
   return [
@@ -197,7 +209,21 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
       title: t('files.personal.fileName'),
       key: 'name',
       resizable: true,
-      sorter: true
+      sorter: true,
+      render: (row: any) => {
+        return h(
+          NButton,
+          {
+            text: true,
+            type: 'primary',
+            onClick: () => clickFile(row)
+          },
+          {
+            icon: renderIconMethod(IconFolderClose),
+            default: () => row.name
+          }
+        );
+      }
     },
     {
       title: t('files.personal.size'),
@@ -314,6 +340,17 @@ const getFileTableSorter = computed(() => {
   );
 });
 
+const filePathPattern = computed(() => {
+  const path = route.params.path;
+  if (!path) {
+    return '';
+  }
+  if (Array.isArray(path)) {
+    return path.join('/');
+  }
+  return path;
+});
+
 const {
   loading: fileTableLoading,
   data: fileTableData,
@@ -331,6 +368,8 @@ const {
         pageSize +
         '?name=' +
         fileNamePattern.value +
+        '&path=' +
+        filePathPattern.value +
         (sorter ? '&' + sorter : '')
     );
   },
@@ -341,7 +380,11 @@ const {
 );
 
 const { loading: createFolderLoading, send: doCreateFolder } = useRequest(
-  () => http.Post('/file_data/_create_folder', createFolderForm.value),
+  () =>
+    http.Post('/file_data/_create_folder', {
+      name: createFolderForm.value.name,
+      path: filePathPattern.value
+    }),
   {
     immediate: false
   }
@@ -424,5 +467,19 @@ function deleteFiles(filePathList: string[]) {
     return;
   }
   doDeleteFile(filePathList);
+}
+
+function clickFile(file: any) {
+  if (file.type === 'FOLDER') {
+    let path = '';
+    if (filePathPattern.value) {
+      path += filePathPattern.value + '/';
+    }
+    path += file.name;
+    router.push({
+      name: 'files-personal',
+      params: { path: path }
+    });
+  }
 }
 </script>

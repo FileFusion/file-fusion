@@ -2,7 +2,7 @@
   <n-breadcrumb>
     <n-breadcrumb-item
       v-for="(b, index) in breadcrumb"
-      :key="b.path"
+      :key="b.name"
       @click="clickBreadcrumb(b, index)">
       <n-flex :size="4">
         <n-icon>
@@ -25,7 +25,7 @@ const breadcrumb = computed(() => {
   let b = [];
   for (let i = 1; i < route.matched.length; i++) {
     b.push({
-      path: route.matched[i].path,
+      name: route.matched[i].name,
       label: route.matched[i].meta.title,
       icon: route.matched[i].meta.icon
     });
@@ -37,6 +37,6 @@ function clickBreadcrumb(breadcrumb: any, index: number) {
   if (index === breadcrumb.length - 1) {
     return;
   }
-  router.push(breadcrumb.path);
+  router.push({ name: breadcrumb.name });
 }
 </script>

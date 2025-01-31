@@ -143,11 +143,11 @@ const {
 }).onSuccess(() => {
   mStore.setToken(loginRes.value.token, loginForm.value.remember);
   window.$msg.success(t('login.success'), t('login.welcomeBack'));
-  const redirect = route.query['redirect'];
-  if (redirect && redirect !== '/login') {
-    router.push(redirect + '');
+  const redirect = <string>route.query['redirect'];
+  if (redirect && !redirect.startsWith('/login')) {
+    router.push(redirect);
   } else {
-    router.push('/');
+    router.push({ name: 'home' });
   }
 });
 

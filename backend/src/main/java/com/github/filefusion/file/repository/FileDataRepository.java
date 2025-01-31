@@ -18,14 +18,15 @@ import java.util.List;
 public interface FileDataRepository extends JpaRepository<FileData, String> {
 
     /**
-     * findAllByPathLikeAndNameLike
+     * findAllByPathLikeAndPathNotLikeAndNameLike
      *
-     * @param path path
-     * @param name name
-     * @param page page
+     * @param path        path
+     * @param excludePath exclude path
+     * @param name        name
+     * @param page        page
      * @return file list
      */
-    Page<FileData> findAllByPathLikeAndNameLike(String path, String name, PageRequest page);
+    Page<FileData> findAllByPathLikeAndPathNotLikeAndNameLike(String path, String excludePath, String name, PageRequest page);
 
     /**
      * deleteAllByPathIn
