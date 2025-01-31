@@ -4,7 +4,7 @@ import IconRecycleBin from '~icons/icon-park-outline/recycle-bin';
 
 export default [
   {
-    path: 'personal',
+    path: 'personal/:path?',
     name: 'files-personal',
     meta: {
       requiresAuth: true,

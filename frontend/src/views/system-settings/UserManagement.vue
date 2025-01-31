@@ -277,8 +277,8 @@ const currentOptionUser = ref({
   password: '',
   systemdUser: false,
   enabled: true,
-  roles: [] as any[],
-  roleIds: [] as string[]
+  roles: <any[]>[],
+  roleIds: <string[]>[]
 });
 const emailAutoCompleteStatus = ref<'success' | 'warning' | 'error'>('success');
 const changePassword = ref(false);

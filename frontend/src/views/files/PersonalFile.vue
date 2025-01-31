@@ -203,7 +203,14 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
       title: t('files.personal.size'),
       key: 'size',
       resizable: true,
-      sorter: true
+      width: 170,
+      sorter: true,
+      render: (row: any) => {
+        if (row.type === 'FOLDER') {
+          return '-';
+        }
+        return row.size;
+      }
     },
     {
       title: t('files.personal.createdDate'),
