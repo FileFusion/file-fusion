@@ -42,7 +42,11 @@ public class FileDataService {
 
     public Page<FileData> get(PageRequest page, String path, String name) {
         path = path + "%";
-        name = "%" + name + "%";
+        if (StringUtils.hasLength(name)) {
+            name = "%" + name + "%";
+        } else {
+            name = "%";
+        }
         String excludePath = path + FileAttribute.SEPARATOR + "%";
         return fileDataRepository.findAllByPathLikeAndPathNotLikeAndNameLike(path, excludePath, name, page);
     }

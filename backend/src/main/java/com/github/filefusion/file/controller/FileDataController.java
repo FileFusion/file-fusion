@@ -90,8 +90,7 @@ public class FileDataController {
         } else {
             filePath = CurrentUser.get().getId() + FileAttribute.SEPARATOR + filePath + FileAttribute.SEPARATOR;
         }
-        String folderName = createFolder.getName();
-        fileDataService.createFolder(filePath, folderName);
+        fileDataService.createFolder(filePath, createFolder.getName());
     }
 
 }
