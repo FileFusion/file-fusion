@@ -55,8 +55,9 @@ public class FileDataService {
         for (String filePath : filePathList) {
             checkUserPermission(userId, filePath);
         }
-        fileDataRepository.deleteAllByPathIn(filePathList);
         for (String filePath : filePathList) {
+            String filePathLike = filePath + FileAttribute.SEPARATOR + "%";
+            fileDataRepository.deleteAllByPathOrPathLike(filePath, filePathLike);
             SystemFile.delete(filePath);
         }
     }
