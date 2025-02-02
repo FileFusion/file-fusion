@@ -149,7 +149,7 @@ public class UserController {
      *
      * @param userIds user ids
      */
-    @PostMapping("_batch_delete")
+    @PostMapping("/_batch_delete")
     @PreAuthorize("hasAuthority('user_management:delete')")
     public void batchDelete(@RequestBody List<String> userIds) {
         userService.batchDelete(userIds);

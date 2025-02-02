@@ -5,12 +5,15 @@ import com.github.filefusion.constant.FileAttribute;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Stream;
 
 /**
@@ -29,16 +32,30 @@ public class SystemFile {
         FILE_DIR = fileDir;
     }
 
-    public static void createFolder(String folderPath) {
-        folderPath = FILE_DIR + FileAttribute.SEPARATOR + folderPath;
-        Path path = Paths.get(folderPath).toAbsolutePath().normalize();
-        if (Files.exists(path)) {
-            throw new HttpException(I18n.get("folderExits"));
+    public static void createFolder(List<String> folderPathList) {
+        for (String folderPath : folderPathList) {
+            Path path = Paths.get(FILE_DIR + FileAttribute.SEPARATOR + folderPath).toAbsolutePath().normalize();
+            if (Files.exists(path)) {
+                continue;
+            }
+            try {
+                Files.createDirectories(path);
+            } catch (IOException e) {
+                throw new HttpException(I18n.get("folderCreationFailed", e.getMessage()));
+            }
         }
-        try {
-            Files.createDirectories(path);
-        } catch (IOException e) {
-            throw new HttpException(I18n.get("folderCreationFailed", e.getMessage()));
+    }
+
+    public static void upload(MultipartFile[] files, String[] paths) {
+        for (int i = 0; i < files.length; i++) {
+            MultipartFile file = files[i];
+            String filePath = FILE_DIR + FileAttribute.SEPARATOR + paths[i] + FileAttribute.SEPARATOR + file.getOriginalFilename();
+            Path path = Paths.get(filePath).toAbsolutePath().normalize();
+            try {
+                Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                throw new HttpException(I18n.get("fileUploadFailed", e.getMessage()));
+            }
         }
     }
 

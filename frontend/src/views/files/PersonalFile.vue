@@ -3,29 +3,19 @@
     <n-card hoverable>
       <n-grid :cols="24">
         <n-gi :span="14">
-          <n-flex>
-            <n-dropdown
-              :options="uploadOptions"
-              :show-arrow="true"
-              trigger="hover">
-              <n-button v-permission="'personal_file:add'" type="primary">{{
-                $t('files.personal.upload')
-              }}</n-button>
-            </n-dropdown>
-            <n-popconfirm
-              :positive-button-props="{ type: 'error' }"
-              @positive-click="deleteFiles(fileTableCheck)">
-              <template #trigger>
-                <n-button
-                  v-permission="'personal_file:delete'"
-                  :loading="deleteFileLoading"
-                  type="error">
-                  {{ $t('common.delete') }}
-                </n-button>
-              </template>
-              {{ $t('common.batchDeleteConfirm') }}
-            </n-popconfirm>
-          </n-flex>
+          <n-popconfirm
+            :positive-button-props="{ type: 'error' }"
+            @positive-click="deleteFiles(fileTableCheck)">
+            <template #trigger>
+              <n-button
+                v-permission="'personal_file:delete'"
+                :loading="deleteFileLoading"
+                type="error">
+                {{ $t('common.delete') }}
+              </n-button>
+            </template>
+            {{ $t('common.batchDeleteConfirm') }}
+          </n-popconfirm>
         </n-gi>
         <n-gi :span="10">
           <n-input-group>
@@ -73,36 +63,6 @@
         @update:page-size="fileTablePageSizeChange"
         @update:checked-row-keys="fileTableHandleCheck" />
     </n-card>
-    <n-modal
-      v-model:show="showCreateFolderModal"
-      :auto-focus="false"
-      :show-icon="false"
-      :title="$t('files.personal.createFolder')"
-      preset="dialog">
-      <n-spin :show="createFolderLoading">
-        <n-form
-          ref="createFolderFormRef"
-          :model="createFolderForm"
-          :rules="createFolderFormRules">
-          <n-form-item path="name">
-            <n-input
-              v-model:value="createFolderForm.name"
-              :placeholder="$t('files.personal.folderName')"
-              clearable
-              maxlength="255"
-              show-count />
-          </n-form-item>
-        </n-form>
-        <div class="text-right">
-          <n-button
-            size="small"
-            type="primary"
-            @click="validateCreateFolderForm()">
-            {{ $t('common.confirm') }}
-          </n-button>
-        </div>
-      </n-spin>
-    </n-modal>
   </div>
 </template>
 
@@ -110,9 +70,6 @@
 import type {
   DataTableColumn,
   DataTableSortState,
-  DropdownOption,
-  FormItemRule,
-  FormRules,
   PaginationInfo
 } from 'naive-ui';
 import { NButton, NDropdown } from 'naive-ui';
@@ -133,8 +90,6 @@ const http = window.$http;
 const router = useRouter();
 const route = useRoute();
 
-const createFolderFormRef = ref<HTMLFormElement>();
-
 const permission = ref({
   personalFileEdit: hasPermission('personal_file:edit'),
   personalFileDelete: hasPermission('personal_file:delete')
@@ -147,25 +102,6 @@ watch(
   }
 );
 
-const uploadOptions = computed<DropdownOption[]>(() => {
-  return [
-    {
-      label: t('files.personal.uploadFile'),
-      key: 'uploadFile'
-    },
-    {
-      label: t('files.personal.uploadFolder'),
-      key: 'uploadFolder'
-    },
-    {
-      label: t('files.personal.createFolder'),
-      key: 'createFolder',
-      props: {
-        onClick: createFolder
-      }
-    }
-  ];
-});
 const fileNamePattern = ref<string>('');
 const fileTableCheck = ref<string[]>([]);
 const fileTableSorter = ref<DataTableSortState | null>(null);
@@ -174,30 +110,6 @@ const showFileEdit = ref(false);
 const currentOptionFile = ref({
   id: null,
   name: ''
-});
-
-const showCreateFolderModal = ref(false);
-const createFolderForm = ref({
-  name: ''
-});
-const createFolderFormRules = computed<FormRules>(() => {
-  return {
-    name: [
-      {
-        required: true,
-        validator(_rule: FormItemRule, value: string) {
-          if (!value || value.length === 0) {
-            return new Error(t('files.personal.folderNameEmpty'));
-          }
-          if (value.length > 255 || value.indexOf('/') !== -1) {
-            return new Error(t('files.personal.folderNameError'));
-          }
-          return true;
-        },
-        trigger: ['input', 'blur']
-      }
-    ]
-  };
 });
 
 const fileTableColumns = computed<DataTableColumn[]>(() => {
@@ -379,21 +291,6 @@ const {
   }
 );
 
-const { loading: createFolderLoading, send: doCreateFolder } = useRequest(
-  () =>
-    http.Post('/file_data/_create_folder', {
-      name: createFolderForm.value.name,
-      path: filePathPattern.value
-    }),
-  {
-    immediate: false
-  }
-).onSuccess(() => {
-  window.$msg.success(t('common.createSuccess'));
-  showCreateFolderModal.value = false;
-  fileTableReload();
-});
-
 const { loading: deleteFileLoading, send: doDeleteFile } = useRequest(
   (filePathList: string[]) =>
     http.Post('/file_data/_batch_delete', filePathList),
@@ -427,21 +324,6 @@ function fileTablePageChange(page: number) {
 function fileTableReload() {
   fileTableCheck.value = [];
   fileTableReloadEvent();
-}
-
-function createFolder() {
-  createFolderForm.value.name = '';
-  showCreateFolderModal.value = true;
-}
-
-function validateCreateFolderForm() {
-  if (createFolderFormRef.value) {
-    createFolderFormRef.value.validate((errors: any) => {
-      if (!errors) {
-        doCreateFolder();
-      }
-    });
-  }
 }
 
 function editFile(file: any) {

@@ -6,6 +6,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 /**
  * FileDataRepository
  *
@@ -35,11 +37,11 @@ public interface FileDataRepository extends JpaRepository<FileData, String> {
     void deleteAllByPathOrPathLike(String path, String pathLike);
 
     /**
-     * existsByPath
+     * findAllByPathIn
      *
-     * @param path path
-     * @return exists
+     * @param pathList path list
+     * @return file list
      */
-    Boolean existsByPath(String path);
+    List<FileData> findAllByPathIn(List<String> pathList);
 
 }

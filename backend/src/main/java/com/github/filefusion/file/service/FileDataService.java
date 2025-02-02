@@ -13,9 +13,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * FileDataService
@@ -33,13 +37,6 @@ public class FileDataService {
         this.fileDataRepository = fileDataRepository;
     }
 
-    private void checkUserPermission(String userId, String filePath) {
-        String userPath = userId + FileAttribute.SEPARATOR;
-        if (!StringUtils.startsWithIgnoreCase(filePath, userPath)) {
-            throw new HttpException(I18n.get("noOperationPermission"));
-        }
-    }
-
     public Page<FileData> get(PageRequest page, String path, String name) {
         path = path + "%";
         if (StringUtils.hasLength(name)) {
@@ -47,42 +44,102 @@ public class FileDataService {
         } else {
             name = "%";
         }
-        String excludePath = path + FileAttribute.SEPARATOR + "%";
-        return fileDataRepository.findAllByPathLikeAndPathNotLikeAndNameLike(path, excludePath, name, page);
+        return fileDataRepository.findAllByPathLikeAndPathNotLikeAndNameLike(path,
+                path + FileAttribute.SEPARATOR + "%",
+                name, page);
     }
 
     @Transactional(rollbackFor = HttpException.class)
-    public void batchDelete(String userId, List<String> filePathList) {
-        if (CollectionUtils.isEmpty(filePathList)) {
-            return;
-        }
+    public void batchDelete(List<String> filePathList) {
         for (String filePath : filePathList) {
-            checkUserPermission(userId, filePath);
-        }
-        for (String filePath : filePathList) {
-            String filePathLike = filePath + FileAttribute.SEPARATOR + "%";
-            fileDataRepository.deleteAllByPathOrPathLike(filePath, filePathLike);
             SystemFile.delete(filePath);
+            fileDataRepository.deleteAllByPathOrPathLike(filePath, filePath + FileAttribute.SEPARATOR + "%");
         }
     }
 
     @Transactional(rollbackFor = HttpException.class)
-    public void createFolder(String filePath, String folderName) {
-        String path = filePath + folderName;
-        if (fileDataRepository.existsByPath(path)) {
+    public void createFolder(String[] folderPaths, String[] folderNames, Date createTime, boolean allowExist) {
+        List<String> fullFolderPathList = new ArrayList<>(folderPaths.length);
+        for (int i = 0; i < folderPaths.length; i++) {
+            fullFolderPathList.add(folderPaths[i] + FileAttribute.SEPARATOR + folderNames[i]);
+        }
+        List<FileData> existsFileDataList = fileDataRepository.findAllByPathIn(fullFolderPathList);
+        if (!allowExist && !CollectionUtils.isEmpty(existsFileDataList)) {
             throw new HttpException(I18n.get("folderExits"));
         }
+
+        Map<String, FileData> existsFileDataMap = existsFileDataList.stream().collect(Collectors.toMap(FileData::getPath, fileData -> fileData));
+        List<FileData> fileDataList = new ArrayList<>(fullFolderPathList.size());
+        for (int i = 0; i < fullFolderPathList.size(); i++) {
+            String path = fullFolderPathList.get(i);
+            FileData fileData;
+            if (existsFileDataMap.containsKey(path)) {
+                fileData = existsFileDataMap.get(path);
+                fileData.setFileLastModifiedDate(createTime);
+            } else {
+                fileData = new FileData();
+                fileData.setPath(path);
+                fileData.setName(folderNames[i]);
+                fileData.setType(FileAttribute.Type.FOLDER);
+                fileData.setSize(0L);
+                fileData.setEncrypted(false);
+                fileData.setFileCreatedDate(createTime);
+                fileData.setFileLastModifiedDate(createTime);
+            }
+            fileDataList.add(fileData);
+        }
+
+        SystemFile.createFolder(fullFolderPathList);
+        fileDataRepository.saveAll(fileDataList);
+    }
+
+    @Transactional(rollbackFor = HttpException.class)
+    public void upload(MultipartFile[] files, String[] paths) {
         Date currentTime = new Date();
-        FileData fileData = new FileData();
-        fileData.setPath(path);
-        fileData.setName(folderName);
-        fileData.setType(FileAttribute.Type.FOLDER);
-        fileData.setSize(0L);
-        fileData.setEncrypted(false);
-        fileData.setFileCreatedDate(currentTime);
-        fileData.setFileLastModifiedDate(currentTime);
-        fileDataRepository.save(fileData);
-        SystemFile.createFolder(path);
+
+        List<String> folderPaths = new ArrayList<>();
+        List<String> folderNames = new ArrayList<>();
+        List<String> filePaths = new ArrayList<>();
+        for (int i = 0; i < files.length; i++) {
+            String[] splitPaths = paths[i].split(FileAttribute.SEPARATOR);
+            StringBuilder splitPath = new StringBuilder();
+            for (int j = 0; j < splitPaths.length - 1; j++) {
+                splitPath.append(splitPaths[j]);
+                folderPaths.add(splitPath.toString());
+                folderNames.add(splitPaths[j + 1]);
+                splitPath.append(FileAttribute.SEPARATOR);
+            }
+            splitPath.append(files[i].getOriginalFilename());
+            filePaths.add(splitPath.toString());
+        }
+        createFolder(folderPaths.toArray(new String[0]), folderNames.toArray(new String[0]), currentTime, true);
+
+        List<FileData> existsFileDataList = fileDataRepository.findAllByPathIn(filePaths);
+        Map<String, FileData> existsFileDataMap = existsFileDataList.stream().collect(Collectors.toMap(FileData::getPath, fileData -> fileData));
+
+        List<FileData> fileDataList = new ArrayList<>();
+        for (int i = 0; i < files.length; i++) {
+            MultipartFile file = files[i];
+            String filePath = paths[i] + FileAttribute.SEPARATOR + file.getOriginalFilename();
+            FileData fileData;
+            if (existsFileDataMap.containsKey(filePath)) {
+                fileData = existsFileDataMap.get(filePath);
+                fileData.setFileLastModifiedDate(currentTime);
+            } else {
+                fileData = new FileData();
+                fileData.setPath(filePath);
+                fileData.setName(file.getOriginalFilename());
+                fileData.setType(FileAttribute.Type.FILE);
+                fileData.setSize(file.getSize());
+                fileData.setEncrypted(false);
+                fileData.setFileCreatedDate(currentTime);
+                fileData.setFileLastModifiedDate(currentTime);
+            }
+            fileDataList.add(fileData);
+        }
+
+        SystemFile.upload(files, paths);
+        fileDataRepository.saveAll(fileDataList);
     }
 
 }

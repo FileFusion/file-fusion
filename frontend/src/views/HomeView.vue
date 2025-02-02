@@ -10,6 +10,7 @@
             <router-view-content></router-view-content>
           </div>
         </n-layout-content>
+        <upload-view></upload-view>
         <n-back-top :bottom="88" :right="24" />
         <footer-bar></footer-bar>
       </n-layout>

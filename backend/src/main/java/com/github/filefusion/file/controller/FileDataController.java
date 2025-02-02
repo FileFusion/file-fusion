@@ -1,18 +1,23 @@
 package com.github.filefusion.file.controller;
 
+import com.github.filefusion.common.HttpException;
 import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.constant.SorterOrder;
 import com.github.filefusion.file.entity.FileData;
 import com.github.filefusion.file.model.CreateFolderModel;
 import com.github.filefusion.file.service.FileDataService;
 import com.github.filefusion.util.CurrentUser;
+import com.github.filefusion.util.I18n;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -70,10 +75,19 @@ public class FileDataController {
      *
      * @param filePathList file path list
      */
-    @PostMapping("_batch_delete")
+    @PostMapping("/_batch_delete")
     @PreAuthorize("hasAuthority('personal_file:delete')")
     public void batchDelete(@RequestBody List<String> filePathList) {
-        fileDataService.batchDelete(CurrentUser.get().getId(), filePathList);
+        if (CollectionUtils.isEmpty(filePathList)) {
+            return;
+        }
+        String userPath = CurrentUser.get().getId() + FileAttribute.SEPARATOR;
+        for (String filePath : filePathList) {
+            if (!StringUtils.startsWithIgnoreCase(filePath, userPath)) {
+                throw new HttpException(I18n.get("noOperationPermission"));
+            }
+        }
+        fileDataService.batchDelete(filePathList);
     }
 
     /**
@@ -81,16 +95,36 @@ public class FileDataController {
      *
      * @param createFolder folder info
      */
-    @PostMapping("_create_folder")
+    @PostMapping("/_create_folder")
     @PreAuthorize("hasAuthority('personal_file:add')")
     public void createFolder(@RequestBody CreateFolderModel createFolder) {
-        String filePath = createFolder.getPath();
-        if (!StringUtils.hasLength(filePath)) {
-            filePath = CurrentUser.get().getId() + FileAttribute.SEPARATOR;
+        String folderPath = createFolder.getPath();
+        if (!StringUtils.hasLength(folderPath)) {
+            folderPath = CurrentUser.get().getId();
         } else {
-            filePath = CurrentUser.get().getId() + FileAttribute.SEPARATOR + filePath + FileAttribute.SEPARATOR;
+            folderPath = CurrentUser.get().getId() + FileAttribute.SEPARATOR + folderPath;
         }
-        fileDataService.createFolder(filePath, createFolder.getName());
+        fileDataService.createFolder(new String[]{folderPath}, new String[]{createFolder.getName()}, new Date(), false);
+    }
+
+    /**
+     * upload files
+     *
+     * @param files files
+     * @param paths paths
+     */
+    @PostMapping("/_upload")
+    public void upload(@RequestParam("files") MultipartFile[] files,
+                       @RequestParam("paths") String[] paths) {
+        String userPath = CurrentUser.get().getId();
+        for (int i = 0; i < paths.length; i++) {
+            if (!StringUtils.hasLength(paths[i])) {
+                paths[i] = userPath;
+            } else {
+                paths[i] = userPath + FileAttribute.SEPARATOR + paths[i];
+            }
+        }
+        fileDataService.upload(files, paths);
     }
 
 }
