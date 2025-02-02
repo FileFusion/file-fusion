@@ -102,6 +102,10 @@ watch(
   }
 );
 
+window.$event.on('UploadView:FileChangeEvent', () => {
+  fileTableReloadEvent();
+});
+
 const fileNamePattern = ref<string>('');
 const fileTableCheck = ref<string[]>([]);
 const fileTableSorter = ref<DataTableSortState | null>(null);

@@ -33,7 +33,7 @@
               {{ $t('files.personal.uploadFolder') }}
             </n-tooltip>
           </n-float-button>
-          <n-float-button type="primary">
+          <n-float-button type="primary" @click="createFolder">
             <n-tooltip trigger="hover" placement="left">
               <template #trigger>
                 <n-icon>
@@ -84,16 +84,17 @@ import type { FormItemRule, FormRules } from 'naive-ui';
 import { computed, ref } from 'vue';
 import { useRequest } from 'alova/client';
 import { useI18n } from 'vue-i18n';
+import { useRoute } from 'vue-router';
 
 const { t } = useI18n();
 const http = window.$http;
+const route = useRoute();
 
 const createFolderFormRef = ref<HTMLFormElement>();
 
 const showCreateFolderModal = ref(false);
 const createFolderForm = ref({
-  name: '',
-  path: ''
+  name: ''
 });
 const createFolderFormRules = computed<FormRules>(() => {
   return {
@@ -115,11 +116,25 @@ const createFolderFormRules = computed<FormRules>(() => {
   };
 });
 
-// function createFolder(path: string) {
-//   createFolderForm.value.name = '';
-//   createFolderForm.value.path = path;
-//   showCreateFolderModal.value = true;
-// }
+const filePathPattern = computed(() => {
+  const path = route.params.path;
+  if (!path) {
+    return '';
+  }
+  if (Array.isArray(path)) {
+    return path.join('/');
+  }
+  return path;
+});
+
+function emitFileChangeEvent() {
+  window.$event.emit('UploadView:FileChangeEvent');
+}
+
+function createFolder() {
+  createFolderForm.value.name = '';
+  showCreateFolderModal.value = true;
+}
 
 function validateCreateFolderForm() {
   if (createFolderFormRef.value) {
@@ -132,12 +147,17 @@ function validateCreateFolderForm() {
 }
 
 const { loading: createFolderLoading, send: doCreateFolder } = useRequest(
-  () => http.Post('/file_data/_create_folder', createFolderForm.value),
+  () =>
+    http.Post('/file_data/_create_folder', {
+      name: createFolderForm.value.name,
+      path: filePathPattern.value
+    }),
   {
     immediate: false
   }
 ).onSuccess(() => {
   window.$msg.success(t('common.createSuccess'));
   showCreateFolderModal.value = false;
+  emitFileChangeEvent();
 });
 </script>
