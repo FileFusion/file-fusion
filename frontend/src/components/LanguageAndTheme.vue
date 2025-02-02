@@ -7,7 +7,7 @@
       @select="switchLanguage">
       <n-button text>
         <n-icon :size="20">
-          <icon-text />
+          <i-text />
         </n-icon>
       </n-button>
     </n-dropdown>
@@ -18,7 +18,7 @@
       @select="switchTheme">
       <n-button text>
         <n-icon :size="20">
-          <icon-contrast />
+          <i-contrast />
         </n-icon>
       </n-button>
     </n-dropdown>

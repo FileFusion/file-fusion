@@ -39,7 +39,7 @@
                     @keyup.enter="validateLoginForm()">
                     <template #prefix>
                       <n-icon>
-                        <icon-people />
+                        <i-people />
                       </n-icon>
                     </template>
                   </n-input>
@@ -55,7 +55,7 @@
                     @keyup.enter="validateLoginForm()">
                     <template #prefix>
                       <n-icon>
-                        <icon-lock />
+                        <i-lock />
                       </n-icon>
                     </template>
                   </n-input>

@@ -20,7 +20,7 @@
                 trigger="hover">
                 <n-button text>
                   <n-icon :size="20">
-                    <icon-people />
+                    <i-people />
                   </n-icon>
                 </n-button>
               </n-dropdown>

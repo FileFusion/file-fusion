@@ -10,7 +10,7 @@
               clearable>
               <template #prefix>
                 <n-icon>
-                  <icon-search />
+                  <i-search />
                 </n-icon>
               </template>
             </n-input>
@@ -94,7 +94,7 @@
                   type="primary"
                   @click="addUsersToOrg()">
                   <n-icon :size="20">
-                    <icon-add-user />
+                    <i-add-user />
                   </n-icon>
                 </n-button>
                 <n-popconfirm
@@ -105,7 +105,7 @@
                   <template #trigger>
                     <n-button v-permission="'org:edit'" text type="error">
                       <n-icon :size="20">
-                        <icon-reduce-user />
+                        <i-reduce-user />
                       </n-icon>
                     </n-button>
                   </template>
@@ -131,7 +131,7 @@
                     @keyup.enter="userTableReload()">
                     <template #prefix>
                       <n-icon>
-                        <icon-search />
+                        <i-search />
                       </n-icon>
                     </template>
                   </n-input>
@@ -154,7 +154,7 @@
                 itemCount: userTableTotal,
                 showSizePicker: true,
                 showQuickJumper: true,
-                prefix: (pagination: PaginationInfo) => {
+                prefix: (pagination: any) => {
                   return t('common.total') + ': ' + pagination.itemCount;
                 }
               }"
@@ -209,12 +209,7 @@
 </template>
 
 <script lang="ts" setup>
-import type {
-  DataTableColumn,
-  FormRules,
-  FormItemRule,
-  PaginationInfo
-} from 'naive-ui';
+import type { DataTableColumn, FormRules, FormItemRule } from 'naive-ui';
 import { NButton } from 'naive-ui';
 import { computed, h, ref } from 'vue';
 import IconAdd from '~icons/icon-park-outline/add';

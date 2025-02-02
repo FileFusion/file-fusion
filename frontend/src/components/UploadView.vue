@@ -10,14 +10,14 @@
         height="44"
         width="44">
         <n-icon>
-          <IconPlus />
+          <i-plus />
         </n-icon>
         <template #menu>
           <n-float-button type="primary">
             <n-tooltip trigger="hover" placement="left">
               <template #trigger>
                 <n-icon>
-                  <IconUpload />
+                  <i-upload />
                 </n-icon>
               </template>
               {{ $t('files.personal.uploadFile') }}
@@ -27,7 +27,7 @@
             <n-tooltip trigger="hover" placement="left">
               <template #trigger>
                 <n-icon>
-                  <IconFolderUpload />
+                  <i-folder-upload />
                 </n-icon>
               </template>
               {{ $t('files.personal.uploadFolder') }}
@@ -37,7 +37,7 @@
             <n-tooltip trigger="hover" placement="left">
               <template #trigger>
                 <n-icon>
-                  <IconFolderPlus />
+                  <i-folder-plus />
                 </n-icon>
               </template>
               {{ $t('files.personal.createFolder') }}
@@ -81,10 +81,6 @@
 
 <script lang="ts" setup>
 import type { FormItemRule, FormRules } from 'naive-ui';
-import IconPlus from '~icons/icon-park-outline/plus';
-import IconUpload from '~icons/icon-park-outline/upload';
-import IconFolderUpload from '~icons/icon-park-outline/folder-upload';
-import IconFolderPlus from '~icons/icon-park-outline/folder-plus';
 import { computed, ref } from 'vue';
 import { useRequest } from 'alova/client';
 import { useI18n } from 'vue-i18n';

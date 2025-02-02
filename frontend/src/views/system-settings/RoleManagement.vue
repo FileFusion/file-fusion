@@ -11,7 +11,7 @@
                 clearable>
                 <template #prefix>
                   <n-icon>
-                    <icon-search />
+                    <i-search />
                   </n-icon>
                 </template>
               </n-input>
@@ -109,7 +109,7 @@
                     clearable>
                     <template #prefix>
                       <n-icon>
-                        <icon-search />
+                        <i-search />
                       </n-icon>
                     </template>
                   </n-input>

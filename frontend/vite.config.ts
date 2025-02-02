@@ -37,7 +37,7 @@ export default defineConfig({
           prefix: false,
           enabledCollections: ['icon-park-outline'],
           alias: {
-            icon: 'icon-park-outline'
+            i: 'icon-park-outline'
           }
         })
       ]

@@ -28,7 +28,7 @@
               @keyup.enter="fileTableReload()">
               <template #prefix>
                 <n-icon>
-                  <icon-search />
+                  <i-search />
                 </n-icon>
               </template>
             </n-input>

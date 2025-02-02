@@ -19,7 +19,7 @@
             type="password">
             <template #prefix>
               <n-icon>
-                <icon-lock />
+                <i-lock />
               </n-icon>
             </template>
           </n-input>
@@ -39,7 +39,7 @@
             type="password">
             <template #prefix>
               <n-icon>
-                <icon-lock />
+                <i-lock />
               </n-icon>
             </template>
           </n-input>
