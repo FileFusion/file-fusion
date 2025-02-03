@@ -1,51 +1,65 @@
 <template>
   <div>
-    <n-flex
-      v-permission="'personal_file:add'"
-      class="fixed bottom-36 right-6 z-1">
-      <n-float-button
-        position="relative"
-        type="primary"
-        menu-trigger="hover"
-        height="44"
-        width="44">
-        <n-icon>
-          <i-plus />
-        </n-icon>
-        <template #menu>
-          <n-float-button type="primary">
-            <n-tooltip trigger="hover" placement="left">
-              <template #trigger>
-                <n-icon>
-                  <i-upload />
-                </n-icon>
-              </template>
-              {{ $t('files.personal.uploadFile') }}
-            </n-tooltip>
-          </n-float-button>
-          <n-float-button type="primary">
-            <n-tooltip trigger="hover" placement="left">
-              <template #trigger>
-                <n-icon>
-                  <i-folder-upload />
-                </n-icon>
-              </template>
-              {{ $t('files.personal.uploadFolder') }}
-            </n-tooltip>
-          </n-float-button>
-          <n-float-button type="primary" @click="createFolder">
-            <n-tooltip trigger="hover" placement="left">
-              <template #trigger>
-                <n-icon>
-                  <i-folder-plus />
-                </n-icon>
-              </template>
-              {{ $t('files.personal.createFolder') }}
-            </n-tooltip>
-          </n-float-button>
-        </template>
-      </n-float-button>
-    </n-flex>
+    <n-upload
+      abstract
+      :directory="isUploadDirectory"
+      :multiple="true"
+      :custom-request="uploadFileRequest">
+      <n-flex
+        v-permission="'personal_file:add'"
+        class="fixed bottom-36 right-6 z-1">
+        <n-float-button
+          position="relative"
+          type="primary"
+          menu-trigger="hover"
+          height="44"
+          width="44">
+          <n-icon>
+            <i-plus />
+          </n-icon>
+          <template #menu>
+            <n-upload-trigger #="{ handleClick }" abstract>
+              <n-float-button
+                type="primary"
+                @click="uploadFileClick(false, handleClick)">
+                <n-tooltip trigger="hover" placement="left">
+                  <template #trigger>
+                    <n-icon>
+                      <i-upload />
+                    </n-icon>
+                  </template>
+                  {{ $t('files.personal.uploadFile') }}
+                </n-tooltip>
+              </n-float-button>
+            </n-upload-trigger>
+            <n-upload-trigger #="{ handleClick }" abstract>
+              <n-float-button
+                type="primary"
+                @click="uploadFileClick(true, handleClick)">
+                <n-tooltip trigger="hover" placement="left">
+                  <template #trigger>
+                    <n-icon>
+                      <i-folder-upload />
+                    </n-icon>
+                  </template>
+                  {{ $t('files.personal.uploadFolder') }}
+                </n-tooltip>
+              </n-float-button>
+            </n-upload-trigger>
+            <n-float-button type="primary" @click="createFolder">
+              <n-tooltip trigger="hover" placement="left">
+                <template #trigger>
+                  <n-icon>
+                    <i-folder-plus />
+                  </n-icon>
+                </template>
+                {{ $t('files.personal.createFolder') }}
+              </n-tooltip>
+            </n-float-button>
+          </template>
+        </n-float-button>
+      </n-flex>
+    </n-upload>
     <n-modal
       v-model:show="showCreateFolderModal"
       :auto-focus="false"
@@ -80,8 +94,12 @@
 </template>
 
 <script lang="ts" setup>
-import type { FormItemRule, FormRules } from 'naive-ui';
-import { computed, ref } from 'vue';
+import type {
+  FormItemRule,
+  FormRules,
+  UploadCustomRequestOptions
+} from 'naive-ui';
+import { computed, ref, nextTick } from 'vue';
 import { useRequest } from 'alova/client';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
@@ -90,8 +108,9 @@ const { t } = useI18n();
 const http = window.$http;
 const route = useRoute();
 
-const createFolderFormRef = ref<HTMLFormElement>();
+const isUploadDirectory = ref<boolean>(false);
 
+const createFolderFormRef = ref<HTMLFormElement>();
 const showCreateFolderModal = ref(false);
 const createFolderForm = ref({
   name: ''
@@ -160,4 +179,37 @@ const { loading: createFolderLoading, send: doCreateFolder } = useRequest(
   showCreateFolderModal.value = false;
   emitFileChangeEvent();
 });
+
+async function uploadFileClick(
+  directory: boolean,
+  uploadFileEvent: () => void
+) {
+  isUploadDirectory.value = directory;
+  await nextTick();
+  uploadFileEvent();
+}
+
+const uploadFileRequest = ({
+  file,
+  onProgress,
+  onFinish,
+  onError
+}: UploadCustomRequestOptions) => {
+  const formData = new FormData();
+  formData.append('files', file.file as File);
+  const uploadMethod = http.Post('/file_data/_upload', formData);
+  uploadMethod.onUpload((event) => {
+    const percent = Math.round((event.loaded / event.total) * 100);
+    onProgress({
+      percent: percent
+    });
+  });
+  uploadMethod.then(() => {
+    onFinish();
+  });
+  uploadMethod.catch((err) => {
+    console.log(err);
+    onError();
+  });
+};
 </script>

@@ -10,7 +10,9 @@
     "preinstall": "npx only-allow pnpm"
   },
   "dependencies": {
+    "@alova/adapter-axios": "2.0.12",
     "alova": "3.2.8",
+    "axios": "1.7.9",
     "date-fns": "4.1.0",
     "mitt": "3.0.1",
     "pinia": "2.3.1",

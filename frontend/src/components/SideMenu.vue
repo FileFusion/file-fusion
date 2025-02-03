@@ -101,12 +101,12 @@ const renderMenuIcon = (option: MenuOption) => {
   return renderIcon(icon, undefined, undefined);
 };
 
-watchEffect(() => {
+watchEffect(async () => {
   if (route.matched.length === 2 || currentSideMenus.value.length === 0) {
     currentSideMenus.value = getCurrentSideMenus();
   }
   if (route.matched.length === 2 && currentSideMenus.value.length > 0) {
-    router.push({ name: currentSideMenus.value[0].key }).then();
+    await router.push({ name: currentSideMenus.value[0].key });
   }
 });
 
