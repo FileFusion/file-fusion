@@ -48,11 +48,6 @@ public class FileData extends BaseEntity {
     private Boolean encrypted;
 
     /**
-     * file created date
-     */
-    private Date fileCreatedDate;
-
-    /**
      * file last modified date
      */
     private Date fileLastModifiedDate;

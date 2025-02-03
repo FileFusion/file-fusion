@@ -46,16 +46,13 @@ public class SystemFile {
         }
     }
 
-    public static void upload(MultipartFile[] files, String[] paths) {
-        for (int i = 0; i < files.length; i++) {
-            MultipartFile file = files[i];
-            String filePath = FILE_DIR + FileAttribute.SEPARATOR + paths[i] + FileAttribute.SEPARATOR + file.getOriginalFilename();
-            Path path = Paths.get(filePath).toAbsolutePath().normalize();
-            try {
-                Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-            } catch (IOException e) {
-                throw new HttpException(I18n.get("fileUploadFailed", e.getMessage()));
-            }
+    public static void upload(MultipartFile file, String path) {
+        String filePath = FILE_DIR + FileAttribute.SEPARATOR + path + FileAttribute.SEPARATOR + file.getOriginalFilename();
+        Path p = Paths.get(filePath).toAbsolutePath().normalize();
+        try {
+            Files.copy(file.getInputStream(), p, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new HttpException(I18n.get("fileUploadFailed", e.getMessage()));
         }
     }
 

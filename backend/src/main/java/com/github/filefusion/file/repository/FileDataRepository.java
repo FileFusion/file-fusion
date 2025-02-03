@@ -37,11 +37,27 @@ public interface FileDataRepository extends JpaRepository<FileData, String> {
     void deleteAllByPathOrPathLike(String path, String pathLike);
 
     /**
+     * existsByPath
+     *
+     * @param path path
+     * @return exists
+     */
+    Boolean existsByPath(String path);
+
+    /**
      * findAllByPathIn
      *
      * @param pathList path list
      * @return file list
      */
     List<FileData> findAllByPathIn(List<String> pathList);
+
+    /**
+     * findFirstByPath
+     *
+     * @param path path
+     * @return file
+     */
+    FileData findFirstByPath(String path);
 
 }

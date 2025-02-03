@@ -4,7 +4,6 @@ import com.github.filefusion.common.HttpException;
 import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.constant.SorterOrder;
 import com.github.filefusion.file.entity.FileData;
-import com.github.filefusion.file.model.CreateFolderModel;
 import com.github.filefusion.file.service.FileDataService;
 import com.github.filefusion.util.CurrentUser;
 import com.github.filefusion.util.I18n;
@@ -17,7 +16,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -93,38 +91,39 @@ public class FileDataController {
     /**
      * create folder
      *
-     * @param createFolder folder info
+     * @param fileData path
      */
     @PostMapping("/_create_folder")
     @PreAuthorize("hasAuthority('personal_file:add')")
-    public void createFolder(@RequestBody CreateFolderModel createFolder) {
-        String folderPath = createFolder.getPath();
-        if (!StringUtils.hasLength(folderPath)) {
-            folderPath = CurrentUser.get().getId();
+    public void createFolder(@RequestBody FileData fileData) {
+        String path = fileData.getPath();
+        if (!StringUtils.hasLength(path)) {
+            path = CurrentUser.get().getId();
         } else {
-            folderPath = CurrentUser.get().getId() + FileAttribute.SEPARATOR + folderPath;
+            path = CurrentUser.get().getId() + FileAttribute.SEPARATOR + path;
         }
-        fileDataService.createFolder(new String[]{folderPath}, new String[]{createFolder.getName()}, new Date(), false);
+        fileDataService.createFolder(path, System.currentTimeMillis(), false);
     }
 
     /**
-     * upload files
+     * upload file
      *
-     * @param files files
-     * @param paths paths
+     * @param file         file
+     * @param path         path
+     * @param type         mime type
+     * @param lastModified last modified
      */
     @PostMapping("/_upload")
-    public void upload(@RequestParam("files") MultipartFile[] files,
-                       @RequestParam("paths") String[] paths) {
-        String userPath = CurrentUser.get().getId();
-        for (int i = 0; i < paths.length; i++) {
-            if (!StringUtils.hasLength(paths[i])) {
-                paths[i] = userPath;
-            } else {
-                paths[i] = userPath + FileAttribute.SEPARATOR + paths[i];
-            }
+    public void upload(@RequestParam("file") MultipartFile file,
+                       @RequestParam("path") String path,
+                       @RequestParam("type") String type,
+                       @RequestParam("lastModified") Long lastModified) {
+        if (!StringUtils.hasLength(path)) {
+            path = CurrentUser.get().getId();
+        } else {
+            path = CurrentUser.get().getId() + FileAttribute.SEPARATOR + path;
         }
-        fileDataService.upload(files, paths);
+        fileDataService.upload(file, path, type, lastModified);
     }
 
 }

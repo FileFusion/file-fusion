@@ -99,7 +99,7 @@ import type {
   FormRules,
   UploadCustomRequestOptions
 } from 'naive-ui';
-import { computed, ref, nextTick } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 import { useRequest } from 'alova/client';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
@@ -168,8 +168,9 @@ function validateCreateFolderForm() {
 const { loading: createFolderLoading, send: doCreateFolder } = useRequest(
   () =>
     http.Post('/file_data/_create_folder', {
-      name: createFolderForm.value.name,
       path: filePathPattern.value
+        ? filePathPattern.value + '/' + createFolderForm.value.name
+        : createFolderForm.value.name
     }),
   {
     immediate: false
@@ -195,8 +196,22 @@ const uploadFileRequest = ({
   onFinish,
   onError
 }: UploadCustomRequestOptions) => {
+  let path = <string>file.fullPath;
+  if (isUploadDirectory.value) {
+    if (filePathPattern.value) {
+      path = filePathPattern.value + path;
+    } else {
+      path = path.substring(1);
+    }
+  } else {
+    path = filePathPattern.value;
+  }
+  const fileInfo: File = <File>file.file;
   const formData = new FormData();
-  formData.append('files', file.file as File);
+  formData.append('file', fileInfo);
+  formData.append('path', path);
+  formData.append('type', fileInfo.type);
+  formData.append('lastModified', fileInfo.lastModified + '');
   const uploadMethod = http.Post('/file_data/_upload', formData);
   uploadMethod.onUpload((event) => {
     const percent = Math.round((event.loaded / event.total) * 100);
@@ -207,8 +222,7 @@ const uploadFileRequest = ({
   uploadMethod.then(() => {
     onFinish();
   });
-  uploadMethod.catch((err) => {
-    console.log(err);
+  uploadMethod.catch(() => {
     onError();
   });
 };
