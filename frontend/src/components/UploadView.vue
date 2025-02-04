@@ -99,6 +99,7 @@ import type {
   FormRules,
   UploadCustomRequestOptions
 } from 'naive-ui';
+import type { Progress } from 'alova';
 import { computed, nextTick, ref } from 'vue';
 import { useRequest } from 'alova/client';
 import { useI18n } from 'vue-i18n';
@@ -196,34 +197,38 @@ const uploadFileRequest = ({
   onFinish,
   onError
 }: UploadCustomRequestOptions) => {
-  let path = <string>file.fullPath;
-  if (isUploadDirectory.value) {
-    if (filePathPattern.value) {
-      path = filePathPattern.value + path;
+  const fileInfo: File = <File>file.file;
+  let path;
+  if (filePathPattern.value) {
+    if (fileInfo.webkitRelativePath) {
+      path = filePathPattern.value + '/' + fileInfo.webkitRelativePath;
     } else {
-      path = path.substring(1);
+      path = filePathPattern.value;
     }
   } else {
-    path = filePathPattern.value;
+    path = fileInfo.webkitRelativePath;
   }
-  const fileInfo: File = <File>file.file;
   const formData = new FormData();
   formData.append('file', fileInfo);
   formData.append('path', path);
   formData.append('type', fileInfo.type);
   formData.append('lastModified', fileInfo.lastModified + '');
   const uploadMethod = http.Post('/file_data/_upload', formData);
-  uploadMethod.onUpload((event) => {
-    const percent = Math.round((event.loaded / event.total) * 100);
+  uploadMethod.onUpload((progress: Progress) => {
+    const percent = Math.round((progress.loaded / progress.total) * 100);
     onProgress({
       percent: percent
     });
   });
-  uploadMethod.then(() => {
-    onFinish();
-  });
-  uploadMethod.catch(() => {
-    onError();
-  });
+  uploadMethod
+    .then(() => {
+      onFinish();
+    })
+    .catch(() => {
+      onError();
+    })
+    .finally(() => {
+      emitFileChangeEvent();
+    });
 };
 </script>
