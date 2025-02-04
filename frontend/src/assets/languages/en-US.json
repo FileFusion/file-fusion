@@ -132,7 +132,6 @@
       "fileName": "Filename",
       "folderName": "Folder name",
       "size": "Size",
-      "createdDate": "Created date",
       "modifiedDate": "Modified date",
       "rename": "Rename",
       "fileDeleteSelectCheck": "Please select the file to be deleted",

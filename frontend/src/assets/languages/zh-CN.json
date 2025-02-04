@@ -132,7 +132,6 @@
       "fileName": "文件名",
       "folderName": "文件夹名",
       "size": "大小",
-      "createdDate": "创建时间",
       "modifiedDate": "修改时间",
       "rename": "重命名",
       "fileDeleteSelectCheck": "请选择需要删除的文件",
