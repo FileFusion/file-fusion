@@ -155,19 +155,6 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
       }
     },
     {
-      title: t('files.personal.createdDate'),
-      key: 'createdDate',
-      resizable: true,
-      width: 170,
-      sorter: true,
-      render: (row: any) => {
-        if (row.createdDate) {
-          return format(row.createdDate, 'yyyy-MM-dd HH:mm:ss');
-        }
-        return '';
-      }
-    },
-    {
       title: t('files.personal.modifiedDate'),
       key: 'lastModifiedDate',
       resizable: true,
