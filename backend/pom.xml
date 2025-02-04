@@ -21,6 +21,11 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.redisson</groupId>
+            <artifactId>redisson-spring-boot-starter</artifactId>
+            <version>${redisson.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
@@ -36,7 +41,7 @@
         <dependency>
             <groupId>de.huxhorn.sulky</groupId>
             <artifactId>de.huxhorn.sulky.ulid</artifactId>
-            <version>${de.huxhorn.sulky.ulid.version}</version>
+            <version>${ulid.version}</version>
         </dependency>
 
         <dependency>
@@ -139,7 +144,7 @@
             <plugin>
                 <groupId>com.ly.smart-doc</groupId>
                 <artifactId>smart-doc-maven-plugin</artifactId>
-                <version>${smart-doc-maven-plugin.version}</version>
+                <version>${smart-doc.version}</version>
                 <configuration>
                     <configFile>./src/main/resources/smart-doc.json</configFile>
                     <projectName>${project.parent.name}</projectName>

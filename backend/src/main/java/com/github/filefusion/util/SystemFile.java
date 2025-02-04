@@ -11,9 +11,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.Comparator;
-import java.util.List;
 import java.util.stream.Stream;
 
 /**
@@ -32,32 +30,34 @@ public class SystemFile {
         FILE_DIR = fileDir;
     }
 
-    public static void createFolder(List<String> folderPathList) {
-        for (String folderPath : folderPathList) {
-            Path path = Paths.get(FILE_DIR + FileAttribute.SEPARATOR + folderPath).toAbsolutePath().normalize();
-            if (Files.exists(path)) {
-                continue;
-            }
-            try {
-                Files.createDirectories(path);
-            } catch (IOException e) {
-                throw new HttpException(I18n.get("folderCreationFailed", e.getMessage()));
-            }
+    public static void createFolder(String path) {
+        String folderPath = FILE_DIR + FileAttribute.SEPARATOR + path;
+        Path targetPath = Paths.get(folderPath).toAbsolutePath().normalize();
+        if (Files.exists(targetPath)) {
+            return;
+        }
+        try {
+            Files.createDirectories(targetPath);
+        } catch (IOException e) {
+            throw new HttpException(I18n.get("folderCreationFailed", e.getMessage()));
         }
     }
 
-    public static void upload(MultipartFile file, String name, String path) {
-        String filePath = FILE_DIR + FileAttribute.SEPARATOR + path + FileAttribute.SEPARATOR + name;
-        Path p = Paths.get(filePath).toAbsolutePath().normalize();
+    public static void upload(MultipartFile file, String path) {
+        String filePath = FILE_DIR + FileAttribute.SEPARATOR + path;
+        Path targetPath = Paths.get(filePath).toAbsolutePath().normalize();
         try {
-            Files.copy(file.getInputStream(), p, StandardCopyOption.REPLACE_EXISTING);
+            if (Files.exists(targetPath)) {
+                delete(path);
+            }
+            Files.copy(file.getInputStream(), targetPath);
         } catch (IOException e) {
             throw new HttpException(I18n.get("fileUploadFailed", e.getMessage()));
         }
     }
 
-    public static void delete(String filePath) {
-        filePath = FILE_DIR + FileAttribute.SEPARATOR + filePath;
+    public static void delete(String path) {
+        String filePath = FILE_DIR + FileAttribute.SEPARATOR + path;
         Path targetPath = Paths.get(filePath).toAbsolutePath().normalize();
         if (!Files.exists(targetPath)) {
             return;
@@ -65,9 +65,9 @@ public class SystemFile {
         try (Stream<Path> pathStream = Files.walk(targetPath)) {
             pathStream
                     .sorted(Comparator.reverseOrder())
-                    .forEach(path -> {
+                    .forEach(p -> {
                         try {
-                            Files.delete(path);
+                            Files.delete(p);
                         } catch (IOException e) {
                             throw new HttpException(I18n.get("fileDeletionFailed", e.getMessage()));
                         }

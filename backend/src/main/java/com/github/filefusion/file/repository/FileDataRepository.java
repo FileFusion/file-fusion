@@ -29,12 +29,13 @@ public interface FileDataRepository extends JpaRepository<FileData, String> {
     Page<FileData> findAllByPathLikeAndPathNotLikeAndNameLike(String path, String excludePath, String name, PageRequest page);
 
     /**
-     * deleteAllByPathOrPathLike
+     * findAllByPathOrPathLike
      *
      * @param path     file path
      * @param pathLike path like
+     * @return file list
      */
-    void deleteAllByPathOrPathLike(String path, String pathLike);
+    List<FileData> findAllByPathOrPathLike(String path, String pathLike);
 
     /**
      * existsByPath
@@ -43,14 +44,6 @@ public interface FileDataRepository extends JpaRepository<FileData, String> {
      * @return exists
      */
     Boolean existsByPath(String path);
-
-    /**
-     * findAllByPathIn
-     *
-     * @param pathList path list
-     * @return file list
-     */
-    List<FileData> findAllByPathIn(List<String> pathList);
 
     /**
      * findFirstByPath

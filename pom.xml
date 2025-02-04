@@ -23,12 +23,13 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
         <java.version>21</java.version>
-        <de.huxhorn.sulky.ulid.version>8.3.0</de.huxhorn.sulky.ulid.version>
+        <ulid.version>8.3.0</ulid.version>
+        <redisson.version>3.44.0</redisson.version>
         <mysql.version>9.2.0</mysql.version>
         <mariadb.version>3.5.1</mariadb.version>
         <postgresql.version>42.7.5</postgresql.version>
         <h2.version>2.3.232</h2.version>
-        <smart-doc-maven-plugin.version>3.0.9</smart-doc-maven-plugin.version>
+        <smart-doc.version>3.0.9</smart-doc.version>
         <exec-maven-plugin.version>3.5.0</exec-maven-plugin.version>
     </properties>
 
