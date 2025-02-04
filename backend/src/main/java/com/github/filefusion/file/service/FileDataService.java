@@ -98,15 +98,15 @@ public class FileDataService {
             fileDataList.add(fileData);
         }
 
-        SystemFile.createFolder(fullPathList);
         fileDataRepository.saveAll(fileDataList);
+        SystemFile.createFolder(fullPathList);
     }
 
     @Transactional(rollbackFor = HttpException.class)
-    public void upload(MultipartFile file, String path, String type, Long lastModified) {
+    public void upload(MultipartFile file, String name, String path, String type, Long lastModified) {
         createFolder(path, lastModified, true);
 
-        String filePath = path + FileAttribute.SEPARATOR + file.getOriginalFilename();
+        String filePath = path + FileAttribute.SEPARATOR + name;
         FileData existsFileData = fileDataRepository.findFirstByPath(filePath);
 
         FileData fileData;
@@ -115,7 +115,7 @@ public class FileDataService {
         } else {
             fileData = new FileData();
             fileData.setPath(filePath);
-            fileData.setName(file.getOriginalFilename());
+            fileData.setName(name);
             fileData.setType(FileAttribute.Type.FILE);
             fileData.setEncrypted(false);
         }
@@ -123,8 +123,8 @@ public class FileDataService {
         fileData.setSize(file.getSize());
         fileData.setFileLastModifiedDate(new Date(lastModified));
 
-        SystemFile.upload(file, path);
         fileDataRepository.save(fileData);
+        SystemFile.upload(file, name, path);
     }
 
 }

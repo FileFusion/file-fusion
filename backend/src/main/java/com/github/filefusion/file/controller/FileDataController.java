@@ -109,12 +109,14 @@ public class FileDataController {
      * upload file
      *
      * @param file         file
+     * @param name         name
      * @param path         path
      * @param type         mime type
      * @param lastModified last modified
      */
     @PostMapping("/_upload")
     public void upload(@RequestParam("file") MultipartFile file,
+                       @RequestParam("name") String name,
                        @RequestParam("path") String path,
                        @RequestParam("type") String type,
                        @RequestParam("lastModified") Long lastModified) {
@@ -123,7 +125,7 @@ public class FileDataController {
         } else {
             path = CurrentUser.get().getId() + FileAttribute.SEPARATOR + path;
         }
-        fileDataService.upload(file, path, type, lastModified);
+        fileDataService.upload(file, name, path, type, lastModified);
     }
 
 }

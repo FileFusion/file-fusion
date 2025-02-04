@@ -208,8 +208,12 @@ const uploadFileRequest = ({
   } else {
     path = fileInfo.webkitRelativePath;
   }
+  if (isUploadDirectory.value) {
+    path = path.substring(0, path.lastIndexOf('/'));
+  }
   const formData = new FormData();
   formData.append('file', fileInfo);
+  formData.append('name', fileInfo.name);
   formData.append('path', path);
   formData.append('type', fileInfo.type);
   formData.append('lastModified', fileInfo.lastModified + '');

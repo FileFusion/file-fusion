@@ -46,8 +46,8 @@ public class SystemFile {
         }
     }
 
-    public static void upload(MultipartFile file, String path) {
-        String filePath = FILE_DIR + FileAttribute.SEPARATOR + path + FileAttribute.SEPARATOR + file.getOriginalFilename();
+    public static void upload(MultipartFile file, String name, String path) {
+        String filePath = FILE_DIR + FileAttribute.SEPARATOR + path + FileAttribute.SEPARATOR + name;
         Path p = Paths.get(filePath).toAbsolutePath().normalize();
         try {
             Files.copy(file.getInputStream(), p, StandardCopyOption.REPLACE_EXISTING);
