@@ -351,7 +351,7 @@ function clickFile(file: any) {
     path += file.name;
     router.push({
       name: 'files-personal',
-      params: { path: path }
+      params: { path: path.split('/') }
     });
   }
 }
