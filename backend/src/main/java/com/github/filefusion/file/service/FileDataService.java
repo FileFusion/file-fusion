@@ -11,13 +11,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * FileDataService
@@ -30,25 +34,26 @@ public class FileDataService {
 
     private final FileDataRepository fileDataRepository;
     private final DistributedLock distributedLock;
+    private final SystemFile systemFile;
 
     @Autowired
     public FileDataService(FileDataRepository fileDataRepository,
-                           DistributedLock distributedLock) {
+                           DistributedLock distributedLock,
+                           SystemFile systemFile) {
         this.fileDataRepository = fileDataRepository;
         this.distributedLock = distributedLock;
+        this.systemFile = systemFile;
     }
 
-    private static Map<String, String> pathToPathTree(String path) {
-        Map<String, String> pathTree = new LinkedHashMap<>();
-        String[] splitPaths = path.split(FileAttribute.SEPARATOR);
-        StringBuilder splitPath = new StringBuilder();
-        for (int i = 0; i < splitPaths.length - 1; i++) {
-            splitPath.append(splitPaths[i]);
-            String name = splitPaths[i + 1];
-            pathTree.put(splitPath + FileAttribute.SEPARATOR + name, name);
-            splitPath.append(FileAttribute.SEPARATOR);
+    private static List<Path> getHierarchyPath(String path) {
+        Path rootPath = Paths.get(path).normalize();
+        List<Path> hierarchyPathList = new ArrayList<>(rootPath.getNameCount() - 1);
+        Path currentPath = rootPath.getName(0);
+        for (int i = 1; i < rootPath.getNameCount(); i++) {
+            currentPath = Paths.get(currentPath.resolve(rootPath.getName(i)).toString());
+            hierarchyPathList.add(currentPath);
         }
-        return pathTree;
+        return hierarchyPathList;
     }
 
     public Page<FileData> get(PageRequest page, String path, String name) {
@@ -63,41 +68,45 @@ public class FileDataService {
                 name, page);
     }
 
+    @Transactional(rollbackFor = HttpException.class)
     public void batchDelete(List<String> pathList) {
-        for (final String path : pathList) {
-            final List<FileData> fileDataList = fileDataRepository.findAllByPathOrPathLike(path, path + FileAttribute.SEPARATOR + "%");
-            List<String> fileDataPathList = fileDataList.stream().map(FileData::getPath).distinct().toList();
-            distributedLock.tryMultiLock(fileDataPathList, () -> {
-                fileDataRepository.deleteAll(fileDataList);
-                SystemFile.delete(path);
-            });
-        }
+        List<String> allPathList = pathList.stream()
+                .flatMap(path -> fileDataRepository.findAllByPathOrPathLike(path, path + FileAttribute.SEPARATOR + "%").stream())
+                .map(FileData::getPath).distinct().toList();
+        distributedLock.tryMultiLock(allPathList, () -> {
+            fileDataRepository.deleteAllByPathIn(allPathList);
+            systemFile.delete(allPathList);
+        });
     }
 
-    public void createFolder(String path, Long lastModified, boolean allowExist) {
-        if (!allowExist && fileDataRepository.existsByPath(path)) {
-            throw new HttpException(I18n.get("folderExits"));
-        }
-
-        Map<String, String> pathTree = pathToPathTree(path);
+    public void createFolder(final String path, Long lastModified, final boolean allowExists) {
         final Date lastModifiedDate = new Date(lastModified);
-        for (final String folderPath : pathTree.keySet()) {
-            final String name = pathTree.get(folderPath);
-            distributedLock.tryLock(folderPath, () -> {
-                FileData fileData = fileDataRepository.findFirstByPath(folderPath);
+        final List<Path> hierarchyPathList = getHierarchyPath(path);
+        final List<String> sortedPathList = hierarchyPathList.stream().map(Path::toString).toList();
+        distributedLock.tryMultiLock(sortedPathList, () -> {
+            if (!allowExists && fileDataRepository.existsByPath(path)) {
+                throw new HttpException(I18n.get("folderExits"));
+            }
+            List<FileData> existsFileDataList = fileDataRepository.findAllByPathIn(sortedPathList);
+            Map<String, FileData> existsFileDataMap = existsFileDataList.stream().collect(Collectors.toMap(FileData::getPath, fileData -> fileData));
+            List<FileData> fileDataList = new ArrayList<>(hierarchyPathList.size());
+            for (Path hierarchyPath : hierarchyPathList) {
+                String folderPath = hierarchyPath.toString();
+                FileData fileData = existsFileDataMap.get(folderPath);
                 if (fileData == null) {
                     fileData = new FileData();
                     fileData.setPath(folderPath);
-                    fileData.setName(name);
+                    fileData.setName(hierarchyPath.getFileName().toString());
                     fileData.setType(FileAttribute.Type.FOLDER);
                     fileData.setSize(0L);
                     fileData.setEncrypted(false);
                 }
                 fileData.setFileLastModifiedDate(lastModifiedDate);
-                SystemFile.createFolder(folderPath);
-                fileDataRepository.save(fileData);
-            });
-        }
+                fileDataList.add(fileData);
+            }
+            systemFile.createFolder(path);
+            fileDataRepository.saveAll(fileDataList);
+        });
     }
 
     public void upload(final MultipartFile file, final String name,
@@ -117,7 +126,7 @@ public class FileDataService {
             fileData.setMimeType(type);
             fileData.setSize(file.getSize());
             fileData.setFileLastModifiedDate(new Date(lastModified));
-            SystemFile.upload(file, filePath);
+            systemFile.upload(file, filePath);
             fileDataRepository.save(fileData);
         });
     }
