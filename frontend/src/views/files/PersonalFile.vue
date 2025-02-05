@@ -98,12 +98,12 @@ const permission = ref({
 watch(
   () => route.params.path,
   () => {
-    fileTableReloadEvent();
+    fileTableReload();
   }
 );
 
 window.$event.on('UploadView:FileChangeEvent', () => {
-  fileTableReloadEvent();
+  fileTableReload();
 });
 
 const fileNamePattern = ref<string>('');

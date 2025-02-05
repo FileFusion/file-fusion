@@ -8,6 +8,7 @@
       :custom-request="uploadFileRequest"
       @change="uploadFileChange">
       <n-flex
+        v-if="route.name === 'files-personal'"
         v-permission="'personal_file:add'"
         class="fixed bottom-36 right-6 z-1">
         <n-float-button
