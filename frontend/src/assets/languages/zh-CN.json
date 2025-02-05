@@ -128,12 +128,14 @@
   "files": {
     "personalFile": "个人文件",
     "personal": {
+      "download": "下载",
       "upload": "上传",
       "fileName": "文件名",
       "folderName": "文件夹名",
       "size": "大小",
       "modifiedDate": "修改时间",
       "rename": "重命名",
+      "fileDownloadSelectCheck": "请选择需要下载的文件",
       "fileDeleteSelectCheck": "请选择需要删除的文件",
       "uploadFile": "上传文件",
       "uploadFolder": "上传文件夹",
