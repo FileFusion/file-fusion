@@ -1,6 +1,7 @@
 package com.github.filefusion.util;
 
 import com.github.filefusion.common.HttpException;
+import com.github.filefusion.constant.RedisAttribute;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +23,6 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class DistributedLock {
 
-    private final static String PREFIX = "lock:";
     private final RedissonClient redissonClient;
     private final Duration waitTimeout;
 
@@ -37,7 +37,7 @@ public class DistributedLock {
         if (!StringUtils.hasLength(key)) {
             return;
         }
-        RLock lock = redissonClient.getLock(PREFIX + key);
+        RLock lock = redissonClient.getLock(RedisAttribute.LOCK_PREFIX + RedisAttribute.SEPARATOR + key);
         tryLock(lock, task);
     }
 
@@ -45,7 +45,7 @@ public class DistributedLock {
         if (CollectionUtils.isEmpty(keyList)) {
             return;
         }
-        RLock[] locks = keyList.stream().map(k -> PREFIX + k).map(redissonClient::getLock).toArray(RLock[]::new);
+        RLock[] locks = keyList.stream().map(k -> RedisAttribute.LOCK_PREFIX + RedisAttribute.SEPARATOR + k).map(redissonClient::getLock).toArray(RLock[]::new);
         RLock multiLock = redissonClient.getMultiLock(locks);
         tryLock(multiLock, task);
     }
