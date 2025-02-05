@@ -9,6 +9,7 @@ package com.github.filefusion.constant;
 public final class FileAttribute {
 
     public static final String SEPARATOR = "/";
+    public static final String FOLDER_MIME_TYPE = "custom/folder";
 
     public enum Type {
         FILE,
