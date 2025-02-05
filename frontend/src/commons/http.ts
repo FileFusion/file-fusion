@@ -25,11 +25,10 @@ const http = createAlova({
       if (data.success) {
         window.$loading.finish();
         return data.data;
-      } else {
-        window.$loading.error();
-        window.$msg.error(data.code, data.message);
-        throw new Error(data.code + ': ' + data.message);
       }
+      window.$loading.error();
+      window.$msg.error(data.code, data.message);
+      throw new Error(data.code + ': ' + data.message);
     },
     onError: (err: AxiosError) => {
       window.$loading.error();
