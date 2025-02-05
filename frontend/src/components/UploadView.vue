@@ -4,7 +4,9 @@
       abstract
       :directory="isUploadDirectory"
       :multiple="true"
-      :custom-request="uploadFileRequest">
+      :show-cancel-button="false"
+      :custom-request="uploadFileRequest"
+      @change="uploadFileChange">
       <n-flex
         v-permission="'personal_file:add'"
         class="fixed bottom-36 right-6 z-1">
@@ -59,6 +61,24 @@
           </template>
         </n-float-button>
       </n-flex>
+      <n-flex
+        v-if="fileList.length > 0"
+        v-permission="'personal_file:add'"
+        class="fixed bottom-36 right-20 z-1">
+        <n-popover trigger="hover" placement="left">
+          <template #trigger>
+            <n-progress
+              class="custom-progress cursor-pointer"
+              type="circle"
+              :percentage="uploadPercentage"
+              :color="themeVars.primaryColor"
+              :indicator-text-color="themeVars.primaryColor" />
+          </template>
+          <div class="max-h-48 overflow-y-auto">
+            <n-upload-file-list />
+          </div>
+        </n-popover>
+      </n-flex>
     </n-upload>
     <n-modal
       v-model:show="showCreateFolderModal"
@@ -97,19 +117,23 @@
 import type {
   FormItemRule,
   FormRules,
-  UploadCustomRequestOptions
+  UploadCustomRequestOptions,
+  UploadFileInfo
 } from 'naive-ui';
 import type { Progress } from 'alova';
 import { computed, nextTick, ref } from 'vue';
 import { useRequest } from 'alova/client';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
+import { useThemeVars } from 'naive-ui';
 
 const { t } = useI18n();
 const http = window.$http;
 const route = useRoute();
+const themeVars = useThemeVars();
 
 const isUploadDirectory = ref<boolean>(false);
+const fileList = ref<UploadFileInfo[]>([]);
 
 const createFolderFormRef = ref<HTMLFormElement>();
 const showCreateFolderModal = ref(false);
@@ -145,6 +169,19 @@ const filePathPattern = computed(() => {
     return path.join('/');
   }
   return path;
+});
+
+const uploadPercentage = computed<number>(() => {
+  const files = fileList.value;
+  const fileCount = files.length;
+  if (fileCount === 0) {
+    return 0;
+  }
+  let percentageCount = 0;
+  for (const file of files) {
+    percentageCount += file.percentage ? file.percentage : 0;
+  }
+  return Math.floor(percentageCount / fileCount);
 });
 
 function emitFileChangeEvent() {
@@ -189,6 +226,10 @@ async function uploadFileClick(
   isUploadDirectory.value = directory;
   await nextTick();
   uploadFileEvent();
+}
+
+function uploadFileChange(options: { fileList: UploadFileInfo[] }) {
+  fileList.value = options.fileList;
 }
 
 const uploadFileRequest = ({
@@ -236,3 +277,15 @@ const uploadFileRequest = ({
     });
 };
 </script>
+
+<style>
+/* stylelint-disable-next-line */
+.custom-progress.n-progress.n-progress--circle {
+  width: 44px;
+}
+
+/* stylelint-disable-next-line */
+.custom-progress.n-progress.n-progress--circle .n-progress-text {
+  font-size: 14px;
+}
+</style>
