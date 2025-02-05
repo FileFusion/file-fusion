@@ -95,12 +95,13 @@ public class FileDataService {
                 FileData fileData = existsFileDataMap.get(folderPath);
                 if (fileData == null) {
                     fileData = new FileData();
-                    fileData.setPath(folderPath);
-                    fileData.setName(hierarchyPath.getFileName().toString());
-                    fileData.setType(FileAttribute.Type.FOLDER);
-                    fileData.setSize(0L);
-                    fileData.setEncrypted(false);
                 }
+                fileData.setPath(folderPath);
+                fileData.setName(hierarchyPath.getFileName().toString());
+                fileData.setType(FileAttribute.Type.FOLDER);
+                fileData.setMimeType(FileAttribute.FOLDER_MIME_TYPE);
+                fileData.setSize(0L);
+                fileData.setEncrypted(false);
                 fileData.setFileLastModifiedDate(lastModifiedDate);
                 fileDataList.add(fileData);
             }
@@ -118,13 +119,13 @@ public class FileDataService {
             FileData fileData = fileDataRepository.findFirstByPath(filePath);
             if (fileData == null) {
                 fileData = new FileData();
-                fileData.setPath(filePath);
-                fileData.setName(name);
-                fileData.setType(FileAttribute.Type.FILE);
-                fileData.setEncrypted(false);
             }
+            fileData.setPath(filePath);
+            fileData.setName(name);
+            fileData.setType(FileAttribute.Type.FILE);
             fileData.setMimeType(type);
             fileData.setSize(file.getSize());
+            fileData.setEncrypted(false);
             fileData.setFileLastModifiedDate(new Date(lastModified));
             systemFile.upload(file, filePath);
             fileDataRepository.save(fileData);
