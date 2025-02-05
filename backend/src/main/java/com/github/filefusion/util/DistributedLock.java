@@ -53,7 +53,7 @@ public class DistributedLock {
     private void tryLock(RLock lock, Runnable task) {
         boolean locked = false;
         try {
-            locked = lock.tryLock(waitTimeout.toMillis(), -1, TimeUnit.MILLISECONDS);
+            locked = lock.tryLock(waitTimeout.toMillis(), TimeUnit.MILLISECONDS);
             if (!locked) {
                 throw new HttpException(I18n.get("lockAcquisitionFailed"));
             }
