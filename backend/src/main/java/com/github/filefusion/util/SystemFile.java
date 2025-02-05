@@ -85,6 +85,17 @@ public class SystemFile {
         }
     }
 
+    public List<Path> validatePaths(List<String> pathList) {
+        return pathList.stream()
+                .map(this::resolveSafePath)
+                .peek(path -> {
+                    if (!Files.exists(path)) {
+                        throw new HttpException(I18n.get("noOperationPermission"));
+                    }
+                })
+                .toList();
+    }
+
     private void delete(Path path) {
         if (!Files.exists(path)) {
             return;

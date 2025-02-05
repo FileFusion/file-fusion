@@ -5,16 +5,21 @@ import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.constant.SorterOrder;
 import com.github.filefusion.file.entity.FileData;
 import com.github.filefusion.file.service.FileDataService;
+import com.github.filefusion.user.entity.UserInfo;
 import com.github.filefusion.util.CurrentUser;
 import com.github.filefusion.util.I18n;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.util.List;
 
@@ -71,21 +76,21 @@ public class FileDataController {
     /**
      * batch delete file
      *
-     * @param filePathList file path list
+     * @param pathList path list
      */
     @PostMapping("/_batch_delete")
     @PreAuthorize("hasAuthority('personal_file:delete')")
-    public void batchDelete(@RequestBody List<String> filePathList) {
-        if (CollectionUtils.isEmpty(filePathList)) {
+    public void batchDelete(@RequestBody List<String> pathList) {
+        if (CollectionUtils.isEmpty(pathList)) {
             return;
         }
         String userPath = CurrentUser.get().getId() + FileAttribute.SEPARATOR;
-        for (String filePath : filePathList) {
-            if (!StringUtils.startsWithIgnoreCase(filePath, userPath)) {
+        for (String path : pathList) {
+            if (!StringUtils.startsWithIgnoreCase(path, userPath)) {
                 throw new HttpException(I18n.get("noOperationPermission"));
             }
         }
-        fileDataService.batchDelete(filePathList);
+        fileDataService.batchDelete(pathList);
     }
 
     /**
@@ -126,6 +131,28 @@ public class FileDataController {
             path = CurrentUser.get().getId() + FileAttribute.SEPARATOR + path;
         }
         fileDataService.upload(file, name, path, type, lastModified);
+    }
+
+    /**
+     * download file
+     *
+     * @param pathList path list
+     * @return file list
+     */
+    @GetMapping(value = "/_download", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public ResponseEntity<StreamingResponseBody> downloadFiles(@RequestParam("paths") List<String> pathList,
+                                                               HttpServletResponse response) {
+        if (CollectionUtils.isEmpty(pathList)) {
+            return null;
+        }
+        UserInfo userInfo = CurrentUser.get();
+        String userPath = userInfo.getId() + FileAttribute.SEPARATOR;
+        for (String path : pathList) {
+            if (!StringUtils.startsWithIgnoreCase(path, userPath)) {
+                throw new HttpException(I18n.get("noOperationPermission"));
+            }
+        }
+        return fileDataService.download(userInfo.getUsername(), pathList, response);
     }
 
 }

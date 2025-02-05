@@ -7,14 +7,26 @@ import com.github.filefusion.file.repository.FileDataRepository;
 import com.github.filefusion.util.DistributedLock;
 import com.github.filefusion.util.I18n;
 import com.github.filefusion.util.SystemFile;
+import jakarta.annotation.Nonnull;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -22,6 +34,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.zip.Deflater;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * FileDataService
@@ -130,6 +145,63 @@ public class FileDataService {
             systemFile.upload(file, filePath);
             fileDataRepository.save(fileData);
         });
+    }
+
+    public ResponseEntity<StreamingResponseBody> download(String username, List<String> pathList, HttpServletResponse response) {
+        List<Path> safePathList = systemFile.validatePaths(pathList);
+        Path pathFirst = safePathList.getFirst();
+
+        String encodedFilename;
+        MediaType contentType;
+        StreamingResponseBody streamingResponseBody;
+        if (safePathList.size() == 1 && !Files.isDirectory(pathFirst)) {
+            encodedFilename = ContentDisposition.attachment()
+                    .filename(pathFirst.getFileName().toString(), StandardCharsets.UTF_8)
+                    .build().toString();
+            response.setHeader(HttpHeaders.CONTENT_DISPOSITION, encodedFilename);
+            contentType = MediaType.APPLICATION_OCTET_STREAM;
+            streamingResponseBody = out -> Files.copy(pathFirst, out);
+        } else {
+            encodedFilename = ContentDisposition.attachment()
+                    .filename(username + FileAttribute.DOWNLOAD_ZIP_SUFFIX, StandardCharsets.UTF_8)
+                    .build().toString();
+            response.setHeader(HttpHeaders.CONTENT_DISPOSITION, encodedFilename);
+            contentType = MediaType.parseMediaType(FileAttribute.ZIP_MEDIA_TYPE);
+            streamingResponseBody = new ZipStreamingResponseBody(safePathList);
+        }
+        return ResponseEntity.ok()
+                .contentType(contentType)
+                .body(streamingResponseBody);
+    }
+
+    private record ZipStreamingResponseBody(List<Path> pathList) implements StreamingResponseBody {
+        @Override
+        public void writeTo(@Nonnull OutputStream out) throws IOException {
+            try (ZipOutputStream zos = new ZipOutputStream(out, StandardCharsets.UTF_8)) {
+                zos.setLevel(Deflater.BEST_SPEED);
+                for (Path path : pathList) {
+                    addToZip(zos, path, "");
+                }
+            }
+        }
+
+        private void addToZip(ZipOutputStream zos, Path path, String parent) throws IOException {
+            String entryName = parent + path.getFileName();
+            if (Files.isDirectory(path)) {
+                entryName += FileAttribute.SEPARATOR;
+                zos.putNextEntry(new ZipEntry(entryName));
+                zos.closeEntry();
+                try (DirectoryStream<Path> children = Files.newDirectoryStream(path)) {
+                    for (Path child : children) {
+                        addToZip(zos, child, entryName);
+                    }
+                }
+            } else {
+                zos.putNextEntry(new ZipEntry(entryName));
+                Files.copy(path, zos);
+                zos.closeEntry();
+            }
+        }
     }
 
 }
