@@ -42,6 +42,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -74,15 +75,11 @@ public class FileDataService {
         this.lockTimeout = timeout;
     }
 
-    private static List<Path> getHierarchyPath(String path) {
+    private List<Path> getHierarchyPathList(String path) {
         Path rootPath = Paths.get(path).normalize();
-        List<Path> hierarchyPathList = new ArrayList<>(rootPath.getNameCount() - 1);
-        Path currentPath = rootPath.getName(0);
-        for (int i = 1; i < rootPath.getNameCount(); i++) {
-            currentPath = Paths.get(currentPath.resolve(rootPath.getName(i)).toString());
-            hierarchyPathList.add(currentPath);
-        }
-        return hierarchyPathList;
+        return IntStream.range(1, rootPath.getNameCount())
+                .mapToObj(i -> rootPath.subpath(0, i + 1))
+                .toList();
     }
 
     public Page<FileData> get(PageRequest page, String path, String name) {
@@ -110,7 +107,7 @@ public class FileDataService {
 
     public void createFolder(final String path, Long lastModified, final boolean allowExists) {
         final Date lastModifiedDate = new Date(lastModified);
-        final List<Path> hierarchyPathList = getHierarchyPath(path);
+        final List<Path> hierarchyPathList = getHierarchyPathList(path);
         final List<String> sortedPathList = hierarchyPathList.stream().map(Path::toString).toList();
         distributedLock.tryMultiLock(sortedPathList, () -> {
             if (!allowExists && fileDataRepository.existsByPath(path)) {
