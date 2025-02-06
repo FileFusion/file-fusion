@@ -31,7 +31,7 @@ public class SystemFile {
     }
 
     private Path resolveSafePath(String path) {
-        if (!StringUtils.hasLength(path) || path.contains("..")) {
+        if (!StringUtils.hasLength(path) || path.contains("..") || path.contains("//") || path.startsWith("/")) {
             throw new HttpException(I18n.get("noOperationPermission"));
         }
         Path resolvedPath = baseDir.resolve(path).normalize();
