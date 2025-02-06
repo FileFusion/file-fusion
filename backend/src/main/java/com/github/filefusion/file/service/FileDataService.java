@@ -6,10 +6,7 @@ import com.github.filefusion.constant.RedisAttribute;
 import com.github.filefusion.file.entity.FileData;
 import com.github.filefusion.file.model.SubmitDownloadFilesResponse;
 import com.github.filefusion.file.repository.FileDataRepository;
-import com.github.filefusion.util.DistributedLock;
-import com.github.filefusion.util.I18n;
-import com.github.filefusion.util.SystemFile;
-import com.github.filefusion.util.ULID;
+import com.github.filefusion.util.*;
 import jakarta.annotation.Nonnull;
 import jakarta.servlet.http.HttpServletResponse;
 import org.redisson.api.RList;
@@ -118,16 +115,18 @@ public class FileDataService {
             List<FileData> fileDataList = new ArrayList<>(hierarchyPathList.size());
             for (Path hierarchyPath : hierarchyPathList) {
                 String folderPath = hierarchyPath.toString();
+                String folderName = hierarchyPath.getFileName().toString();
                 FileData fileData = existsFileDataMap.get(folderPath);
                 if (fileData == null) {
                     fileData = new FileData();
                 }
                 fileData.setPath(folderPath);
-                fileData.setName(hierarchyPath.getFileName().toString());
+                fileData.setName(folderName);
                 fileData.setType(FileAttribute.Type.FOLDER);
                 fileData.setMimeType(FileAttribute.FOLDER_MIME_TYPE);
                 fileData.setSize(0L);
                 fileData.setEncrypted(false);
+                fileData.setHashValue(EncryptUtil.sha256(folderName));
                 fileData.setFileLastModifiedDate(lastModifiedDate);
                 fileDataList.add(fileData);
             }
@@ -153,7 +152,7 @@ public class FileDataService {
             fileData.setSize(file.getSize());
             fileData.setEncrypted(false);
             fileData.setFileLastModifiedDate(new Date(lastModified));
-            systemFile.upload(file, filePath);
+            fileData.setHashValue(systemFile.upload(file, filePath));
             fileDataRepository.save(fileData);
         });
     }

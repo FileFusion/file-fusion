@@ -7,6 +7,7 @@ CREATE TABLE file_data
     mime_type               VARCHAR(100) DEFAULT NULL,
     size                    BIGINT        NOT NULL,
     encrypted               BOOLEAN       NOT NULL,
+    hash_value              VARCHAR(256)  NOT NULL,
     file_last_modified_date TIMESTAMP    DEFAULT NULL,
     created_by              VARCHAR(26)   NOT NULL,
     created_date            TIMESTAMP     NOT NULL,

@@ -8,9 +8,9 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -59,14 +59,15 @@ public class SystemFile {
         }
     }
 
-    public void upload(MultipartFile file, String path) {
+    public String upload(MultipartFile file, String path) {
         Path targetPath = resolveSafePath(path);
         if (Files.exists(targetPath)) {
             delete(targetPath);
         }
-        try (InputStream inputStream = file.getInputStream()) {
-            Files.copy(inputStream, targetPath);
-        } catch (IOException e) {
+        try (HashingInputStream hashingInputStream = new HashingInputStream(file.getInputStream())) {
+            Files.copy(hashingInputStream, targetPath);
+            return hashingInputStream.getHashString();
+        } catch (IOException | NoSuchAlgorithmException e) {
             throw new HttpException(I18n.get("fileUploadFailed"));
         }
     }
