@@ -13,6 +13,7 @@ import org.springframework.util.StringUtils;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * DistributedLock
@@ -51,17 +52,17 @@ public class DistributedLock {
     }
 
     private void tryLock(RLock lock, Runnable task) {
-        boolean locked = false;
+        final AtomicBoolean isLockAcquired = new AtomicBoolean(false);
         try {
-            locked = lock.tryLock(waitTimeout.toMillis(), TimeUnit.MILLISECONDS);
-            if (!locked) {
+            isLockAcquired.set(lock.tryLock(waitTimeout.toMillis(), TimeUnit.MILLISECONDS));
+            if (!isLockAcquired.get()) {
                 throw new HttpException(I18n.get("lockAcquisitionFailed"));
             }
             task.run();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         } finally {
-            if (locked && lock.isHeldByCurrentThread()) {
+            if (isLockAcquired.get() && lock.isHeldByCurrentThread()) {
                 lock.unlock();
             }
         }
