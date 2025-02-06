@@ -4,15 +4,14 @@ import com.github.filefusion.common.HttpException;
 import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.constant.SorterOrder;
 import com.github.filefusion.file.entity.FileData;
+import com.github.filefusion.file.model.SubmitDownloadFilesResponse;
 import com.github.filefusion.file.service.FileDataService;
-import com.github.filefusion.user.entity.UserInfo;
 import com.github.filefusion.util.CurrentUser;
 import com.github.filefusion.util.I18n;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.CollectionUtils;
@@ -134,25 +133,34 @@ public class FileDataController {
     }
 
     /**
-     * download file
+     * submit download file list
      *
      * @param pathList path list
-     * @return file list
+     * @return download id
      */
-    @GetMapping(value = "/_download", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<StreamingResponseBody> downloadFiles(@RequestParam("paths") List<String> pathList,
-                                                               HttpServletResponse response) {
+    @PostMapping("/_submit_download")
+    public SubmitDownloadFilesResponse submitDownloadFiles(@RequestBody List<String> pathList) {
         if (CollectionUtils.isEmpty(pathList)) {
             return null;
         }
-        UserInfo userInfo = CurrentUser.get();
-        String userPath = userInfo.getId() + FileAttribute.SEPARATOR;
+        String userPath = CurrentUser.get().getId() + FileAttribute.SEPARATOR;
         for (String path : pathList) {
             if (!StringUtils.startsWithIgnoreCase(path, userPath)) {
                 throw new HttpException(I18n.get("noOperationPermission"));
             }
         }
-        return fileDataService.download(userInfo.getUsername(), pathList, response);
+        return fileDataService.submitDownload(pathList);
+    }
+
+    /**
+     * download file list
+     *
+     * @param downloadId download id
+     * @return file list
+     */
+    @GetMapping("/_download/{downloadId}")
+    public ResponseEntity<StreamingResponseBody> downloadFiles(@PathVariable String downloadId, HttpServletResponse response) {
+        return fileDataService.download(downloadId, response);
     }
 
 }

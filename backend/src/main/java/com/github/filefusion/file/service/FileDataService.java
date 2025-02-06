@@ -2,14 +2,20 @@ package com.github.filefusion.file.service;
 
 import com.github.filefusion.common.HttpException;
 import com.github.filefusion.constant.FileAttribute;
+import com.github.filefusion.constant.RedisAttribute;
 import com.github.filefusion.file.entity.FileData;
+import com.github.filefusion.file.model.SubmitDownloadFilesResponse;
 import com.github.filefusion.file.repository.FileDataRepository;
 import com.github.filefusion.util.DistributedLock;
 import com.github.filefusion.util.I18n;
 import com.github.filefusion.util.SystemFile;
+import com.github.filefusion.util.ULID;
 import jakarta.annotation.Nonnull;
 import jakarta.servlet.http.HttpServletResponse;
+import org.redisson.api.RList;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ContentDisposition;
@@ -18,6 +24,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
@@ -29,6 +36,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -50,14 +58,20 @@ public class FileDataService {
     private final FileDataRepository fileDataRepository;
     private final DistributedLock distributedLock;
     private final SystemFile systemFile;
+    private final RedissonClient redissonClient;
+    private final Duration lockTimeout;
 
     @Autowired
     public FileDataService(FileDataRepository fileDataRepository,
                            DistributedLock distributedLock,
-                           SystemFile systemFile) {
+                           SystemFile systemFile,
+                           RedissonClient redissonClient,
+                           @Value("${server.servlet.session.timeout}") Duration timeout) {
         this.fileDataRepository = fileDataRepository;
         this.distributedLock = distributedLock;
         this.systemFile = systemFile;
+        this.redissonClient = redissonClient;
+        this.lockTimeout = timeout;
     }
 
     private static List<Path> getHierarchyPath(String path) {
@@ -147,8 +161,21 @@ public class FileDataService {
         });
     }
 
-    public ResponseEntity<StreamingResponseBody> download(String username, List<String> pathList, HttpServletResponse response) {
+    public SubmitDownloadFilesResponse submitDownload(List<String> pathList) {
+        String downloadId = ULID.randomULID();
+        RList<String> pathRList = redissonClient.getList(RedisAttribute.DOWNLOAD_ID_PREFIX + RedisAttribute.SEPARATOR + downloadId);
+        pathRList.addAll(pathList);
+        pathRList.expire(lockTimeout);
+        return new SubmitDownloadFilesResponse(downloadId);
+    }
+
+    public ResponseEntity<StreamingResponseBody> download(String downloadId, HttpServletResponse response) {
+        RList<String> pathList = redissonClient.getList(RedisAttribute.DOWNLOAD_ID_PREFIX + RedisAttribute.SEPARATOR + downloadId);
+        if (CollectionUtils.isEmpty(pathList)) {
+            throw new HttpException(I18n.get("downloadLinkExpired"));
+        }
         List<Path> safePathList = systemFile.validatePaths(pathList);
+        pathList.delete();
         Path pathFirst = safePathList.getFirst();
 
         String encodedFilename;
@@ -163,7 +190,7 @@ public class FileDataService {
             streamingResponseBody = out -> Files.copy(pathFirst, out);
         } else {
             encodedFilename = ContentDisposition.attachment()
-                    .filename(username + FileAttribute.DOWNLOAD_ZIP_SUFFIX, StandardCharsets.UTF_8)
+                    .filename(FileAttribute.DOWNLOAD_ZIP_NAME, StandardCharsets.UTF_8)
                     .build().toString();
             response.setHeader(HttpHeaders.CONTENT_DISPOSITION, encodedFilename);
             contentType = MediaType.parseMediaType(FileAttribute.ZIP_MEDIA_TYPE);

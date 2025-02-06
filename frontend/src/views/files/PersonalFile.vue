@@ -3,19 +3,27 @@
     <n-card hoverable>
       <n-grid :cols="24">
         <n-gi :span="14">
-          <n-popconfirm
-            :positive-button-props="{ type: 'error' }"
-            @positive-click="deleteFiles(fileTableCheck)">
-            <template #trigger>
-              <n-button
-                v-permission="'personal_file:delete'"
-                :loading="deleteFileLoading"
-                type="error">
-                {{ $t('common.delete') }}
-              </n-button>
-            </template>
-            {{ $t('common.batchDeleteConfirm') }}
-          </n-popconfirm>
+          <n-flex>
+            <n-button
+              :loading="downloadFileLoading"
+              type="primary"
+              @click="downloadFiles(fileTableCheck)">
+              {{ $t('files.personal.download') }}
+            </n-button>
+            <n-popconfirm
+              :positive-button-props="{ type: 'error' }"
+              @positive-click="deleteFiles(fileTableCheck)">
+              <template #trigger>
+                <n-button
+                  v-permission="'personal_file:delete'"
+                  :loading="deleteFileLoading"
+                  type="error">
+                  {{ $t('common.delete') }}
+                </n-button>
+              </template>
+              {{ $t('common.batchDeleteConfirm') }}
+            </n-popconfirm>
+          </n-flex>
         </n-gi>
         <n-gi :span="10">
           <n-input-group>
@@ -75,10 +83,11 @@ import type {
 import { NButton, NDropdown } from 'naive-ui';
 import { computed, h, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import IconDelete from '~icons/icon-park-outline/delete';
-import IconEditTwo from '~icons/icon-park-outline/edit-two';
-import IconDown from '~icons/icon-park-outline/down';
 import IconFolderClose from '~icons/icon-park-outline/folder-close';
+import IconDown from '~icons/icon-park-outline/down';
+import IconDownload from '~icons/icon-park-outline/download';
+import IconEditTwo from '~icons/icon-park-outline/edit-two';
+import IconDelete from '~icons/icon-park-outline/delete';
 import { useRequest, usePagination } from 'alova/client';
 import { hasPermission } from '@/commons/permission';
 import { renderIconMethod } from '@/commons/utils';
@@ -182,6 +191,16 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
           {
             options: [
               {
+                icon: renderIconMethod(IconDownload),
+                key: 'download',
+                label: t('files.personal.download'),
+                props: {
+                  onClick: () => {
+                    downloadFiles([row.path]);
+                  }
+                }
+              },
+              {
                 icon: renderIconMethod(IconEditTwo),
                 key: 'edit',
                 label: t('files.personal.rename'),
@@ -282,6 +301,15 @@ const {
   }
 );
 
+const { loading: downloadFileLoading, send: doDownloadFile } = useRequest(
+  (filePathList: string[]) =>
+    http.Post('/file_data/_submit_download', filePathList),
+  { immediate: false }
+).onSuccess((response: any) => {
+  window.location.href =
+    http.options.baseURL + '/file_data/_download/' + response.data.downloadId;
+});
+
 const { loading: deleteFileLoading, send: doDeleteFile } = useRequest(
   (filePathList: string[]) =>
     http.Post('/file_data/_batch_delete', filePathList),
@@ -320,6 +348,14 @@ function fileTableReload() {
 function editFile(file: any) {
   currentOptionFile.value = JSON.parse(JSON.stringify(file));
   showFileEdit.value = true;
+}
+
+function downloadFiles(filePathList: string[]) {
+  if (!filePathList || filePathList.length === 0) {
+    window.$msg.warning(t('files.personal.fileDownloadSelectCheck'));
+    return;
+  }
+  doDownloadFile(filePathList);
 }
 
 function deleteFile(file: any) {
