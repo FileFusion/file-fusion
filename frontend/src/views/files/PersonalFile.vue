@@ -5,6 +5,7 @@
         <n-gi :span="14">
           <n-flex>
             <n-button
+              v-permission="'personal_file:download'"
               :loading="downloadFileLoading"
               type="primary"
               @click="downloadFiles(fileTableCheck)">
@@ -100,6 +101,7 @@ const router = useRouter();
 const route = useRoute();
 
 const permission = ref({
+  personalFileDownload: hasPermission('personal_file:download'),
   personalFileEdit: hasPermission('personal_file:edit'),
   personalFileDelete: hasPermission('personal_file:delete')
 });
@@ -178,6 +180,7 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
     }
   ];
   if (
+    permission.value.personalFileDownload ||
     permission.value.personalFileEdit ||
     permission.value.personalFileDelete
   ) {
@@ -198,7 +201,8 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
                   onClick: () => {
                     downloadFiles([row.path]);
                   }
-                }
+                },
+                show: permission.value.personalFileDownload
               },
               {
                 icon: renderIconMethod(IconEditTwo),

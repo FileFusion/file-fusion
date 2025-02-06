@@ -9,7 +9,7 @@
       @change="uploadFileChange">
       <n-flex
         v-if="route.name === 'files-personal'"
-        v-permission="'personal_file:add'"
+        v-permission="'personal_file:upload'"
         class="fixed bottom-36 right-6 z-1">
         <n-float-button
           position="relative"
@@ -64,7 +64,7 @@
       </n-flex>
       <n-flex
         v-if="fileList.length > 0"
-        v-permission="'personal_file:add'"
+        v-permission="'personal_file:upload'"
         class="fixed bottom-36 right-20 z-1">
         <n-popover trigger="hover" placement="left">
           <template #trigger>

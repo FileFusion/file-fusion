@@ -98,7 +98,7 @@ public class FileDataController {
      * @param fileData path
      */
     @PostMapping("/_create_folder")
-    @PreAuthorize("hasAuthority('personal_file:add')")
+    @PreAuthorize("hasAuthority('personal_file:upload')")
     public void createFolder(@RequestBody FileData fileData) {
         String path = fileData.getPath();
         if (!StringUtils.hasLength(path)) {
@@ -119,6 +119,7 @@ public class FileDataController {
      * @param lastModified last modified
      */
     @PostMapping("/_upload")
+    @PreAuthorize("hasAuthority('personal_file:upload')")
     public void upload(@RequestParam("file") MultipartFile file,
                        @RequestParam("name") String name,
                        @RequestParam("path") String path,
@@ -139,6 +140,7 @@ public class FileDataController {
      * @return download id
      */
     @PostMapping("/_submit_download")
+    @PreAuthorize("hasAuthority('personal_file:download')")
     public SubmitDownloadFilesResponse submitDownloadFiles(@RequestBody List<String> pathList) {
         if (CollectionUtils.isEmpty(pathList)) {
             return null;
