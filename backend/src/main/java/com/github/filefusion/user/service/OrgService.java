@@ -122,8 +122,10 @@ public class OrgService {
     public void addOrgUser(String orgId, List<String> userIds) {
         List<UserInfo> users = getNotExitsOrgUser(orgId);
         List<String> uIds = users.stream().map(UserInfo::getId).toList();
-        if (CollectionUtils.containsAny(uIds, userIds)) {
-            throw new HttpException(I18n.get("existUserAnotherOrg"));
+        for (String userId : userIds) {
+            if (!uIds.contains(userId)) {
+                throw new HttpException(I18n.get("existUserAnotherOrg"));
+            }
         }
         List<OrgUser> orgUsers = new ArrayList<>(userIds.size());
         for (String userId : userIds) {
