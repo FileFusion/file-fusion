@@ -79,6 +79,7 @@ public class UserService implements UserDetailsService {
         u.setEmail(user.getEmail());
         u.setPhone(user.getPhone());
         if (!StringUtils.hasLength(u.getPhone())) {
+            // todo
             u.setAreaCode(null);
         } else {
             u.setAreaCode(user.getAreaCode());
@@ -88,8 +89,7 @@ public class UserService implements UserDetailsService {
 
     public void updateCurrentUserPassword(String userId, String originalPassword, String newPassword) {
         UserInfo u = userRepository.findById(userId).orElseThrow();
-        originalPassword = EncryptUtil.sha256(originalPassword);
-        if (!passwordEncoder.matches(originalPassword, u.getPassword())) {
+        if (!passwordEncoder.matches(EncryptUtil.sha256(originalPassword), u.getPassword())) {
             throw new HttpException(I18n.get("originalPasswordError"));
         }
         u.setPassword(passwordEncoder.encode(EncryptUtil.sha256(newPassword)));
@@ -99,8 +99,8 @@ public class UserService implements UserDetailsService {
 
     public Page<UserInfo> get(PageRequest page, String search) {
         Page<UserInfo> users = userRepository.findAllOrderBySort(search, page);
-        List<UserRole> userRoles = userRoleRepository.findAllByUserIdIn(users.getContent().stream().map(UserInfo::getId).distinct().toList());
-        List<Role> roles = roleRepository.findAllById(userRoles.stream().map(UserRole::getRoleId).distinct().toList());
+        List<UserRole> userRoles = userRoleRepository.findAllByUserIdIn(users.getContent().stream().map(UserInfo::getId).toList());
+        List<Role> roles = roleRepository.findAllById(userRoles.stream().map(UserRole::getRoleId).toList());
         for (UserInfo user : users.getContent()) {
             List<Role> ur = new ArrayList<>();
             for (UserRole userRole : userRoles) {

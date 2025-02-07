@@ -3,6 +3,7 @@ package com.github.filefusion.util;
 import com.github.filefusion.common.HttpException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -51,11 +52,11 @@ public class SystemFile {
                 try {
                     Files.createDirectories(targetPath);
                 } catch (IOException e1) {
-                    throw new HttpException(I18n.get("folderCreationFailed"));
+                    throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("folderCreationFailed"));
                 }
             }
         } catch (IOException e) {
-            throw new HttpException(I18n.get("folderCreationFailed"));
+            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("folderCreationFailed"));
         }
     }
 
@@ -68,7 +69,7 @@ public class SystemFile {
             Files.copy(hashingInputStream, targetPath);
             return hashingInputStream.getHashString();
         } catch (IOException | NoSuchAlgorithmException e) {
-            throw new HttpException(I18n.get("fileUploadFailed"));
+            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
         }
     }
 
@@ -82,7 +83,7 @@ public class SystemFile {
             }
         });
         if (!success.get()) {
-            throw new HttpException(I18n.get("fileDeletionFailed"));
+            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileDeletionFailed"));
         }
     }
 
@@ -116,7 +117,7 @@ public class SystemFile {
                 }
             });
         } catch (IOException e) {
-            throw new HttpException(I18n.get("fileDeletionFailed"));
+            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileDeletionFailed"));
         }
     }
 

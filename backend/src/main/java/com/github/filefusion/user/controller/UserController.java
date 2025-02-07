@@ -1,12 +1,10 @@
 package com.github.filefusion.user.controller;
 
 import com.github.filefusion.constant.SorterOrder;
-import com.github.filefusion.user.entity.Org;
 import com.github.filefusion.user.entity.UserInfo;
 import com.github.filefusion.user.model.UpdateUserModel;
 import com.github.filefusion.user.model.UpdateUserPasswordModel;
 import com.github.filefusion.user.model.UserTokenResponse;
-import com.github.filefusion.user.service.OrgService;
 import com.github.filefusion.user.service.UserService;
 import com.github.filefusion.util.CurrentUser;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,13 +27,10 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
-    private final OrgService orgService;
 
     @Autowired
-    public UserController(UserService userService,
-                          OrgService orgService) {
+    public UserController(UserService userService) {
         this.userService = userService;
-        this.orgService = orgService;
     }
 
     /**
@@ -58,17 +53,6 @@ public class UserController {
     @PreAuthorize("hasAuthority('user:read')")
     public UserInfo getCurrentUser() {
         return CurrentUser.get();
-    }
-
-    /**
-     * get current user org
-     *
-     * @return org list
-     */
-    @GetMapping("/current/org")
-    @PreAuthorize("hasAuthority('user:read')")
-    public List<Org> getCurrentUserOrg() {
-        return orgService.getUserOrg(CurrentUser.get().getId());
     }
 
     /**

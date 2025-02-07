@@ -9,7 +9,7 @@ package com.github.filefusion.constant;
 public final class RedisAttribute {
 
     public static final String SEPARATOR = ":";
-    public final static String LOCK_PREFIX = "lock";
-    public final static String DOWNLOAD_ID_PREFIX = "download";
+    public static final String LOCK_PREFIX = "lock";
+    public static final String DOWNLOAD_ID_PREFIX = "download";
 
 }

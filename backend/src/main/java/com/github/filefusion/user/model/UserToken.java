@@ -21,7 +21,7 @@ import java.util.Date;
 @NoArgsConstructor
 public class UserToken implements Serializable {
 
-    private final static String TOKEN_HEADER = "Bearer ";
+    private static final String TOKEN_HEADER = "Bearer ";
 
     private String userId;
     private Date createdDate;

@@ -29,7 +29,8 @@ import java.io.IOException;
  */
 public final class AuthenticationTokenFilter extends OncePerRequestFilter {
 
-    private final static AntPathMatcher PATH_MATCHER = new AntPathMatcher();
+    private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
+    private static final UrlPathHelper PATH_HELPER = new UrlPathHelper();
     private final UserDetailsService userDetailsService;
 
     public AuthenticationTokenFilter(UserDetailsService userDetailsService) {
@@ -66,8 +67,8 @@ public final class AuthenticationTokenFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(@Nonnull HttpServletRequest request) {
-        String lookupPath = UrlPathHelper.defaultInstance.getLookupPathForRequest(request);
-        return !PATH_MATCHER.match(ApiPrefixConfig.CONTEXT_PATH + "/**", lookupPath);
+        String path = PATH_HELPER.getLookupPathForRequest(request);
+        return !PATH_MATCHER.match(ApiPrefixConfig.CONTEXT_PATH + "/**", path);
     }
 
 }

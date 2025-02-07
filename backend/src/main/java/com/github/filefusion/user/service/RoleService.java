@@ -104,11 +104,8 @@ public class RoleService {
     }
 
     public List<String> getRolePermission(String roleId) {
-        List<RolePermission> rolePermissions = rolePermissionRepository.findAllByRoleId(roleId);
-        List<Permission> permissions = permissionRepository.findAllByBasicsOrderByNameAsc(true);
-        List<String> permissionIds = new ArrayList<>(permissions.stream().map(Permission::getId).distinct().toList());
-        permissionIds.addAll(rolePermissions.stream().map(RolePermission::getPermissionId).distinct().toList());
-        return permissionIds;
+        List<Permission> permissions = permissionRepository.findAllByRoleId(roleId);
+        return permissions.stream().map(Permission::getId).toList();
     }
 
 }

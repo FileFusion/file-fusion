@@ -6,6 +6,7 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -56,7 +57,7 @@ public class DistributedLock {
         try {
             isLockAcquired.set(lock.tryLock(waitTimeout.toMillis(), TimeUnit.MILLISECONDS));
             if (!isLockAcquired.get()) {
-                throw new HttpException(I18n.get("lockAcquisitionFailed"));
+                throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("lockAcquisitionFailed"));
             }
             task.run();
         } catch (InterruptedException e) {

@@ -15,7 +15,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class ApiPrefixConfig implements WebMvcConfigurer {
 
-    public final static String CONTEXT_PATH = "/api";
+    public static final String CONTEXT_PATH = "/api";
 
     @Override
     public void configurePathMatch(PathMatchConfigurer configurer) {

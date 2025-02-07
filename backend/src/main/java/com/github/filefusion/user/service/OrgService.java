@@ -29,6 +29,8 @@ import java.util.List;
 @Service
 public class OrgService {
 
+    private static final String ROOT = "root";
+
     private final OrgRepository orgRepository;
     private final OrgUserRepository orgUserRepository;
     private final UserInfoRepository userRepository;
@@ -85,8 +87,7 @@ public class OrgService {
     private void getOrgAllParentId(List<String> orgAllParentIds, String orgId) {
         Org org = orgRepository.findById(orgId).orElseThrow();
         orgAllParentIds.add(orgId);
-        String root = "root";
-        if (root.equals(org.getParentId())) {
+        if (ROOT.equals(org.getParentId())) {
             return;
         }
         getOrgAllParentId(orgAllParentIds, org.getParentId());
@@ -120,11 +121,9 @@ public class OrgService {
 
     public void addOrgUser(String orgId, List<String> userIds) {
         List<UserInfo> users = getNotExitsOrgUser(orgId);
-        List<String> uIds = users.stream().map(UserInfo::getId).distinct().toList();
-        for (String userId : userIds) {
-            if (!uIds.contains(userId)) {
-                throw new HttpException(I18n.get("existUserAnotherOrg"));
-            }
+        List<String> uIds = users.stream().map(UserInfo::getId).toList();
+        if (CollectionUtils.containsAny(uIds, userIds)) {
+            throw new HttpException(I18n.get("existUserAnotherOrg"));
         }
         List<OrgUser> orgUsers = new ArrayList<>(userIds.size());
         for (String userId : userIds) {
@@ -149,16 +148,6 @@ public class OrgService {
             orgUsers.add(orgUser);
         }
         orgUserRepository.deleteAllInBatch(orgUsers);
-    }
-
-    public List<Org> getUserOrg(String userId) {
-        List<OrgUser> orgUsers = orgUserRepository.findAllByUserId(userId);
-        List<String> orgIds = orgUsers.stream().map(OrgUser::getOrgId).distinct().toList();
-        List<String> orgAllChildId = new ArrayList<>(orgIds);
-        for (String orgId : orgIds) {
-            getOrgAllChildId(orgAllChildId, orgId);
-        }
-        return orgRepository.findAllById(orgAllChildId);
     }
 
 }

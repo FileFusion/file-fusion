@@ -3,6 +3,7 @@ package com.github.filefusion.license.entity;
 import com.github.filefusion.common.BaseEntity;
 import jakarta.persistence.Entity;
 import lombok.Data;
+import lombok.experimental.FieldNameConstants;
 
 import java.util.Date;
 
@@ -14,6 +15,7 @@ import java.util.Date;
  */
 @Data
 @Entity(name = "license")
+@FieldNameConstants
 public class License extends BaseEntity {
 
     /**

@@ -42,4 +42,13 @@ public interface PermissionRepository extends JpaRepository<Permission, String> 
     @Query("FROM permission p WHERE p.id IN (SELECT rp.permissionId FROM role_permission rp WHERE rp.roleId IN (SELECT ur.roleId FROM user_role ur WHERE ur.userId = ?1)) OR p.basics = true")
     List<Permission> findAllByUserId(String userId);
 
+    /**
+     * findAllByRoleId
+     *
+     * @param roleId role id
+     * @return permission list
+     */
+    @Query("FROM permission p WHERE p.id IN (SELECT rp.permissionId FROM role_permission rp WHERE rp.roleId = ?1) OR p.basics = true")
+    List<Permission> findAllByRoleId(String roleId);
+
 }

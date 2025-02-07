@@ -58,7 +58,7 @@ public class FileDataController {
                               @RequestParam(required = false) String sorter,
                               @RequestParam(required = false) SorterOrder sorterOrder) {
         if (!StringUtils.hasLength(sorter)) {
-            sorter = "name";
+            sorter = FileData.Fields.name;
         }
         if (sorterOrder == null) {
             sorterOrder = SorterOrder.ascend;

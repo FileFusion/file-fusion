@@ -4,6 +4,7 @@ import com.github.filefusion.common.BaseEntity;
 import com.github.filefusion.constant.FileAttribute;
 import jakarta.persistence.Entity;
 import lombok.Data;
+import lombok.experimental.FieldNameConstants;
 
 import java.util.Date;
 
@@ -15,6 +16,7 @@ import java.util.Date;
  */
 @Data
 @Entity(name = "file_data")
+@FieldNameConstants
 public class FileData extends BaseEntity {
 
     /**
