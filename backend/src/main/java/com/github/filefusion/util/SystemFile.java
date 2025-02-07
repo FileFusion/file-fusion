@@ -75,13 +75,13 @@ public class SystemFile {
 
     public void delete(List<String> pathList) {
         final AtomicBoolean success = new AtomicBoolean(true);
-        pathList.forEach(path -> {
+        for (String path : pathList) {
             try {
                 delete(resolveSafePath(path));
             } catch (Exception e) {
                 success.set(false);
             }
-        });
+        }
         if (!success.get()) {
             throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileDeletionFailed"));
         }
