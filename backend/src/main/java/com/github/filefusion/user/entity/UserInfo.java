@@ -5,6 +5,7 @@ import com.github.filefusion.util.I18n;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Transient;
 import lombok.Data;
+import lombok.experimental.FieldNameConstants;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -19,6 +20,7 @@ import java.util.List;
  */
 @Data
 @Entity(name = "user_info")
+@FieldNameConstants
 public class UserInfo extends BaseEntity implements UserDetails {
 
     /**

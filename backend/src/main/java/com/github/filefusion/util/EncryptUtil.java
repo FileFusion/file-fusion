@@ -31,6 +31,10 @@ import java.util.Arrays;
 @Component
 public class EncryptUtil {
 
+    public static final String AES = "AES";
+    public static final String SHA_256 = "SHA-256";
+    private static final String AES_TRANSFORMATION = "AES/CBC/PKCS5Padding";
+
     private static final byte[] HEX_LOOKUP = new byte[128];
     private static final char[] HEX_TABLE = new char[256 * 2];
 
@@ -64,8 +68,8 @@ public class EncryptUtil {
 
     private static Cipher getCipher(int cipherMode) {
         try {
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-            SecretKeySpec secretKey = new SecretKeySpec(SECRET_KEY.getBytes(StandardCharsets.UTF_8), "AES");
+            Cipher cipher = Cipher.getInstance(AES_TRANSFORMATION);
+            SecretKeySpec secretKey = new SecretKeySpec(SECRET_KEY.getBytes(StandardCharsets.UTF_8), AES);
             IvParameterSpec ivParameter = new IvParameterSpec(SECRET_IV.getBytes(StandardCharsets.UTF_8));
             cipher.init(cipherMode, secretKey, ivParameter);
             return cipher;
@@ -102,7 +106,7 @@ public class EncryptUtil {
 
     public static String sha256(String original) {
         try {
-            MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+            MessageDigest messageDigest = MessageDigest.getInstance(SHA_256);
             return bytesToHex(messageDigest.digest(original.getBytes(StandardCharsets.UTF_8)));
         } catch (NoSuchAlgorithmException e) {
             throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, e);

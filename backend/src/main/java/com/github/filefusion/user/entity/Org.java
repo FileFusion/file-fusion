@@ -3,6 +3,7 @@ package com.github.filefusion.user.entity;
 import com.github.filefusion.common.BaseEntity;
 import jakarta.persistence.Entity;
 import lombok.Data;
+import lombok.experimental.FieldNameConstants;
 
 /**
  * Org
@@ -12,6 +13,7 @@ import lombok.Data;
  */
 @Data
 @Entity(name = "org")
+@FieldNameConstants
 public class Org extends BaseEntity {
 
     /**

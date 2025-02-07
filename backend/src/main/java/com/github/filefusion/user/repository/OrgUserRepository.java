@@ -32,14 +32,6 @@ public interface OrgUserRepository extends JpaRepository<OrgUser, String> {
     List<OrgUser> findAllByOrgIdIn(List<String> orgId);
 
     /**
-     * findAllByUserId
-     *
-     * @param userId user id
-     * @return org user list
-     */
-    List<OrgUser> findAllByUserId(String userId);
-
-    /**
      * deleteAllByUserId
      *
      * @param userIds user ids

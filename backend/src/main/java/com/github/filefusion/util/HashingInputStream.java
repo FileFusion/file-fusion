@@ -20,7 +20,7 @@ public class HashingInputStream extends InputStream {
 
     public HashingInputStream(InputStream inputStream) throws NoSuchAlgorithmException {
         this.inputStream = inputStream;
-        this.messageDigest = MessageDigest.getInstance("SHA-256");
+        this.messageDigest = MessageDigest.getInstance(EncryptUtil.SHA_256);
     }
 
     @Override

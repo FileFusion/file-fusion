@@ -4,6 +4,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
 import lombok.Data;
+import lombok.experimental.FieldNameConstants;
 
 import java.io.Serializable;
 
@@ -16,6 +17,7 @@ import java.io.Serializable;
 @Data
 @Entity(name = "org_user")
 @IdClass(OrgUser.class)
+@FieldNameConstants
 public class OrgUser implements Serializable {
 
     /**

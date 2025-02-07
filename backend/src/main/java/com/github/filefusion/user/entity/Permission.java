@@ -3,6 +3,7 @@ package com.github.filefusion.user.entity;
 import com.github.filefusion.common.BaseEntity;
 import jakarta.persistence.Entity;
 import lombok.Data;
+import lombok.experimental.FieldNameConstants;
 import org.springframework.security.core.GrantedAuthority;
 
 /**
@@ -13,6 +14,7 @@ import org.springframework.security.core.GrantedAuthority;
  */
 @Data
 @Entity(name = "permission")
+@FieldNameConstants
 public class Permission extends BaseEntity implements GrantedAuthority {
 
     /**
