@@ -32,6 +32,7 @@ import java.util.Arrays;
 public class EncryptUtil {
 
     private static final byte[] HEX_LOOKUP = new byte[128];
+    private static final char[] HEX_TABLE = new char[256 * 2];
 
     private static String SECRET_KEY;
     private static String SECRET_IV;
@@ -45,6 +46,13 @@ public class EncryptUtil {
             HEX_LOOKUP['a' + i] = (byte) (10 + i);
             HEX_LOOKUP['A' + i] = (byte) (10 + i);
         }
+
+        for (int i = 0; i < 256; i++) {
+            HEX_TABLE[i << 1] = Character.forDigit((i >> 4) & 0x0F, 16);
+            HEX_TABLE[(i << 1) + 1] = Character.forDigit(i & 0x0F, 16);
+        }
+        String tableStr = new String(HEX_TABLE);
+        tableStr.getChars(0, tableStr.length(), HEX_TABLE, 0);
     }
 
     @Autowired
@@ -68,15 +76,14 @@ public class EncryptUtil {
     }
 
     public static String bytesToHex(byte[] bytes) {
-        StringBuilder hexString = new StringBuilder(64);
-        for (byte b : bytes) {
-            String hex = Integer.toHexString(0xff & b);
-            if (hex.length() == 1) {
-                hexString.append('0');
-            }
-            hexString.append(hex);
+        final int len = bytes.length;
+        final char[] hexChars = new char[len * 2];
+        for (int i = 0; i < len; i++) {
+            final int byteVal = bytes[i] & 0xFF;
+            hexChars[i * 2] = HEX_TABLE[byteVal << 1];
+            hexChars[i * 2 + 1] = HEX_TABLE[(byteVal << 1) + 1];
         }
-        return hexString.toString();
+        return new String(hexChars);
     }
 
     public static byte[] hexToBytes(String hex) {

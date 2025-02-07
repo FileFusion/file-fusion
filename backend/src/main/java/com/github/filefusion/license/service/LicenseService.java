@@ -23,10 +23,10 @@ public class LicenseService {
 
     public License getCurrentLicense() {
         License license = licenseRepository.findFirstByStartDateNotNullOrderByStartDateDesc();
-        if (license == null) {
-            license = licenseRepository.findFirstByAuthorizedTo("Personal");
+        if (license != null) {
+            return license;
         }
-        return license;
+        return licenseRepository.findFirstByAuthorizedTo("Personal");
     }
 
 }

@@ -4,7 +4,6 @@ import com.github.filefusion.common.SecurityProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -15,8 +14,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Map;
+import java.util.Arrays;
 
 /**
  * SecurityConfiguration
@@ -42,6 +42,10 @@ public class SecurityConfiguration {
         this.webServerFactory = webServerFactory;
     }
 
+    private static String buildFullPath(String path) {
+        return UriComponentsBuilder.fromPath(ApiPrefixConfig.CONTEXT_PATH).path(path).build().toUriString();
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         webServerFactory.setSslRedirect(http);
@@ -50,26 +54,23 @@ public class SecurityConfiguration {
                 .headers(headers -> headers.frameOptions((HeadersConfigurer.FrameOptionsConfig::sameOrigin)))
                 .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(new AuthenticationTokenFilter(userDetailsService), UsernamePasswordAuthenticationFilter.class);
-        http.authorizeHttpRequests(authorizeHttpRequests -> {
-            String[] allWhitelist = securityProperties.getAllWhitelist();
-            AntPathRequestMatcher[] allWhitelistRequestMatchers = new AntPathRequestMatcher[allWhitelist.length];
-            for (int i = 0; i < allWhitelist.length; i++) {
-                allWhitelistRequestMatchers[i] = new AntPathRequestMatcher(ApiPrefixConfig.CONTEXT_PATH + allWhitelist[i]);
-            }
-            authorizeHttpRequests.requestMatchers(allWhitelistRequestMatchers).permitAll();
-            Map<HttpMethod, String[]> whitelist = securityProperties.getWhitelist();
-            for (HttpMethod method : whitelist.keySet()) {
-                String[] wl = whitelist.get(method);
-                AntPathRequestMatcher[] wlRequestMatchers = new AntPathRequestMatcher[wl.length];
-                for (int i = 0; i < wl.length; i++) {
-                    wlRequestMatchers[i] = new AntPathRequestMatcher(ApiPrefixConfig.CONTEXT_PATH + wl[i], method.name());
-                }
-                authorizeHttpRequests.requestMatchers(wlRequestMatchers).permitAll();
-            }
-            authorizeHttpRequests.requestMatchers(new AntPathRequestMatcher(ApiPrefixConfig.CONTEXT_PATH + "/**")).authenticated()
-                    .anyRequest().permitAll();
-        });
+        configureWhitelistAccess(http);
         return http.build();
+    }
+
+    private void configureWhitelistAccess(HttpSecurity http) throws Exception {
+        http.authorizeHttpRequests(authorizeHttpRequests -> {
+            Arrays.stream(securityProperties.getAllWhitelist())
+                    .map(SecurityConfiguration::buildFullPath)
+                    .map(AntPathRequestMatcher::new)
+                    .forEach(matcher -> authorizeHttpRequests.requestMatchers(matcher).permitAll());
+            securityProperties.getWhitelist().entrySet().stream()
+                    .flatMap(entry -> Arrays.stream(entry.getValue())
+                            .map(path -> new AntPathRequestMatcher(buildFullPath(path), entry.getKey().name()))
+                    ).forEach(matcher -> authorizeHttpRequests.requestMatchers(matcher).permitAll());
+            authorizeHttpRequests.requestMatchers(new AntPathRequestMatcher(buildFullPath("/**")))
+                    .authenticated().anyRequest().permitAll();
+        });
     }
 
 }
