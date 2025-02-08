@@ -111,11 +111,14 @@ watchEffect(async () => {
 });
 
 function getCurrentSideMenus() {
-  const parentName = <string>route.matched[1].name;
-  if (Object.prototype.hasOwnProperty.call(allSideMenus.value, parentName)) {
-    return allSideMenus.value[parentName];
+  if (!route.matched || route.matched.length < 2) {
+    return [];
   }
-  return [];
+  const parentName = <string>route.matched[1].name;
+  if (!Object.prototype.hasOwnProperty.call(allSideMenus.value, parentName)) {
+    return [];
+  }
+  return allSideMenus.value[parentName];
 }
 
 function switchSideMenuCollapsed(value: boolean) {
