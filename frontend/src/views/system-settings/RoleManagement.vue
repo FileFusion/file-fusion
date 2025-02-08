@@ -147,10 +147,15 @@ import { useI18n } from 'vue-i18n';
 import { ulid } from 'ulidx';
 import { useRequest } from 'alova/client';
 import { arrayToTreeCustom } from '@/commons/utils';
+import { hasPermission } from '@/commons/permission';
 
 const { t } = useI18n();
 const http = window.$http;
 const roleFormRef = ref<HTMLFormElement>();
+
+const hasPermissionValue = ref({
+  roleEdit: hasPermission('role:edit')
+});
 
 const rolePattern = ref<string>('');
 const permissions = ref<any[]>([]);
@@ -289,7 +294,9 @@ function selectedRole(value: string[]) {
       if (!currentRole.value.new) {
         doGetRolePermissionRole();
       }
-      updateAllPermission(currentRole.value.systemRole);
+      updateAllPermission(
+        currentRole.value.systemRole || !hasPermissionValue.value.roleEdit
+      );
       break;
     }
   }
