@@ -45,7 +45,7 @@ function hasPermission(permissions: string | string[], or?: boolean): boolean {
   const mStore = mainStore(window.$pinia);
   const userPermissions = mStore.getPermissions;
   if (!userPermissions) {
-    return true;
+    return false;
   }
   const userPermissionIds: string[] = userPermissions.map(
     (permission: any): string => {

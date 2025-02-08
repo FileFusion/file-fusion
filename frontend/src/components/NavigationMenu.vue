@@ -60,8 +60,12 @@ const menus = computed(() => {
 });
 
 watchEffect(async () => {
-  if (route.matched.length === 1 && menus.value.length > 0) {
-    await router.push({ name: menus.value[0].key });
+  if (route.matched.length === 1) {
+    if (menus.value.length > 0) {
+      await router.push({ name: menus.value[0].key });
+    } else {
+      await router.push({ name: 'user-settings' });
+    }
   }
 });
 </script>

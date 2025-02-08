@@ -26,7 +26,6 @@ const routes = [
     name: 'home',
     meta: { requiresAuth: true },
     component: () => import('@/views/HomeView.vue'),
-    redirect: '/files',
     children: [
       {
         path: '/files',
@@ -97,7 +96,7 @@ const router = createRouter({
   routes: routes
 });
 
-router.beforeEach((to: RouteLocationNormalized) => {
+router.beforeEach(async (to: RouteLocationNormalized) => {
   const mStore = mainStore(window.$pinia);
   const token = mStore.getToken;
   if (to.meta.requiresAuth) {
@@ -108,6 +107,10 @@ router.beforeEach((to: RouteLocationNormalized) => {
       };
     }
     if (to.meta.permission) {
+      if (!mStore.getUser) {
+        const user: any = await window.$http.Get<any>('/user/current');
+        mStore.setUser(user);
+      }
       if (!hasPermission(to.meta.permission, to.meta.permissionOr)) {
         return { path: '/' };
       }
