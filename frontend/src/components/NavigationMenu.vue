@@ -8,13 +8,20 @@
 
 <script lang="ts" setup>
 import { useI18n } from 'vue-i18n';
-import { computed, h } from 'vue';
+import { computed, h, watchEffect } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { hasPermission } from '@/commons/permission';
 
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
+
+const activeMenu = computed(() => {
+  if (route.matched.length >= 2) {
+    return route.matched[1].name;
+  }
+  return '';
+});
 
 const menus = computed(() => {
   let newMenus = [];
@@ -52,10 +59,9 @@ const menus = computed(() => {
   return newMenus;
 });
 
-const activeMenu = computed(() => {
-  if (route.matched.length >= 2) {
-    return route.matched[1].name;
+watchEffect(async () => {
+  if (route.matched.length === 1 && menus.value.length > 0) {
+    await router.push({ name: menus.value[0].key });
   }
-  return '';
 });
 </script>
