@@ -7,7 +7,6 @@ import com.github.filefusion.file.entity.FileData;
 import com.github.filefusion.file.model.SubmitDownloadFilesResponse;
 import com.github.filefusion.file.repository.FileDataRepository;
 import com.github.filefusion.util.*;
-import jakarta.annotation.Nonnull;
 import jakarta.servlet.http.HttpServletResponse;
 import org.redisson.api.RList;
 import org.redisson.api.RedissonClient;
@@ -26,10 +25,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -40,9 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.zip.Deflater;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 /**
  * FileDataService
@@ -157,6 +150,7 @@ public class FileDataService {
         });
     }
 
+    @Transactional(rollbackFor = HttpException.class)
     public void rename(String path, String originalName, final String targetName) {
         if (!StringUtils.hasLength(originalName)) {
             throw new HttpException(I18n.get("renameFileSelectCheck"));
@@ -175,13 +169,15 @@ public class FileDataService {
             throw new HttpException(I18n.get("fileNameAlreadyExists"));
         }
 
-        final String targetPathFolder = targetPath + FileAttribute.SEPARATOR;
         final String originalPathFolder = originalPath + FileAttribute.SEPARATOR;
+        final String targetPathFolder = targetPath + FileAttribute.SEPARATOR;
         final List<FileData> originalFileList = fileDataRepository.findAllByPathLike(originalPathFolder + "%");
 
-        List<String> allOriginalPathList = originalFileList.stream().map(FileData::getPath).collect(Collectors.toList());
-        allOriginalPathList.add(originalPath);
-        distributedLock.tryMultiLock(allOriginalPathList, () -> {
+        List<String> allPathList = originalFileList.stream().map(FileData::getPath).collect(Collectors.toList());
+        allPathList.add(originalPath);
+        allPathList.add(targetPath);
+        distributedLock.tryMultiLock(allPathList, () -> {
+            originalFile.setPath(targetPath);
             originalFile.setName(targetName);
             for (FileData fileData : originalFileList) {
                 String filePath = fileData.getPath();
@@ -190,8 +186,8 @@ public class FileDataService {
             }
             originalFileList.add(originalFile);
 
-            systemFile.move(originalPath, targetPath);
             fileDataRepository.saveAll(originalFileList);
+            systemFile.move(originalPath, targetPath);
         });
     }
 
@@ -233,36 +229,6 @@ public class FileDataService {
         return ResponseEntity.ok()
                 .contentType(contentType)
                 .body(streamingResponseBody);
-    }
-
-    private record ZipStreamingResponseBody(List<Path> pathList) implements StreamingResponseBody {
-        @Override
-        public void writeTo(@Nonnull OutputStream out) throws IOException {
-            try (ZipOutputStream zos = new ZipOutputStream(out, StandardCharsets.UTF_8)) {
-                zos.setLevel(Deflater.BEST_SPEED);
-                for (Path path : pathList) {
-                    addToZip(zos, path, "");
-                }
-            }
-        }
-
-        private void addToZip(ZipOutputStream zos, Path path, String parent) throws IOException {
-            String entryName = parent + path.getFileName();
-            if (Files.isDirectory(path)) {
-                entryName += FileAttribute.SEPARATOR;
-                zos.putNextEntry(new ZipEntry(entryName));
-                zos.closeEntry();
-                try (DirectoryStream<Path> children = Files.newDirectoryStream(path)) {
-                    for (Path child : children) {
-                        addToZip(zos, child, entryName);
-                    }
-                }
-            } else {
-                zos.putNextEntry(new ZipEntry(entryName));
-                Files.copy(path, zos);
-                zos.closeEntry();
-            }
-        }
     }
 
 }
