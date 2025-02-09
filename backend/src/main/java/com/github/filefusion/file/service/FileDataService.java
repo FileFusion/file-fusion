@@ -157,6 +157,25 @@ public class FileDataService {
         });
     }
 
+    public void rename(String path, String originalName, String targetName) {
+        if (!StringUtils.hasLength(originalName)) {
+            throw new HttpException(I18n.get("renameFileSelectCheck"));
+        }
+        if (!StringUtils.hasLength(targetName)) {
+            throw new HttpException(I18n.get("fileNameEmpty"));
+        }
+        String originalPath = path + FileAttribute.SEPARATOR + originalName;
+        FileData originalFile = fileDataRepository.findFirstByPath(originalPath);
+        if (originalFile == null) {
+            throw new HttpException(I18n.get("originalFileNotExist"));
+        }
+        String targetPath = path + FileAttribute.SEPARATOR + targetName;
+        if (fileDataRepository.existsByPath(targetPath)) {
+            throw new HttpException(I18n.get("fileNameAlreadyExists"));
+        }
+        systemFile.move(originalPath, targetPath);
+    }
+
     public SubmitDownloadFilesResponse submitDownload(List<String> pathList) {
         String downloadId = ULID.randomULID();
         RList<String> pathRList = redissonClient.getList(RedisAttribute.DOWNLOAD_ID_PREFIX + RedisAttribute.SEPARATOR + downloadId);

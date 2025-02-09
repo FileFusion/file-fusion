@@ -4,6 +4,7 @@ import com.github.filefusion.common.HttpException;
 import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.constant.SorterOrder;
 import com.github.filefusion.file.entity.FileData;
+import com.github.filefusion.file.model.RenameFileModel;
 import com.github.filefusion.file.model.SubmitDownloadFilesResponse;
 import com.github.filefusion.file.service.FileDataService;
 import com.github.filefusion.util.CurrentUser;
@@ -131,6 +132,23 @@ public class FileDataController {
             path = CurrentUser.get().getId() + FileAttribute.SEPARATOR + path;
         }
         fileDataService.upload(file, name, path, type, lastModified);
+    }
+
+    /**
+     * rename file
+     *
+     * @param renameFileModel rename file info
+     */
+    @PostMapping("/_rename")
+    @PreAuthorize("hasAuthority('personal_file:edit')")
+    public void rename(@RequestBody RenameFileModel renameFileModel) {
+        String path = renameFileModel.getPath();
+        if (!StringUtils.hasLength(path)) {
+            path = CurrentUser.get().getId();
+        } else {
+            path = CurrentUser.get().getId() + FileAttribute.SEPARATOR + path;
+        }
+        fileDataService.rename(path, renameFileModel.getOriginalName(), renameFileModel.getTargetName());
     }
 
     /**

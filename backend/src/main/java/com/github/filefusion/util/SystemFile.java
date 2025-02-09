@@ -42,6 +42,17 @@ public class SystemFile {
         return resolvedPath;
     }
 
+    public List<Path> validatePaths(List<String> pathList) {
+        return pathList.stream()
+                .map(this::resolveSafePath)
+                .peek(path -> {
+                    if (!Files.exists(path)) {
+                        throw new HttpException(I18n.get("noOperationPermission"));
+                    }
+                })
+                .toList();
+    }
+
     public void createFolder(String path) {
         Path targetPath = resolveSafePath(path);
         try {
@@ -73,6 +84,22 @@ public class SystemFile {
         }
     }
 
+    public void move(String original, String target) {
+        Path originalPath = resolveSafePath(original);
+        if (!Files.exists(originalPath)) {
+            throw new HttpException(I18n.get("originalFileNotExist"));
+        }
+        Path targetPath = resolveSafePath(target);
+        if (Files.exists(targetPath)) {
+            delete(targetPath);
+        }
+        try {
+            Files.move(originalPath, targetPath, StandardCopyOption.ATOMIC_MOVE);
+        } catch (IOException e) {
+            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileMoveFailed"));
+        }
+    }
+
     public void delete(List<String> pathList) {
         final AtomicBoolean success = new AtomicBoolean(true);
         for (String path : pathList) {
@@ -85,17 +112,6 @@ public class SystemFile {
         if (!success.get()) {
             throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileDeletionFailed"));
         }
-    }
-
-    public List<Path> validatePaths(List<String> pathList) {
-        return pathList.stream()
-                .map(this::resolveSafePath)
-                .peek(path -> {
-                    if (!Files.exists(path)) {
-                        throw new HttpException(I18n.get("noOperationPermission"));
-                    }
-                })
-                .toList();
     }
 
     private void delete(Path path) {
