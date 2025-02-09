@@ -15,7 +15,7 @@ export default [
     component: () => import('@/views/files/PersonalFile.vue')
   },
   {
-    path: 'org',
+    path: 'org/:path*',
     name: 'files-org',
     meta: {
       requiresAuth: true,
@@ -26,7 +26,7 @@ export default [
     component: () => import('@/views/files/OrgFile.vue')
   },
   {
-    path: 'recycle-bin',
+    path: 'recycle-bin/:path*',
     name: 'files-recycle-bin',
     meta: {
       requiresAuth: true,
