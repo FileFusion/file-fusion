@@ -85,13 +85,14 @@ import { NButton, NDropdown } from 'naive-ui';
 import { computed, h, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import IconFolderClose from '~icons/icon-park-outline/folder-close';
+import IconDocDetail from '~icons/icon-park-outline/doc-detail';
 import IconDown from '~icons/icon-park-outline/down';
 import IconDownload from '~icons/icon-park-outline/download';
 import IconEditTwo from '~icons/icon-park-outline/edit-two';
 import IconDelete from '~icons/icon-park-outline/delete';
 import { useRequest, usePagination } from 'alova/client';
 import { hasPermission } from '@/commons/permission';
-import { renderIconMethod } from '@/commons/utils';
+import { formatFileSize, renderIconMethod } from '@/commons/utils';
 import { format } from 'date-fns';
 import { useRouter, useRoute } from 'vue-router';
 
@@ -146,7 +147,7 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
             onClick: () => clickFile(row)
           },
           {
-            icon: renderIconMethod(IconFolderClose),
+            icon: renderFileIcon(row),
             default: () => row.name
           }
         );
@@ -162,7 +163,7 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
         if (row.type === 'FOLDER') {
           return '-';
         }
-        return row.size;
+        return formatFileSize(row.size);
       }
     },
     {
@@ -380,6 +381,14 @@ function deleteFiles(filePathList: string[]) {
     return;
   }
   doDeleteFile(filePathList);
+}
+
+function renderFileIcon(file: any) {
+  if (file.type === 'FOLDER') {
+    return renderIconMethod(IconFolderClose);
+  } else {
+    return renderIconMethod(IconDocDetail);
+  }
 }
 
 function clickFile(file: any) {
