@@ -72,6 +72,36 @@
         @update:page-size="fileTablePageSizeChange"
         @update:checked-row-keys="fileTableHandleCheck" />
     </n-card>
+    <n-modal
+      v-model:show="showRenameFileModal"
+      :auto-focus="false"
+      :show-icon="false"
+      :title="$t('files.personal.renameFile')"
+      preset="dialog">
+      <n-spin :show="renameFileLoading">
+        <n-form
+          ref="renameFileFormRef"
+          :model="renameFileForm"
+          :rules="renameFileFormRules">
+          <n-form-item path="name">
+            <n-input
+              v-model:value="renameFileForm.targetName"
+              :placeholder="$t('files.personal.fileName')"
+              clearable
+              maxlength="255"
+              show-count />
+          </n-form-item>
+        </n-form>
+        <div class="text-right">
+          <n-button
+            size="small"
+            type="primary"
+            @click="validateRenameFileForm()">
+            {{ $t('common.save') }}
+          </n-button>
+        </div>
+      </n-spin>
+    </n-modal>
   </div>
 </template>
 
@@ -79,6 +109,8 @@
 import type {
   DataTableColumn,
   DataTableSortState,
+  FormItemRule,
+  FormRules,
   PaginationInfo
 } from 'naive-ui';
 import { NButton, NDropdown } from 'naive-ui';
@@ -122,10 +154,30 @@ const fileNamePattern = ref<string>('');
 const fileTableCheck = ref<string[]>([]);
 const fileTableSorter = ref<DataTableSortState | null>(null);
 
-const showFileEdit = ref(false);
-const currentOptionFile = ref({
-  id: null,
-  name: ''
+const renameFileFormRef = ref<HTMLFormElement>();
+const showRenameFileModal = ref(false);
+const renameFileForm = ref({
+  originalName: '',
+  targetName: ''
+});
+const renameFileFormRules = computed<FormRules>(() => {
+  return {
+    targetName: [
+      {
+        required: true,
+        validator(_rule: FormItemRule, value: string) {
+          if (!value || value.length === 0) {
+            return new Error(t('files.personal.fileNameEmpty'));
+          }
+          if (value.length > 255 || value.indexOf('/') !== -1) {
+            return new Error(t('files.personal.fileNameError'));
+          }
+          return true;
+        },
+        trigger: ['input', 'blur']
+      }
+    ]
+  };
 });
 
 const fileTableColumns = computed<DataTableColumn[]>(() => {
@@ -211,7 +263,7 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
                 label: t('files.personal.rename'),
                 props: {
                   onClick: () => {
-                    editFile(row);
+                    renameFile(row);
                   }
                 },
                 show: permission.value.personalFileEdit
@@ -326,6 +378,22 @@ const { loading: deleteFileLoading, send: doDeleteFile } = useRequest(
   fileTableReload();
 });
 
+const { loading: renameFileLoading, send: doRenameFile } = useRequest(
+  () =>
+    http.Post('/file_data/_rename', {
+      path: filePathPattern.value,
+      originalName: renameFileForm.value.originalName,
+      targetName: renameFileForm.value.targetName
+    }),
+  {
+    immediate: false
+  }
+).onSuccess(() => {
+  window.$msg.success(t('common.saveSuccess'));
+  showRenameFileModal.value = false;
+  fileTableReload();
+});
+
 function fileTableHandleCheck(rowKeys: string[]) {
   fileTableCheck.value = rowKeys;
 }
@@ -350,9 +418,20 @@ function fileTableReload() {
   fileTableReloadEvent();
 }
 
-function editFile(file: any) {
-  currentOptionFile.value = JSON.parse(JSON.stringify(file));
-  showFileEdit.value = true;
+function renameFile(file: any) {
+  renameFileForm.value.originalName = file.name;
+  renameFileForm.value.targetName = file.name;
+  showRenameFileModal.value = true;
+}
+
+function validateRenameFileForm() {
+  if (renameFileFormRef.value) {
+    renameFileFormRef.value.validate((errors: any) => {
+      if (!errors) {
+        doRenameFile();
+      }
+    });
+  }
 }
 
 function downloadFiles(filePathList: string[]) {

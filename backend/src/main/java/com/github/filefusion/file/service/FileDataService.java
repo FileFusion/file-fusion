@@ -157,23 +157,42 @@ public class FileDataService {
         });
     }
 
-    public void rename(String path, String originalName, String targetName) {
+    public void rename(String path, String originalName, final String targetName) {
         if (!StringUtils.hasLength(originalName)) {
             throw new HttpException(I18n.get("renameFileSelectCheck"));
         }
-        if (!StringUtils.hasLength(targetName)) {
-            throw new HttpException(I18n.get("fileNameEmpty"));
-        }
-        String originalPath = path + FileAttribute.SEPARATOR + originalName;
-        FileData originalFile = fileDataRepository.findFirstByPath(originalPath);
+        final String originalPath = path + FileAttribute.SEPARATOR + originalName;
+        final FileData originalFile = fileDataRepository.findFirstByPath(originalPath);
         if (originalFile == null) {
             throw new HttpException(I18n.get("originalFileNotExist"));
         }
-        String targetPath = path + FileAttribute.SEPARATOR + targetName;
+
+        if (!StringUtils.hasLength(targetName)) {
+            throw new HttpException(I18n.get("fileNameEmpty"));
+        }
+        final String targetPath = path + FileAttribute.SEPARATOR + targetName;
         if (fileDataRepository.existsByPath(targetPath)) {
             throw new HttpException(I18n.get("fileNameAlreadyExists"));
         }
-        systemFile.move(originalPath, targetPath);
+
+        final String targetPathFolder = targetPath + FileAttribute.SEPARATOR;
+        final String originalPathFolder = originalPath + FileAttribute.SEPARATOR;
+        final List<FileData> originalFileList = fileDataRepository.findAllByPathLike(originalPathFolder + "%");
+
+        List<String> allOriginalPathList = originalFileList.stream().map(FileData::getPath).collect(Collectors.toList());
+        allOriginalPathList.add(originalPath);
+        distributedLock.tryMultiLock(allOriginalPathList, () -> {
+            originalFile.setName(targetName);
+            for (FileData fileData : originalFileList) {
+                String filePath = fileData.getPath();
+                filePath = filePath.substring(originalPathFolder.length(), filePath.length() - 1);
+                fileData.setPath(targetPathFolder + filePath);
+            }
+            originalFileList.add(originalFile);
+
+            systemFile.move(originalPath, targetPath);
+            fileDataRepository.saveAll(originalFileList);
+        });
     }
 
     public SubmitDownloadFilesResponse submitDownload(List<String> pathList) {

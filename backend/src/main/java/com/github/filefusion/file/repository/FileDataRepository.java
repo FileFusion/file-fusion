@@ -38,6 +38,14 @@ public interface FileDataRepository extends JpaRepository<FileData, String> {
     List<FileData> findAllByPathOrPathLike(String path, String pathLike);
 
     /**
+     * findAllByPathLike
+     *
+     * @param pathLike path like
+     * @return file list
+     */
+    List<FileData> findAllByPathLike(String pathLike);
+
+    /**
      * deleteAllByPathIn
      *
      * @param pathList path list
