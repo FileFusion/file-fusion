@@ -33,17 +33,12 @@ spring:
   flyway:
     locations: classpath:/db/migration
     table: db_version
+  h2:
+    console:
+      enabled: false
 logging:
   level:
     org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver: ERROR
-management:
-  endpoints:
-    web:
-      exposure:
-        include: '*'
-  endpoint:
-    health:
-      show-details: always
 security:
   all-whitelist:
   whitelist:
