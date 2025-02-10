@@ -1,32 +1,30 @@
 <template>
   <div>
     <n-card hoverable>
-      <n-grid :cols="24">
-        <n-gi :span="14">
-          <n-flex>
-            <n-button
-              v-permission="'personal_file:download'"
-              :loading="downloadFileLoading"
-              type="primary"
-              @click="downloadFiles(fileTableCheck)">
-              {{ $t('files.personal.download') }}
-            </n-button>
-            <n-popconfirm
-              :positive-button-props="{ type: 'error' }"
-              @positive-click="deleteFiles(fileTableCheck)">
-              <template #trigger>
-                <n-button
-                  v-permission="'personal_file:delete'"
-                  :loading="deleteFileLoading"
-                  type="error">
-                  {{ $t('common.delete') }}
-                </n-button>
-              </template>
-              {{ $t('common.batchDeleteConfirm') }}
-            </n-popconfirm>
-          </n-flex>
-        </n-gi>
-        <n-gi :span="10">
+      <n-flex justify="space-between">
+        <n-flex>
+          <n-button
+            v-permission="'personal_file:download'"
+            :loading="downloadFileLoading"
+            type="primary"
+            @click="downloadFiles(fileTableCheck)">
+            {{ $t('files.personal.download') }}
+          </n-button>
+          <n-popconfirm
+            :positive-button-props="{ type: 'error' }"
+            @positive-click="deleteFiles(fileTableCheck)">
+            <template #trigger>
+              <n-button
+                v-permission="'personal_file:delete'"
+                :loading="deleteFileLoading"
+                type="error">
+                {{ $t('common.delete') }}
+              </n-button>
+            </template>
+            {{ $t('common.batchDeleteConfirm') }}
+          </n-popconfirm>
+        </n-flex>
+        <n-flex :wrap="false" justify="end">
           <n-input-group>
             <n-input
               v-model:value="fileNamePattern"
@@ -45,8 +43,20 @@
               {{ $t('common.search') }}
             </n-button>
           </n-input-group>
-        </n-gi>
-      </n-grid>
+          <n-radio-group v-model:value="fileShowType">
+            <n-radio-button value="grid">
+              <n-icon>
+                <i-grid-four />
+              </n-icon>
+            </n-radio-button>
+            <n-radio-button value="table">
+              <n-icon>
+                <i-list-two />
+              </n-icon>
+            </n-radio-button>
+          </n-radio-group>
+        </n-flex>
+      </n-flex>
       <n-data-table
         :bordered="false"
         :checked-row-keys="fileTableCheck"
@@ -150,6 +160,7 @@ window.$event.on('UploadView:FileChangeEvent', () => {
   fileTableReload();
 });
 
+const fileShowType = ref<string>('grid');
 const fileNamePattern = ref<string>('');
 const fileTableCheck = ref<string[]>([]);
 const fileTableSorter = ref<DataTableSortState | null>(null);

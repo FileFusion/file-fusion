@@ -1,31 +1,29 @@
 <template>
   <div>
     <n-card hoverable>
-      <n-grid :cols="24">
-        <n-gi :span="14">
-          <n-flex>
-            <n-button
-              v-permission="'user_management:add'"
-              type="primary"
-              @click="addUser()">
-              {{ $t('common.add') }}
-            </n-button>
-            <n-popconfirm
-              :positive-button-props="{ type: 'error' }"
-              @positive-click="deleteUsers(userTableCheck)">
-              <template #trigger>
-                <n-button
-                  v-permission="'user_management:delete'"
-                  :loading="deleteUserLoading"
-                  type="error">
-                  {{ $t('common.delete') }}
-                </n-button>
-              </template>
-              {{ $t('common.batchDeleteConfirm') }}
-            </n-popconfirm>
-          </n-flex>
-        </n-gi>
-        <n-gi :span="10">
+      <n-flex justify="space-between">
+        <n-flex>
+          <n-button
+            v-permission="'user_management:add'"
+            type="primary"
+            @click="addUser()">
+            {{ $t('common.add') }}
+          </n-button>
+          <n-popconfirm
+            :positive-button-props="{ type: 'error' }"
+            @positive-click="deleteUsers(userTableCheck)">
+            <template #trigger>
+              <n-button
+                v-permission="'user_management:delete'"
+                :loading="deleteUserLoading"
+                type="error">
+                {{ $t('common.delete') }}
+              </n-button>
+            </template>
+            {{ $t('common.batchDeleteConfirm') }}
+          </n-popconfirm>
+        </n-flex>
+        <n-flex :wrap="false" justify="end">
           <n-input-group>
             <n-input
               v-model:value="userPattern"
@@ -52,8 +50,8 @@
               {{ $t('common.search') }}
             </n-button>
           </n-input-group>
-        </n-gi>
-      </n-grid>
+        </n-flex>
+      </n-flex>
       <n-data-table
         :bordered="false"
         :checked-row-keys="userTableCheck"

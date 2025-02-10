@@ -37,54 +37,48 @@
               :model="currentOrg"
               :rules="orgFormRules"
               inline>
-              <n-grid :cols="24" :x-gap="24">
-                <n-form-item-gi
-                  :label="$t('systemSettings.org.orgName')"
-                  :span="9"
-                  path="name">
-                  <n-input
-                    v-model:value="currentOrg.name"
-                    :placeholder="$t('systemSettings.org.orgName')"
-                    clearable
-                    maxlength="100"
-                    show-count />
-                </n-form-item-gi>
-                <n-form-item-gi
-                  :label="$t('common.description')"
-                  :span="10"
-                  path="description">
-                  <n-input
-                    v-model:value="currentOrg.description"
-                    :placeholder="$t('common.description')"
-                    clearable
-                    maxlength="500"
-                    show-count />
-                </n-form-item-gi>
-                <n-form-item-gi v-permission="'org:edit'" :span="2">
-                  <n-button type="primary" @click="validateOrgForm()">
-                    {{ $t('common.save') }}
-                  </n-button>
-                </n-form-item-gi>
-                <n-form-item-gi v-permission="'org:delete'" :span="3">
-                  <n-popconfirm
-                    :positive-button-props="{
-                      type: 'error'
-                    }"
-                    @positive-click="deleteOrg()">
-                    <template #trigger>
-                      <n-button type="error">
-                        {{ $t('common.delete') }}
-                      </n-button>
-                    </template>
-                    {{ $t('common.deleteConfirm') }}
-                  </n-popconfirm>
-                </n-form-item-gi>
-              </n-grid>
+              <n-form-item
+                :label="$t('systemSettings.org.orgName')"
+                path="name">
+                <n-input
+                  v-model:value="currentOrg.name"
+                  :placeholder="$t('systemSettings.org.orgName')"
+                  clearable
+                  maxlength="100"
+                  show-count />
+              </n-form-item>
+              <n-form-item :label="$t('common.description')" path="description">
+                <n-input
+                  v-model:value="currentOrg.description"
+                  :placeholder="$t('common.description')"
+                  clearable
+                  maxlength="500"
+                  show-count />
+              </n-form-item>
+              <n-form-item v-permission="'org:edit'">
+                <n-button type="primary" @click="validateOrgForm()">
+                  {{ $t('common.save') }}
+                </n-button>
+              </n-form-item>
+              <n-form-item v-permission="'org:delete'">
+                <n-popconfirm
+                  :positive-button-props="{
+                    type: 'error'
+                  }"
+                  @positive-click="deleteOrg()">
+                  <template #trigger>
+                    <n-button type="error">
+                      {{ $t('common.delete') }}
+                    </n-button>
+                  </template>
+                  {{ $t('common.deleteConfirm') }}
+                </n-popconfirm>
+              </n-form-item>
             </n-form>
           </n-spin>
           <n-spin v-if="!currentOrg.new" :show="removeUsersFromOrgLoading">
-            <n-grid :cols="24" class="items-center">
-              <n-gi :span="14" class="flex items-center gap-2">
+            <n-flex justify="space-between">
+              <n-flex align="center" :size="4">
                 <n-text strong>
                   {{ $t('systemSettings.org.orgUsers') }}
                 </n-text>
@@ -111,8 +105,8 @@
                   </template>
                   {{ $t('systemSettings.org.orgUsersDeleteConfirm') }}
                 </n-popconfirm>
-              </n-gi>
-              <n-gi :span="10">
+              </n-flex>
+              <n-flex :wrap="false" justify="end">
                 <n-input-group>
                   <n-input
                     v-model:value="userPattern"
@@ -139,8 +133,8 @@
                     {{ $t('common.search') }}
                   </n-button>
                 </n-input-group>
-              </n-gi>
-            </n-grid>
+              </n-flex>
+            </n-flex>
             <n-data-table
               :bordered="false"
               :checked-row-keys="userTableCheck"
