@@ -57,20 +57,29 @@
           </n-radio-group>
         </n-flex>
       </n-flex>
-      <n-flex v-if="fileShowType === 'grid'" class="mt-3">
+      <n-flex v-if="fileShowType === 'grid'" class="mt-3" :size="[50, 50]">
         <n-card
           v-for="(fileData, index) in fileTableData"
           :key="index"
           :hoverable="true"
           :bordered="false"
-          class="w-36 cursor-pointer">
-          <n-flex align="center" justify="center">
-            <component :is="renderFileIcon(fileData)" />
-            <n-ellipsis :line-clamp="1">{{ fileData.name }}</n-ellipsis>
-            <n-text depth="3">
-              {{ format(fileData.lastModifiedDate, 'yyyy-MM-dd HH:mm') }}
-            </n-text>
-          </n-flex>
+          class="w-32 cursor-pointer"
+          content-style="padding: 0;">
+          <div class="pb-2 pl-1 pr-1 pt-4 text-center">
+            <div>
+              <file-preview :type="fileData.mimeType" />
+            </div>
+            <div class="mt-3">
+              <n-ellipsis :line-clamp="2">
+                {{ fileData.name }}
+              </n-ellipsis>
+            </div>
+            <div>
+              <n-text depth="3">
+                {{ format(fileData.lastModifiedDate, 'yyyy-MM-dd HH:mm') }}
+              </n-text>
+            </div>
+          </div>
         </n-card>
       </n-flex>
       <n-data-table
@@ -158,6 +167,7 @@ import { hasPermission } from '@/commons/permission';
 import { formatFileSize, renderIconMethod } from '@/commons/utils';
 import { format } from 'date-fns';
 import { useRouter, useRoute } from 'vue-router';
+import FilePreview from '@/views/files/components/FilePreview.vue';
 
 const { t } = useI18n();
 const http = window.$http;

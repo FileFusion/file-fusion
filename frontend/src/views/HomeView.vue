@@ -19,6 +19,7 @@
 </template>
 
 <script lang="ts" setup>
+import UploadView from '@/views/files/components/UploadView.vue';
 import { mainStore } from '@/store';
 
 const mStore = mainStore();
