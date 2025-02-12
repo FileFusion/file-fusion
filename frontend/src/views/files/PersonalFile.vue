@@ -57,30 +57,49 @@
           </n-radio-group>
         </n-flex>
       </n-flex>
+      <n-flex v-if="fileShowType === 'grid'" class="mt-3">
+        <n-card
+          v-for="(fileData, index) in fileTableData"
+          :key="index"
+          :hoverable="true"
+          :bordered="false"
+          class="w-36 cursor-pointer">
+          <n-flex align="center" justify="center">
+            <component :is="renderFileIcon(fileData)" />
+            <n-ellipsis :line-clamp="1">{{ fileData.name }}</n-ellipsis>
+            <n-text depth="3">
+              {{ format(fileData.lastModifiedDate, 'yyyy-MM-dd HH:mm') }}
+            </n-text>
+          </n-flex>
+        </n-card>
+      </n-flex>
       <n-data-table
+        v-if="fileShowType === 'table'"
         :bordered="false"
         :checked-row-keys="fileTableCheck"
         :columns="fileTableColumns"
         :data="fileTableData"
         :loading="fileTableLoading"
-        :pagination="{
-          page: fileTablePage,
-          pageSize: fileTablePageSize,
-          pageSizes: [5, 10, 50],
-          itemCount: fileTableTotal,
-          showSizePicker: true,
-          showQuickJumper: true,
-          prefix: (pagination: PaginationInfo) => {
-            return t('common.total') + ': ' + pagination.itemCount;
-          }
-        }"
         :row-key="(row: any) => row.path"
         remote
         class="mt-3"
         @update:sorter="fileTableHandleSorter"
-        @update:page="fileTablePageChange"
-        @update:page-size="fileTablePageSizeChange"
         @update:checked-row-keys="fileTableHandleCheck" />
+      <n-pagination
+        class="mt-3 justify-end"
+        :page="fileTablePage"
+        :page-size="fileTablePageSize"
+        :page-sizes="[5, 10, 50]"
+        :item-count="fileTableTotal"
+        :show-size-picker="true"
+        :show-quick-jumper="true"
+        :prefix="
+          (pagination: PaginationInfo) => {
+            return t('common.total') + ': ' + pagination.itemCount;
+          }
+        "
+        @update:page="fileTablePageChange"
+        @update:page-size="fileTablePageSizeChange" />
     </n-card>
     <n-modal
       v-model:show="showRenameFileModal"
@@ -123,9 +142,11 @@ import type {
   FormRules,
   PaginationInfo
 } from 'naive-ui';
-import { NButton, NDropdown } from 'naive-ui';
+import { NButton, NDropdown, useThemeVars } from 'naive-ui';
 import { computed, h, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import IconSolidFolderClose from '~icons/icon-park-solid/folder-close';
+import IconSolidDocDetail from '~icons/icon-park-solid/doc-detail';
 import IconFolderClose from '~icons/icon-park-outline/folder-close';
 import IconDocDetail from '~icons/icon-park-outline/doc-detail';
 import IconDown from '~icons/icon-park-outline/down';
@@ -142,6 +163,7 @@ const { t } = useI18n();
 const http = window.$http;
 const router = useRouter();
 const route = useRoute();
+const themeVars = useThemeVars();
 
 const permission = ref({
   personalFileDownload: hasPermission('personal_file:download'),
@@ -237,7 +259,7 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
       sorter: true,
       render: (row: any) => {
         if (row.lastModifiedDate) {
-          return format(row.lastModifiedDate, 'yyyy-MM-dd HH:mm:ss');
+          return format(row.lastModifiedDate, 'yyyy-MM-dd HH:mm');
         }
         return '';
       }
@@ -474,10 +496,26 @@ function deleteFiles(filePathList: string[]) {
 }
 
 function renderFileIcon(file: any) {
-  if (file.type === 'FOLDER') {
-    return renderIconMethod(IconFolderClose);
+  if (fileShowType.value === 'grid') {
+    if (file.type === 'FOLDER') {
+      return renderIconMethod(
+        IconSolidFolderClose,
+        themeVars.value.primaryColor,
+        96
+      );
+    } else {
+      return renderIconMethod(
+        IconSolidDocDetail,
+        themeVars.value.primaryColor,
+        96
+      );
+    }
   } else {
-    return renderIconMethod(IconDocDetail);
+    if (file.type === 'FOLDER') {
+      return renderIconMethod(IconFolderClose);
+    } else {
+      return renderIconMethod(IconDocDetail);
+    }
   }
 }
 

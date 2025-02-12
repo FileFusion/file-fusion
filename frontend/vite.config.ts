@@ -35,9 +35,10 @@ export default defineConfig({
         NaiveUiResolver(),
         IconsResolver({
           prefix: false,
-          enabledCollections: ['icon-park-outline'],
+          enabledCollections: ['icon-park-outline', 'icon-park-solid'],
           alias: {
-            i: 'icon-park-outline'
+            i: 'icon-park-outline',
+            'i-solid': 'icon-park-solid'
           }
         })
       ]
