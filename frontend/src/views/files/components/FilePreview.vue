@@ -22,6 +22,9 @@ import VideoIconWhite from '@/assets/images/file-icons/white/video.png';
 import ArchiveIconWhite from '@/assets/images/file-icons/white/archive.png';
 import CodeIconWhite from '@/assets/images/file-icons/white/code.png';
 import PdfIconWhite from '@/assets/images/file-icons/white/pdf.png';
+import WordIconWhite from '@/assets/images/file-icons/white/word.png';
+import PptIconWhite from '@/assets/images/file-icons/white/ppt.png';
+import ExcelIconWhite from '@/assets/images/file-icons/white/excel.png';
 
 import FileIconBlack from '@/assets/images/file-icons/black/file.png';
 import FolderIconBlack from '@/assets/images/file-icons/black/folder.png';
@@ -33,6 +36,9 @@ import VideoIconBlack from '@/assets/images/file-icons/black/video.png';
 import ArchiveIconBlack from '@/assets/images/file-icons/black/archive.png';
 import CodeIconBlack from '@/assets/images/file-icons/black/code.png';
 import PdfIconBlack from '@/assets/images/file-icons/black/pdf.png';
+import WordIconBlack from '@/assets/images/file-icons/black/word.png';
+import PptIconBlack from '@/assets/images/file-icons/black/ppt.png';
+import ExcelIconBlack from '@/assets/images/file-icons/black/excel.png';
 
 const props = defineProps({
   type: {
@@ -85,6 +91,18 @@ const fileIconsWhite = ref<any>({
   'text/javascript': CodeIconWhite,
   'text/xml': CodeIconWhite,
 
+  //office
+  'application/msword': WordIconWhite,
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+    WordIconWhite,
+  'application/vnd.ms-powerpoint': PptIconWhite,
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation':
+    PptIconWhite,
+  'application/vnd.ms-excel': ExcelIconWhite,
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+    ExcelIconWhite,
+  'text/csv': ExcelIconWhite,
+
   //other
   'application/ogg': AudioIconWhite,
   'application/vnd.ms-fontobject': FontIconWhite,
@@ -128,6 +146,18 @@ const fileIconsBlack = ref<any>({
   'text/html': CodeIconBlack,
   'text/javascript': CodeIconBlack,
   'text/xml': CodeIconBlack,
+
+  //office
+  'application/msword': WordIconBlack,
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+    WordIconBlack,
+  'application/vnd.ms-powerpoint': PptIconBlack,
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation':
+    PptIconBlack,
+  'application/vnd.ms-excel': ExcelIconBlack,
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+    ExcelIconBlack,
+  'text/csv': ExcelIconBlack,
 
   //other
   'application/ogg': AudioIconBlack,
