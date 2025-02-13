@@ -57,31 +57,61 @@
           </n-radio-group>
         </n-flex>
       </n-flex>
-      <n-flex v-if="fileShowType === 'grid'" class="mt-3" :size="[50, 50]">
-        <n-card
-          v-for="(fileData, index) in fileTableData"
-          :key="index"
-          :hoverable="true"
-          :bordered="false"
-          class="w-32 cursor-pointer"
-          content-style="padding: 0;">
-          <div class="pb-2 pl-1 pr-1 pt-4 text-center">
-            <div>
-              <file-preview :type="fileData.mimeType" />
-            </div>
-            <div class="mt-3">
-              <n-ellipsis :line-clamp="2">
-                {{ fileData.name }}
-              </n-ellipsis>
-            </div>
-            <div>
-              <n-text depth="3">
-                {{ format(fileData.lastModifiedDate, 'yyyy-MM-dd HH:mm') }}
-              </n-text>
-            </div>
-          </div>
-        </n-card>
-      </n-flex>
+      <n-spin v-if="fileShowType === 'grid'" :show="fileTableLoading">
+        <n-checkbox-group
+          v-if="fileTableData.length > 0"
+          v-model:value="fileTableCheck">
+          <n-flex class="mt-3" :size="[50, 20]">
+            <n-card
+              v-for="(fileData, index) in fileTableData"
+              :key="index"
+              :hoverable="true"
+              :bordered="false"
+              class="w-32 cursor-pointer"
+              content-style="position: relative;padding: 0;"
+              @click="clickFile(fileData)"
+              @mouseover="fileData.showOperate = true"
+              @mouseleave="fileData.showOperate = false">
+              <n-checkbox
+                v-if="fileData.showOperate || fileGridIsCheck(fileData.path)"
+                class="absolute left-2 top-2 z-1"
+                :value="fileData.path"
+                @click.stop="" />
+              <n-button
+                v-if="fileData.showOperate"
+                text
+                type="primary"
+                class="absolute right-2 top-2 z-1"
+                @click.stop="">
+                <n-icon :size="18">
+                  <i-more-two />
+                </n-icon>
+              </n-button>
+              <div class="relative pb-2 pl-1 pr-1 pt-4 text-center">
+                <div>
+                  <file-preview :type="fileData.mimeType" />
+                </div>
+                <div class="mt-3">
+                  <n-ellipsis :line-clamp="2">
+                    {{ fileData.name }}
+                  </n-ellipsis>
+                </div>
+                <div>
+                  <n-text depth="3">
+                    <n-time
+                      :time="fileData.lastModifiedDate"
+                      format="yyyy-MM-dd HH:mm" />
+                  </n-text>
+                </div>
+              </div>
+            </n-card>
+          </n-flex>
+        </n-checkbox-group>
+        <n-empty
+          v-if="fileTableData.length === 0"
+          :description="t('common.noData')"
+          class="mb-12 mt-12"></n-empty>
+      </n-spin>
       <n-data-table
         v-if="fileShowType === 'table'"
         :bordered="false"
@@ -151,7 +181,7 @@ import type {
   FormRules,
   PaginationInfo
 } from 'naive-ui';
-import { NButton, NDropdown } from 'naive-ui';
+import { NButton, NDropdown, NTime } from 'naive-ui';
 import { computed, h, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import IconDown from '~icons/icon-park-outline/down';
@@ -161,7 +191,6 @@ import IconDelete from '~icons/icon-park-outline/delete';
 import { useRequest, usePagination } from 'alova/client';
 import { hasPermission } from '@/commons/permission';
 import { formatFileSize, renderIconMethod } from '@/commons/utils';
-import { format } from 'date-fns';
 import { useRouter, useRoute } from 'vue-router';
 import FilePreview from '@/views/files/components/FilePreview.vue';
 
@@ -267,10 +296,10 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
       width: 170,
       sorter: true,
       render: (row: any) => {
-        if (row.lastModifiedDate) {
-          return format(row.lastModifiedDate, 'yyyy-MM-dd HH:mm');
-        }
-        return '';
+        return h(NTime, {
+          time: row.lastModifiedDate,
+          format: 'yyyy-MM-dd HH:mm'
+        });
       }
     }
   ];
@@ -435,6 +464,10 @@ const { loading: renameFileLoading, send: doRenameFile } = useRequest(
   showRenameFileModal.value = false;
   fileTableReload();
 });
+
+function fileGridIsCheck(rowKey: string) {
+  return fileTableCheck.value.includes(rowKey);
+}
 
 function fileTableHandleCheck(rowKeys: string[]) {
   fileTableCheck.value = rowKeys;

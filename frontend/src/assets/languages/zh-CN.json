@@ -28,7 +28,8 @@
     "info": "信息",
     "success": "成功",
     "warning": "警告",
-    "error": "错误"
+    "error": "错误",
+    "noData": "无数据"
   },
   "theme": {
     "syncSystem": "跟随系统",

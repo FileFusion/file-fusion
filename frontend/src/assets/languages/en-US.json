@@ -28,7 +28,8 @@
     "info": "Info",
     "success": "Success",
     "warning": "Warning",
-    "error": "Error"
+    "error": "Error",
+    "noData": "No data"
   },
   "theme": {
     "syncSystem": "Sync with system",
