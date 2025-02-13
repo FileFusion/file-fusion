@@ -17,7 +17,7 @@
 <script lang="ts" setup>
 import { useRoute, useRouter } from 'vue-router';
 import { computed } from 'vue';
-import IconDocDetail from '~icons/icon-park-outline/doc-detail';
+import IconFolderClose from '~icons/icon-park-outline/folder-close';
 
 const router = useRouter();
 const route = useRoute();
@@ -55,7 +55,7 @@ const breadcrumb = computed(() => {
       b.push({
         name: route.name,
         label: filePathList[i],
-        icon: IconDocDetail,
+        icon: IconFolderClose,
         i18n: false,
         params: {
           path: [...filePathParamList]
