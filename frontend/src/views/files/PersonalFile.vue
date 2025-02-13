@@ -151,13 +151,9 @@ import type {
   FormRules,
   PaginationInfo
 } from 'naive-ui';
-import { NButton, NDropdown, useThemeVars } from 'naive-ui';
+import { NButton, NDropdown } from 'naive-ui';
 import { computed, h, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import IconSolidFolderClose from '~icons/icon-park-solid/folder-close';
-import IconSolidDocDetail from '~icons/icon-park-solid/doc-detail';
-import IconFolderClose from '~icons/icon-park-outline/folder-close';
-import IconDocDetail from '~icons/icon-park-outline/doc-detail';
 import IconDown from '~icons/icon-park-outline/down';
 import IconDownload from '~icons/icon-park-outline/download';
 import IconEditTwo from '~icons/icon-park-outline/edit-two';
@@ -173,7 +169,6 @@ const { t } = useI18n();
 const http = window.$http;
 const router = useRouter();
 const route = useRoute();
-const themeVars = useThemeVars();
 
 const permission = ref({
   personalFileDownload: hasPermission('personal_file:download'),
@@ -242,7 +237,11 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
             onClick: () => clickFile(row)
           },
           {
-            icon: renderFileIcon(row),
+            icon: () =>
+              h(FilePreview, {
+                type: row.mimeType,
+                size: 18
+              }),
             default: () => row.name
           }
         );
@@ -503,30 +502,6 @@ function deleteFiles(filePathList: string[]) {
     return;
   }
   doDeleteFile(filePathList);
-}
-
-function renderFileIcon(file: any) {
-  if (fileShowType.value === 'grid') {
-    if (file.type === 'FOLDER') {
-      return renderIconMethod(
-        IconSolidFolderClose,
-        themeVars.value.primaryColor,
-        96
-      );
-    } else {
-      return renderIconMethod(
-        IconSolidDocDetail,
-        themeVars.value.primaryColor,
-        96
-      );
-    }
-  } else {
-    if (file.type === 'FOLDER') {
-      return renderIconMethod(IconFolderClose);
-    } else {
-      return renderIconMethod(IconDocDetail);
-    }
-  }
 }
 
 function clickFile(file: any) {
