@@ -26,6 +26,7 @@
         </n-flex>
         <n-flex :wrap="false" justify="end">
           <n-dropdown
+            v-if="fileShowType === 'grid'"
             :options="getFileTableSorterOptions"
             :show-arrow="true"
             trigger="click">
