@@ -70,23 +70,30 @@
               class="w-32 cursor-pointer"
               content-style="position: relative;padding: 0;"
               @click="clickFile(fileData)"
-              @mouseover="fileData.showOperate = true"
+              @mouseenter="fileData.showOperate = true"
               @mouseleave="fileData.showOperate = false">
               <n-checkbox
                 v-if="fileData.showOperate || fileGridIsCheck(fileData.path)"
                 class="absolute left-2 top-2 z-1"
                 :value="fileData.path"
                 @click.stop="" />
-              <n-button
-                v-if="fileData.showOperate"
-                text
-                type="primary"
-                class="absolute right-2 top-2 z-1"
-                @click.stop="">
-                <n-icon :size="18">
-                  <i-more-two />
-                </n-icon>
-              </n-button>
+              <n-dropdown
+                v-if="fileData.showOperate || fileData.showOperateMenu"
+                trigger="manual"
+                :options="getFileDropdownOptions(fileData)"
+                :show="fileData.showOperateMenu">
+                <n-button
+                  text
+                  type="primary"
+                  class="absolute right-2 top-2 z-1"
+                  @click.stop="
+                    fileData.showOperateMenu = !fileData.showOperateMenu
+                  ">
+                  <n-icon :size="18">
+                    <i-more-two />
+                  </n-icon>
+                </n-button>
+              </n-dropdown>
               <div class="relative pb-2 pl-1 pr-1 pt-4 text-center">
                 <div>
                   <file-preview :type="fileData.mimeType" />
@@ -247,6 +254,47 @@ const renameFileFormRules = computed<FormRules>(() => {
   };
 });
 
+function getFileDropdownOptions(file: any) {
+  return [
+    {
+      icon: renderIconMethod(IconDownload),
+      key: 'download',
+      label: t('files.personal.download'),
+      props: {
+        onClick: () => {
+          file.showOperateMenu = false;
+          downloadFiles([file.path]);
+        }
+      },
+      show: permission.value.personalFileDownload
+    },
+    {
+      icon: renderIconMethod(IconEditTwo),
+      key: 'edit',
+      label: t('files.personal.rename'),
+      props: {
+        onClick: () => {
+          file.showOperateMenu = false;
+          renameFile(file);
+        }
+      },
+      show: permission.value.personalFileEdit
+    },
+    {
+      icon: renderIconMethod(IconDelete),
+      key: 'delete',
+      label: t('common.delete'),
+      props: {
+        onClick: () => {
+          file.showOperateMenu = false;
+          deleteFile(file);
+        }
+      },
+      show: permission.value.personalFileDelete
+    }
+  ];
+}
+
 const fileTableColumns = computed<DataTableColumn[]>(() => {
   const tableColumn: DataTableColumn[] = [
     {
@@ -316,41 +364,7 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
         return h(
           NDropdown,
           {
-            options: [
-              {
-                icon: renderIconMethod(IconDownload),
-                key: 'download',
-                label: t('files.personal.download'),
-                props: {
-                  onClick: () => {
-                    downloadFiles([row.path]);
-                  }
-                },
-                show: permission.value.personalFileDownload
-              },
-              {
-                icon: renderIconMethod(IconEditTwo),
-                key: 'edit',
-                label: t('files.personal.rename'),
-                props: {
-                  onClick: () => {
-                    renameFile(row);
-                  }
-                },
-                show: permission.value.personalFileEdit
-              },
-              {
-                icon: renderIconMethod(IconDelete),
-                key: 'delete',
-                label: t('common.delete'),
-                props: {
-                  onClick: () => {
-                    deleteFile(row);
-                  }
-                },
-                show: permission.value.personalFileDelete
-              }
-            ],
+            options: getFileDropdownOptions(row),
             showArrow: true,
             trigger: 'click'
           },
