@@ -29,7 +29,10 @@
     "success": "成功",
     "warning": "警告",
     "error": "错误",
-    "noData": "无数据"
+    "noData": "无数据",
+    "sort": "排序",
+    "asc": "升序",
+    "desc": "降序"
   },
   "theme": {
     "syncSystem": "跟随系统",

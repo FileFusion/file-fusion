@@ -25,6 +25,19 @@
           </n-popconfirm>
         </n-flex>
         <n-flex :wrap="false" justify="end">
+          <n-dropdown
+            :options="getFileTableSorterOptions"
+            :show-arrow="true"
+            trigger="click">
+            <n-button>
+              <template #icon>
+                <n-icon>
+                  <i-sort-two />
+                </n-icon>
+              </template>
+              {{ t('common.sort') }}
+            </n-button>
+          </n-dropdown>
           <n-input-group>
             <n-input
               v-model:value="fileNamePattern"
@@ -79,6 +92,7 @@
                 @click.stop="" />
               <n-dropdown
                 v-if="fileData.showOperate || fileData.showOperateMenu"
+                :show-arrow="true"
                 trigger="manual"
                 :options="getFileDropdownOptions(fileData)"
                 :show="fileData.showOperateMenu">
@@ -191,6 +205,7 @@ import type {
 import { NButton, NDropdown, NTime } from 'naive-ui';
 import { computed, h, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import IconCheck from '~icons/icon-park-outline/check';
 import IconDown from '~icons/icon-park-outline/down';
 import IconDownload from '~icons/icon-park-outline/download';
 import IconEditTwo from '~icons/icon-park-outline/edit-two';
@@ -226,7 +241,11 @@ window.$event.on('UploadView:FileChangeEvent', () => {
 const fileShowType = ref<string>('grid');
 const fileNamePattern = ref<string>('');
 const fileTableCheck = ref<string[]>([]);
-const fileTableSorter = ref<DataTableSortState | null>(null);
+const fileTableSorter = ref<any>({
+  name: <any>'ascend',
+  size: <any>false,
+  lastModifiedDate: <any>false
+});
 
 const renameFileFormRef = ref<HTMLFormElement>();
 const showRenameFileModal = ref(false);
@@ -305,6 +324,7 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
       key: 'name',
       resizable: true,
       sorter: true,
+      sortOrder: fileTableSorter.value.name,
       render: (row: any) => {
         return h(
           NButton,
@@ -330,6 +350,7 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
       resizable: true,
       width: 170,
       sorter: true,
+      sortOrder: fileTableSorter.value.size,
       render: (row: any) => {
         if (row.type === 'FOLDER') {
           return '-';
@@ -343,6 +364,7 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
       resizable: true,
       width: 170,
       sorter: true,
+      sortOrder: fileTableSorter.value.lastModifiedDate,
       render: (row: any) => {
         return h(NTime, {
           time: row.lastModifiedDate,
@@ -393,15 +415,110 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
 });
 
 const getFileTableSorter = computed(() => {
-  if (!fileTableSorter.value || !fileTableSorter.value.order) {
+  let columnKey = null;
+  let order = null;
+  for (const key in fileTableSorter.value) {
+    const sort = fileTableSorter.value[key];
+    if (sort) {
+      columnKey = key;
+      order = sort;
+      break;
+    }
+  }
+  if (!columnKey || !order) {
     return false;
   }
-  return (
-    'sorter=' +
-    fileTableSorter.value.columnKey +
-    '&sorterOrder=' +
-    fileTableSorter.value.order
-  );
+  return 'sorter=' + columnKey + '&sorterOrder=' + order;
+});
+
+const getFileTableSorterOptions = computed(() => {
+  const icon = renderIconMethod(IconCheck);
+  let columnKey: any = null;
+  let order: any = null;
+  for (const key in fileTableSorter.value) {
+    const sort = fileTableSorter.value[key];
+    if (sort) {
+      columnKey = key;
+      order = sort;
+      break;
+    }
+  }
+  return [
+    {
+      icon: columnKey === 'name' ? icon : undefined,
+      key: 'name',
+      label: t('files.personal.fileName'),
+      props: {
+        onClick: () => {
+          fileTableHandleSorter({
+            columnKey: 'name',
+            order: order,
+            sorter: true
+          });
+        }
+      }
+    },
+    {
+      icon: columnKey === 'size' ? icon : undefined,
+      key: 'size',
+      label: t('files.personal.size'),
+      props: {
+        onClick: () => {
+          fileTableHandleSorter({
+            columnKey: 'size',
+            order: order,
+            sorter: true
+          });
+        }
+      }
+    },
+    {
+      icon: columnKey === 'lastModifiedDate' ? icon : undefined,
+      key: 'lastModifiedDate',
+      label: t('files.personal.modifiedDate'),
+      props: {
+        onClick: () => {
+          fileTableHandleSorter({
+            columnKey: 'lastModifiedDate',
+            order: order,
+            sorter: true
+          });
+        }
+      }
+    },
+    {
+      type: 'divider',
+      key: 'divider'
+    },
+    {
+      icon: order === 'ascend' ? icon : undefined,
+      key: 'ascend',
+      label: t('common.asc'),
+      props: {
+        onClick: () => {
+          fileTableHandleSorter({
+            columnKey: columnKey,
+            order: 'ascend',
+            sorter: true
+          });
+        }
+      }
+    },
+    {
+      icon: order === 'descend' ? icon : undefined,
+      key: 'descend',
+      label: t('common.desc'),
+      props: {
+        onClick: () => {
+          fileTableHandleSorter({
+            columnKey: columnKey,
+            order: 'descend',
+            sorter: true
+          });
+        }
+      }
+    }
+  ];
 });
 
 const filePathPattern = computed(() => {
@@ -488,7 +605,12 @@ function fileTableHandleCheck(rowKeys: string[]) {
 }
 
 function fileTableHandleSorter(params: DataTableSortState | null) {
-  fileTableSorter.value = params;
+  for (const key in fileTableSorter.value) {
+    fileTableSorter.value[key] = false;
+  }
+  if (params) {
+    fileTableSorter.value[params.columnKey] = params.order;
+  }
   fileTableReload();
 }
 

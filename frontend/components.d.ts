@@ -22,6 +22,7 @@ declare module 'vue' {
     IPlus: typeof import('~icons/icon-park-outline/plus')['default']
     IReduceUser: typeof import('~icons/icon-park-outline/reduce-user')['default']
     ISearch: typeof import('~icons/icon-park-outline/search')['default']
+    ISortTwo: typeof import('~icons/icon-park-outline/sort-two')['default']
     IText: typeof import('~icons/icon-park-outline/text')['default']
     IUpload: typeof import('~icons/icon-park-outline/upload')['default']
     LanguageAndTheme: typeof import('./src/components/LanguageAndTheme.vue')['default']

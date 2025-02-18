@@ -29,7 +29,10 @@
     "success": "Success",
     "warning": "Warning",
     "error": "Error",
-    "noData": "No data"
+    "noData": "No data",
+    "sort": "Sort",
+    "asc": "Asc",
+    "desc": "Desc"
   },
   "theme": {
     "syncSystem": "Sync with system",
