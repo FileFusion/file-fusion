@@ -48,19 +48,19 @@ public class FileDataService {
 
     private final FileDataRepository fileDataRepository;
     private final DistributedLock distributedLock;
-    private final SystemFile systemFile;
+    private final FileUtil fileUtil;
     private final RedissonClient redissonClient;
     private final Duration lockTimeout;
 
     @Autowired
     public FileDataService(FileDataRepository fileDataRepository,
                            DistributedLock distributedLock,
-                           SystemFile systemFile,
+                           FileUtil fileUtil,
                            RedissonClient redissonClient,
                            @Value("${server.servlet.session.timeout}") Duration timeout) {
         this.fileDataRepository = fileDataRepository;
         this.distributedLock = distributedLock;
-        this.systemFile = systemFile;
+        this.fileUtil = fileUtil;
         this.redissonClient = redissonClient;
         this.lockTimeout = timeout;
     }
@@ -91,7 +91,7 @@ public class FileDataService {
                 .map(FileData::getPath).distinct().toList();
         distributedLock.tryMultiLock(allPathList, () -> {
             fileDataRepository.deleteAllByPathIn(allPathList);
-            systemFile.delete(allPathList);
+            fileUtil.delete(allPathList);
         });
     }
 
@@ -123,7 +123,7 @@ public class FileDataService {
                 fileData.setFileLastModifiedDate(lastModifiedDate);
                 fileDataList.add(fileData);
             }
-            systemFile.createFolder(path);
+            fileUtil.createFolder(path);
             fileDataRepository.saveAll(fileDataList);
         });
     }
@@ -145,7 +145,7 @@ public class FileDataService {
             fileData.setSize(file.getSize());
             fileData.setEncrypted(false);
             fileData.setFileLastModifiedDate(new Date(lastModified));
-            fileData.setHashValue(systemFile.upload(file, filePath));
+            fileData.setHashValue(fileUtil.upload(file, filePath));
             fileDataRepository.save(fileData);
         });
     }
@@ -187,7 +187,7 @@ public class FileDataService {
             originalFileList.add(originalFile);
 
             fileDataRepository.saveAll(originalFileList);
-            systemFile.move(originalPath, targetPath);
+            fileUtil.move(originalPath, targetPath);
         });
     }
 
@@ -204,7 +204,7 @@ public class FileDataService {
         if (CollectionUtils.isEmpty(pathList)) {
             throw new HttpException(I18n.get("downloadLinkExpired"));
         }
-        List<Path> safePathList = systemFile.validatePaths(pathList);
+        List<Path> safePathList = fileUtil.validatePaths(pathList);
         pathList.delete();
         Path pathFirst = safePathList.getFirst();
 

@@ -16,18 +16,18 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * SystemFile
+ * FileUtil
  *
  * @author hackyo
  * @since 2022/4/1
  */
 @Component
-public class SystemFile {
+public class FileUtil {
 
     private final Path baseDir;
 
     @Autowired
-    public SystemFile(@Value("${file.dir}") String fileDir) {
+    public FileUtil(@Value("${file.dir}") String fileDir) {
         this.baseDir = Paths.get(fileDir).normalize().toAbsolutePath();
     }
 
