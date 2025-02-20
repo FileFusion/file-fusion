@@ -26,13 +26,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class DistributedLock {
 
     private final RedissonClient redissonClient;
-    private final Duration waitTimeout;
+    private final Duration fileLockTimeout;
 
     @Autowired
     public DistributedLock(RedissonClient redissonClient,
-                           @Value("${server.servlet.session.timeout}") Duration timeout) {
+                           @Value("${file.lock-timeout}") Duration fileLockTimeout) {
         this.redissonClient = redissonClient;
-        this.waitTimeout = timeout;
+        this.fileLockTimeout = fileLockTimeout;
     }
 
     public void tryLock(String key, Runnable task) {
@@ -55,7 +55,7 @@ public class DistributedLock {
     private void tryLock(RLock lock, Runnable task) {
         final AtomicBoolean isLockAcquired = new AtomicBoolean(false);
         try {
-            isLockAcquired.set(lock.tryLock(waitTimeout.toMillis(), TimeUnit.MILLISECONDS));
+            isLockAcquired.set(lock.tryLock(fileLockTimeout.toMillis(), TimeUnit.MILLISECONDS));
             if (!isLockAcquired.get()) {
                 throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("lockAcquisitionFailed"));
             }

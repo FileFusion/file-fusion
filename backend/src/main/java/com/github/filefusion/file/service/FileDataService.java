@@ -50,19 +50,19 @@ public class FileDataService {
     private final DistributedLock distributedLock;
     private final FileUtil fileUtil;
     private final RedissonClient redissonClient;
-    private final Duration lockTimeout;
+    private final Duration fileDownloadLinkTimeout;
 
     @Autowired
     public FileDataService(FileDataRepository fileDataRepository,
                            DistributedLock distributedLock,
                            FileUtil fileUtil,
                            RedissonClient redissonClient,
-                           @Value("${server.servlet.session.timeout}") Duration timeout) {
+                           @Value("${file.download-link-timeout}") Duration fileDownloadLinkTimeout) {
         this.fileDataRepository = fileDataRepository;
         this.distributedLock = distributedLock;
         this.fileUtil = fileUtil;
         this.redissonClient = redissonClient;
-        this.lockTimeout = timeout;
+        this.fileDownloadLinkTimeout = fileDownloadLinkTimeout;
     }
 
     private List<Path> getHierarchyPathList(String path) {
@@ -195,7 +195,7 @@ public class FileDataService {
         String downloadId = ULID.randomULID();
         RList<String> pathRList = redissonClient.getList(RedisAttribute.DOWNLOAD_ID_PREFIX + RedisAttribute.SEPARATOR + downloadId);
         pathRList.addAll(pathList);
-        pathRList.expire(lockTimeout);
+        pathRList.expire(fileDownloadLinkTimeout);
         return new SubmitDownloadFilesResponse(downloadId);
     }
 

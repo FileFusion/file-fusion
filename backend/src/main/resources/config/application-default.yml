@@ -38,3 +38,21 @@ security:
     iv: ${FF_SECRET_IV:t7M1BjL1wLKE6hyc}
 file:
   dir: ${FF_FILE_DIR:/opt/file_fusion/data/file}
+  lock-timeout: ${FF_TIMEOUT:60s}
+  download-link-timeout: ${FF_TIMEOUT:60s}
+thumbnail:
+  dir: ${FF_THUMBNAIL_DIR:/opt/file_fusion/data/thumbnail}
+  generate-timeout: ${FF_TIMEOUT:60s}
+  mime-type: "${FF_THUMBNAIL_MIME_TYPE:application/pdf,\
+  application/postscript,\
+  image/bmp,\
+  image/gif,\
+  image/heic,\
+  image/jpeg,\
+  image/png,\
+  image/sgi,\
+  image/svg+xml,\
+  image/tiff,\
+  image/vnd.adobe.photoshop,\
+  image/webp,\
+  image/x-xbitmap}"

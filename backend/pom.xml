@@ -39,6 +39,11 @@
             <artifactId>de.huxhorn.sulky.ulid</artifactId>
             <version>${ulid.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-exec</artifactId>
+            <version>${commons-exec.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.flywaydb</groupId>
