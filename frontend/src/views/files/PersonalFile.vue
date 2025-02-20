@@ -556,6 +556,7 @@ const {
     );
   },
   {
+    initialPageSize: 20,
     total: (res) => res.totalElements,
     data: (res) => res.content
   }
