@@ -3,6 +3,7 @@ package com.github.filefusion.file.entity;
 import com.github.filefusion.common.BaseEntity;
 import com.github.filefusion.constant.FileAttribute;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Transient;
 import lombok.Data;
 import lombok.experimental.FieldNameConstants;
 
@@ -58,5 +59,11 @@ public class FileData extends BaseEntity {
      * file last modified date
      */
     private Date fileLastModifiedDate;
+
+    /**
+     * has thumbnail
+     */
+    @Transient
+    private Boolean hasThumbnail;
 
 }

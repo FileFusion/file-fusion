@@ -49,6 +49,7 @@ public class FileDataService {
     private final FileDataRepository fileDataRepository;
     private final DistributedLock distributedLock;
     private final FileUtil fileUtil;
+    private final ThumbnailUtil thumbnailUtil;
     private final RedissonClient redissonClient;
     private final Duration fileDownloadLinkTimeout;
 
@@ -56,11 +57,13 @@ public class FileDataService {
     public FileDataService(FileDataRepository fileDataRepository,
                            DistributedLock distributedLock,
                            FileUtil fileUtil,
+                           ThumbnailUtil thumbnailUtil,
                            RedissonClient redissonClient,
                            @Value("${file.download-link-timeout}") Duration fileDownloadLinkTimeout) {
         this.fileDataRepository = fileDataRepository;
         this.distributedLock = distributedLock;
         this.fileUtil = fileUtil;
+        this.thumbnailUtil = thumbnailUtil;
         this.redissonClient = redissonClient;
         this.fileDownloadLinkTimeout = fileDownloadLinkTimeout;
     }
@@ -79,9 +82,12 @@ public class FileDataService {
         } else {
             name = "%";
         }
-        return fileDataRepository.findAllByPathLikeAndPathNotLikeAndNameLike(path,
-                path + FileAttribute.SEPARATOR + "%",
-                name, page);
+        Page<FileData> fileDataPage = fileDataRepository.findAllByPathLikeAndPathNotLikeAndNameLike(path,
+                path + FileAttribute.SEPARATOR + "%", name, page);
+        fileDataPage.getContent().forEach(fileData ->
+                fileData.setHasThumbnail(thumbnailUtil.hasThumbnail(fileData.getMimeType()))
+        );
+        return fileDataPage;
     }
 
     @Transactional(rollbackFor = HttpException.class)

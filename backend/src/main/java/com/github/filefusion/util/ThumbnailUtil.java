@@ -3,6 +3,8 @@ package com.github.filefusion.util;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -29,7 +31,13 @@ public final class ThumbnailUtil {
         this.baseDir = Paths.get(thumbnailDir).normalize().toAbsolutePath();
         this.thumbnailGenerateTimeout = thumbnailGenerateTimeout;
         this.thumbnailMimeType = thumbnailMimeType;
-        System.out.println("aaa");
+    }
+
+    public boolean hasThumbnail(String mimeType) {
+        if (CollectionUtils.isEmpty(thumbnailMimeType) || !StringUtils.hasLength(mimeType)) {
+            return false;
+        }
+        return thumbnailMimeType.contains(mimeType);
     }
 
 }
