@@ -150,7 +150,7 @@
         class="mt-3 justify-end"
         :page="fileTablePage"
         :page-size="fileTablePageSize"
-        :page-sizes="[5, 10, 50]"
+        :page-sizes="[10, 20, 50]"
         :item-count="fileTableTotal"
         :show-size-picker="true"
         :show-quick-jumper="true"

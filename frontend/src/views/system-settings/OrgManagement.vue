@@ -144,7 +144,7 @@
               :pagination="{
                 page: userTablePage,
                 pageSize: userTablePageSize,
-                pageSizes: [5, 10, 50],
+                pageSizes: [10, 20, 50],
                 itemCount: userTableTotal,
                 showSizePicker: true,
                 showQuickJumper: true,
