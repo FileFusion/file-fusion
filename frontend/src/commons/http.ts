@@ -11,7 +11,9 @@ const http = createAlova({
   requestAdapter: axiosRequestAdapter(),
   cacheFor: null,
   beforeRequest: (method) => {
-    window.$loading.start();
+    if (!method.meta || method.meta.loading !== false) {
+      window.$loading.start();
+    }
     const mStore = mainStore(window.$pinia);
     method.config.headers['Accept-Language'] = mStore.getLanguage;
     const token = mStore.getToken;

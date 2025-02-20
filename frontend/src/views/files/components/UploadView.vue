@@ -259,7 +259,11 @@ const uploadFileRequest = ({
   formData.append('path', path);
   formData.append('type', fileInfo.type);
   formData.append('lastModified', fileInfo.lastModified + '');
-  const uploadMethod = http.Post('/file_data/_upload', formData);
+  const uploadMethod = http.Post('/file_data/_upload', formData, {
+    meta: {
+      loading: false
+    }
+  });
   uploadMethod.onUpload((progress: Progress) => {
     const percent = Math.round((progress.loaded / progress.total) * 100);
     onProgress({
