@@ -28,8 +28,6 @@ spring:
     fallback-to-system-locale: false
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
-  jpa:
-    open-in-view: true
   flyway:
     locations: classpath:/db/migration
     table: db_version
