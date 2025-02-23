@@ -1,11 +1,9 @@
 package com.github.filefusion.util;
 
-import com.github.filefusion.common.HttpException;
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteWatchdog;
 import org.apache.commons.exec.Executor;
-import org.springframework.http.HttpStatus;
 import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
@@ -40,7 +38,7 @@ public final class ExecUtil {
         try {
             return executor.execute(commandLine) == 0;
         } catch (IOException e) {
-            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, e);
+            throw new RuntimeException(e);
         }
     }
 
