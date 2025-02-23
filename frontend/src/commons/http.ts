@@ -24,6 +24,10 @@ const http = createAlova({
   responded: {
     onSuccess: (response: AxiosResponse) => {
       const data = response.data;
+      if (response.config.responseType === 'blob') {
+        window.$loading.finish();
+        return data;
+      }
       if (data.success) {
         window.$loading.finish();
         return data.data;

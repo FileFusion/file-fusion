@@ -111,7 +111,10 @@
               </n-dropdown>
               <div class="relative pb-2 pl-1 pr-1 pt-4 text-center">
                 <div>
-                  <file-preview :type="fileData.mimeType" />
+                  <file-preview
+                    :path="fileData.path"
+                    :thumbnail="fileData.hasThumbnail"
+                    :type="fileData.mimeType" />
                 </div>
                 <div class="mt-3">
                   <n-ellipsis :line-clamp="2">
