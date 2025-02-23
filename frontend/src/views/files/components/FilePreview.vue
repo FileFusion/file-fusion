@@ -8,7 +8,6 @@
 </template>
 
 <script setup lang="ts">
-import type { SUPPORT_THEMES } from '@/commons/theme.ts';
 import { computed, ref, onBeforeUnmount } from 'vue';
 import { mainStore } from '@/store';
 import { useRequest } from 'alova/client';
@@ -88,24 +87,21 @@ const fileCategories = {
   folder: ['custom/folder']
 };
 
-const getFileIcon = (type: string, theme: SUPPORT_THEMES) => {
+const fileIcon = computed(() => {
+  let iconType;
+  for (const [category, types] of Object.entries(fileCategories)) {
+    if (types.includes(props.type)) {
+      iconType = category;
+    }
+  }
+  if (!iconType) {
+    const category = props.type.split('/')[0];
+    iconType = fileIcons.includes(category) ? category : 'default';
+  }
   return new URL(
-    `/src/assets/images/file-icons/${theme}/${type}.png`,
+    `/src/assets/images/file-icons/${theme.value}/${iconType}.png`,
     import.meta.url
   ).href;
-};
-
-const getFileCategory = (mimeType: string) => {
-  for (const [category, types] of Object.entries(fileCategories)) {
-    if (types.includes(mimeType)) return category;
-  }
-  const category = mimeType.split('/')[0];
-  return fileIcons.includes(category) ? category : 'default';
-};
-
-const fileIcon = computed(() => {
-  const iconType = getFileCategory(props.type);
-  return getFileIcon(iconType, theme.value);
 });
 
 const thumbnailFileUrl = ref<string>('');
