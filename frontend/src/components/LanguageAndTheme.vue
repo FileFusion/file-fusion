@@ -37,7 +37,7 @@ import IconIntermediateMode from '~icons/icon-park-outline/intermediate-mode';
 import { mainStore } from '@/store';
 import { renderIconMethod } from '@/commons/utils.ts';
 import { SUPPORT_LANGUAGES } from '@/commons/i18n.ts';
-import { SupportThemes } from '@/commons/theme.ts';
+import { SUPPORT_THEMES } from '@/commons/theme.ts';
 
 const mStore = mainStore();
 const { t, locale } = useI18n();
@@ -58,17 +58,17 @@ const languagesOptions = [
 const themeOptions = computed(() => [
   {
     label: t('theme.syncSystem'),
-    key: SupportThemes.SYNC_SYSTEM,
+    key: SUPPORT_THEMES.SYNC_SYSTEM,
     icon: renderIconMethod(IconIntermediateMode)
   },
   {
     label: t('theme.light'),
-    key: SupportThemes.LIGHT,
+    key: SUPPORT_THEMES.LIGHT,
     icon: renderIconMethod(IconSun)
   },
   {
     label: t('theme.dark'),
-    key: SupportThemes.DARK,
+    key: SUPPORT_THEMES.DARK,
     icon: renderIconMethod(IconMoon)
   }
 ]);
@@ -81,7 +81,7 @@ function switchLanguage(language: SUPPORT_LANGUAGES) {
   mStore.setLanguage(language);
 }
 
-function switchTheme(theme: SupportThemes) {
+function switchTheme(theme: SUPPORT_THEMES) {
   mStore.setTheme(theme);
 }
 </script>

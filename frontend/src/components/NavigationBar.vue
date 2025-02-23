@@ -6,7 +6,7 @@
           <n-gi :span="6" class="h-8 pl-6">
             <img
               class="h-8 object-contain"
-              :src="theme === SupportThemes.DARK ? logoTitleWhite : logoTitle"
+              :src="theme === SUPPORT_THEMES.DARK ? logoTitleWhite : logoTitle"
               alt="title logo" />
           </n-gi>
           <n-gi :span="14">
@@ -53,7 +53,7 @@
                   <img
                     class="h-8 object-contain !w-unset"
                     :src="
-                      theme === SupportThemes.DARK ? logoTitleWhite : logoTitle
+                      theme === SUPPORT_THEMES.DARK ? logoTitleWhite : logoTitle
                     "
                     alt="title logo" />
                 </n-gi>
@@ -114,7 +114,7 @@ import { renderIconMethod } from '@/commons/utils';
 import logoTitle from '@/assets/images/logo-title.png';
 import logoTitleWhite from '@/assets/images/logo-title-white.png';
 import packageInfo from '../../package.json';
-import { SupportThemes } from '@/commons/theme.ts';
+import { SUPPORT_THEMES } from '@/commons/theme.ts';
 
 const mStore = mainStore();
 const router = useRouter();

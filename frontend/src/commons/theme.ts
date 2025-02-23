@@ -1,50 +1,50 @@
 import { useOsTheme } from 'naive-ui';
 
-export enum SupportThemes {
+export enum SUPPORT_THEMES {
   SYNC_SYSTEM = 'syncSystem',
   LIGHT = 'light',
   DARK = 'dark'
 }
 
-function getDefaultTheme(): SupportThemes {
+function getDefaultTheme(): SUPPORT_THEMES {
   const theme = localStorage.getItem('theme');
   if (theme) {
-    for (const supportTheme of Object.values(SupportThemes)) {
+    for (const supportTheme of Object.values(SUPPORT_THEMES)) {
       if (theme === supportTheme) {
         return supportTheme;
       }
     }
   }
-  return SupportThemes.SYNC_SYSTEM;
+  return SUPPORT_THEMES.SYNC_SYSTEM;
 }
 
-export function getTheme(theme: SupportThemes): SupportThemes {
-  if (theme === SupportThemes.LIGHT || theme === SupportThemes.DARK) {
+export function getTheme(theme: SUPPORT_THEMES): SUPPORT_THEMES {
+  if (theme === SUPPORT_THEMES.LIGHT || theme === SUPPORT_THEMES.DARK) {
     return theme;
-  } else if (theme === SupportThemes.SYNC_SYSTEM) {
+  } else if (theme === SUPPORT_THEMES.SYNC_SYSTEM) {
     const osThemeRef = useOsTheme();
-    return osThemeRef.value === SupportThemes.DARK
-      ? SupportThemes.DARK
-      : SupportThemes.LIGHT;
+    return osThemeRef.value === SUPPORT_THEMES.DARK
+      ? SUPPORT_THEMES.DARK
+      : SUPPORT_THEMES.LIGHT;
   }
-  return SupportThemes.LIGHT;
+  return SUPPORT_THEMES.LIGHT;
 }
 
 export function osThemeChange(theme: string | null) {
   const at =
-    theme === SupportThemes.DARK ? SupportThemes.DARK : SupportThemes.LIGHT;
+    theme === SUPPORT_THEMES.DARK ? SUPPORT_THEMES.DARK : SUPPORT_THEMES.LIGHT;
   const icon = document.querySelector('link[rel="icon"]');
   if (icon) {
     icon.setAttribute(
       'href',
-      at === SupportThemes.LIGHT ? '/favicon.svg' : '/favicon-white.svg'
+      at === SUPPORT_THEMES.DARK ? '/favicon-white.svg' : '/favicon.svg'
     );
   }
   const shortcutIcon = document.querySelector('link[rel="shortcut icon"]');
   if (shortcutIcon) {
     shortcutIcon.setAttribute(
       'href',
-      at === SupportThemes.LIGHT ? '/favicon.ico' : '/favicon-white.ico'
+      at === SUPPORT_THEMES.DARK ? '/favicon-white.ico' : '/favicon.ico'
     );
   }
   const appleTouchIconPrecomposed = document.querySelector(
@@ -53,9 +53,9 @@ export function osThemeChange(theme: string | null) {
   if (appleTouchIconPrecomposed) {
     appleTouchIconPrecomposed.setAttribute(
       'href',
-      at === SupportThemes.LIGHT
-        ? '/icon72x72@2x.png'
-        : '/icon72x72@2x-white.png'
+      at === SUPPORT_THEMES.DARK
+        ? '/icon72x72@2x-white.png'
+        : '/icon72x72@2x.png'
     );
   }
 }

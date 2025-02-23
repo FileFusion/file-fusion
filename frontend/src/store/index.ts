@@ -1,12 +1,13 @@
 import type { SUPPORT_LANGUAGES } from '@/commons/i18n';
+import type { SUPPORT_THEMES } from '@/commons/theme';
 import { defineStore } from 'pinia';
 import { DefaultLanguage } from '@/commons/i18n';
-import { DefaultTheme, getTheme, SupportThemes } from '@/commons/theme';
+import { DefaultTheme, getTheme } from '@/commons/theme';
 import route, { getRouteTitle } from '@/router';
 
 interface MainState {
   language: SUPPORT_LANGUAGES;
-  theme: SupportThemes;
+  theme: SUPPORT_THEMES;
   sideMenuCollapsed: string | null;
   token: string | null;
   user: any | null;
@@ -26,7 +27,7 @@ export const mainStore = defineStore('main', {
     getLanguage(state): SUPPORT_LANGUAGES {
       return state.language;
     },
-    getTheme(state): SupportThemes {
+    getTheme(state): SUPPORT_THEMES {
       return getTheme(state.theme);
     },
     getSideMenuCollapsed(state): boolean {
@@ -52,7 +53,7 @@ export const mainStore = defineStore('main', {
       document.documentElement.setAttribute('lang', language);
       document.title = getRouteTitle(route.currentRoute.value);
     },
-    setTheme(theme: SupportThemes) {
+    setTheme(theme: SUPPORT_THEMES) {
       this.theme = theme;
       localStorage.setItem('theme', theme);
       document.documentElement.setAttribute(

@@ -17,7 +17,9 @@
             <div class="text-center">
               <img
                 class="h-10 object-contain"
-                :src="theme === SupportThemes.DARK ? logoTitleWhite : logoTitle"
+                :src="
+                  theme === SUPPORT_THEMES.DARK ? logoTitleWhite : logoTitle
+                "
                 alt="title logo" />
             </div>
             <div class="mt-1 text-center">
@@ -98,7 +100,7 @@ import { mainStore } from '@/store';
 import loginSide from '@/assets/images/login-side.png';
 import logoTitle from '@/assets/images/logo-title.png';
 import logoTitleWhite from '@/assets/images/logo-title-white.png';
-import { SupportThemes } from '@/commons/theme.ts';
+import { SUPPORT_THEMES } from '@/commons/theme.ts';
 
 const mStore = mainStore();
 const router = useRouter();

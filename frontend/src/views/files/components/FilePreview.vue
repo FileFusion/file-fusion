@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-import type { SupportThemes } from '@/commons/theme.ts';
+import type { SUPPORT_THEMES } from '@/commons/theme.ts';
 import { computed, ref, onBeforeUnmount } from 'vue';
 import { mainStore } from '@/store';
 import { useRequest } from 'alova/client';
@@ -88,7 +88,7 @@ const fileCategories = {
   folder: ['custom/folder']
 };
 
-const getFileIcon = (type: string, theme: SupportThemes) => {
+const getFileIcon = (type: string, theme: SUPPORT_THEMES) => {
   return new URL(
     `/src/assets/images/file-icons/${theme}/${type}.png`,
     import.meta.url
