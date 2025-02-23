@@ -8,9 +8,9 @@
 </template>
 
 <script setup lang="ts">
+import type { SupportThemes } from '@/commons/theme.ts';
 import { computed, ref, onBeforeUnmount } from 'vue';
 import { mainStore } from '@/store';
-import { SupportThemes } from '@/commons/theme.ts';
 import { useRequest } from 'alova/client';
 
 const props = defineProps({
