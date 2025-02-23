@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onBeforeUnmount } from 'vue';
+import { computed, ref, onBeforeUnmount, watch } from 'vue';
 import { mainStore } from '@/store';
 import { useRequest } from 'alova/client';
 
@@ -120,9 +120,16 @@ const { data: thumbnailFile, send: doGetThumbnailFile } = useRequest(
 ).onSuccess(() => {
   thumbnailFileUrl.value = URL.createObjectURL(thumbnailFile.value);
 });
-if (props.thumbnail) {
-  doGetThumbnailFile();
-}
+
+watch(
+  () => props.thumbnail,
+  (thumbnail) => {
+    if (thumbnail) {
+      doGetThumbnailFile();
+    }
+  },
+  { immediate: true }
+);
 
 onBeforeUnmount(() => {
   if (thumbnailFileUrl.value) {
