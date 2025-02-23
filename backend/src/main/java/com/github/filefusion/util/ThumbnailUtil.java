@@ -4,9 +4,11 @@ import com.github.filefusion.common.HttpException;
 import com.github.filefusion.constant.FileAttribute;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -43,6 +45,13 @@ public final class ThumbnailUtil {
         this.thumbnailImageMimeType = thumbnailImageMimeType;
         this.thumbnailVideoMimeType = thumbnailVideoMimeType;
         this.fileUtil = fileUtil;
+        if (!Files.exists(baseDir)) {
+            try {
+                Files.createDirectory(baseDir);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     public boolean hasThumbnail(String mimeType) {
@@ -69,7 +78,7 @@ public final class ThumbnailUtil {
         }
         boolean execResult = ExecUtil.exec(Arrays.asList(exec.split(" ")), thumbnailGenerateTimeout);
         if (!execResult || !Files.exists(thumbnailFilePath)) {
-            throw new HttpException(I18n.get("thumbnailGenerationFailed"));
+            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("thumbnailGenerationFailed"));
         }
         return thumbnailFilePath;
     }
