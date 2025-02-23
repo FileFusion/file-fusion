@@ -26,10 +26,13 @@
         <ulid.version>8.3.0</ulid.version>
         <commons-exec.version>1.4.0</commons-exec.version>
         <redisson.version>3.44.0</redisson.version>
+        <hikaricp.version>6.2.1</hikaricp.version>
+        <flyway.version>11.3.3</flyway.version>
         <mysql.version>9.2.0</mysql.version>
         <mariadb.version>3.5.1</mariadb.version>
         <postgresql.version>42.7.5</postgresql.version>
         <h2.version>2.3.232</h2.version>
+        <lombok.version>1.18.36</lombok.version>
         <smart-doc.version>3.0.9</smart-doc.version>
         <exec-maven-plugin.version>3.5.0</exec-maven-plugin.version>
     </properties>
