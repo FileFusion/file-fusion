@@ -3,12 +3,14 @@ package com.github.filefusion.util;
 import com.github.filefusion.common.HttpException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.NoSuchAlgorithmException;
@@ -87,7 +89,7 @@ public class FileUtil {
     public void move(String original, String target) {
         Path originalPath = resolveSafePath(original);
         if (!Files.exists(originalPath)) {
-            throw new HttpException(I18n.get("originalFileNotExist"));
+            throw new HttpException(I18n.get("fileNotExist"));
         }
         Path targetPath = resolveSafePath(target);
         if (Files.exists(targetPath)) {
@@ -135,6 +137,20 @@ public class FileUtil {
         } catch (IOException e) {
             throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileDeletionFailed"));
         }
+    }
+
+    public ResponseEntity<StreamingResponseBody> download(Path path) {
+        return download(path.getFileName().toString(), out -> Files.copy(path, out));
+    }
+
+    public ResponseEntity<StreamingResponseBody> download(String filename, StreamingResponseBody streamingResponseBody) {
+        String contentDisposition = ContentDisposition.attachment()
+                .filename(filename, StandardCharsets.UTF_8)
+                .build().toString();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(streamingResponseBody);
     }
 
 }

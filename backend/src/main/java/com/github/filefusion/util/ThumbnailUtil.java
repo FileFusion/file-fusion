@@ -40,4 +40,8 @@ public final class ThumbnailUtil {
         return thumbnailMimeType.contains(mimeType);
     }
 
+    public Path generateThumbnail(String path, String mimeType, String hash) {
+        return null;
+    }
+
 }

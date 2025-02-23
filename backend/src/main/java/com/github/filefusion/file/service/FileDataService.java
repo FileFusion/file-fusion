@@ -7,16 +7,12 @@ import com.github.filefusion.file.entity.FileData;
 import com.github.filefusion.file.model.SubmitDownloadFilesResponse;
 import com.github.filefusion.file.repository.FileDataRepository;
 import com.github.filefusion.util.*;
-import jakarta.servlet.http.HttpServletResponse;
 import org.redisson.api.RList;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.ContentDisposition;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +21,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -164,7 +159,7 @@ public class FileDataService {
         final String originalPath = path + FileAttribute.SEPARATOR + originalName;
         final FileData originalFile = fileDataRepository.findFirstByPath(originalPath);
         if (originalFile == null) {
-            throw new HttpException(I18n.get("originalFileNotExist"));
+            throw new HttpException(I18n.get("fileNotExist"));
         }
 
         if (!StringUtils.hasLength(targetName)) {
@@ -205,7 +200,7 @@ public class FileDataService {
         return new SubmitDownloadFilesResponse(downloadId);
     }
 
-    public ResponseEntity<StreamingResponseBody> download(String downloadId, HttpServletResponse response) {
+    public ResponseEntity<StreamingResponseBody> download(String downloadId) {
         RList<String> pathList = redissonClient.getList(RedisAttribute.DOWNLOAD_ID_PREFIX + RedisAttribute.SEPARATOR + downloadId);
         if (CollectionUtils.isEmpty(pathList)) {
             throw new HttpException(I18n.get("downloadLinkExpired"));
@@ -213,28 +208,28 @@ public class FileDataService {
         List<Path> safePathList = fileUtil.validatePaths(pathList);
         pathList.delete();
         Path pathFirst = safePathList.getFirst();
-
-        String encodedFilename;
-        MediaType contentType;
-        StreamingResponseBody streamingResponseBody;
         if (safePathList.size() == 1 && !Files.isDirectory(pathFirst)) {
-            encodedFilename = ContentDisposition.attachment()
-                    .filename(pathFirst.getFileName().toString(), StandardCharsets.UTF_8)
-                    .build().toString();
-            response.setHeader(HttpHeaders.CONTENT_DISPOSITION, encodedFilename);
-            contentType = MediaType.APPLICATION_OCTET_STREAM;
-            streamingResponseBody = out -> Files.copy(pathFirst, out);
+            return fileUtil.download(pathFirst);
         } else {
-            encodedFilename = ContentDisposition.attachment()
-                    .filename(FileAttribute.DOWNLOAD_ZIP_NAME, StandardCharsets.UTF_8)
-                    .build().toString();
-            response.setHeader(HttpHeaders.CONTENT_DISPOSITION, encodedFilename);
-            contentType = MediaType.parseMediaType(FileAttribute.ZIP_MEDIA_TYPE);
-            streamingResponseBody = new ZipStreamingResponseBody(safePathList);
+            return fileUtil.download(FileAttribute.DOWNLOAD_ZIP_NAME, new ZipStreamingResponseBody(safePathList));
         }
-        return ResponseEntity.ok()
-                .contentType(contentType)
-                .body(streamingResponseBody);
+    }
+
+    public ResponseEntity<StreamingResponseBody> thumbnailFile(String path) {
+        FileData fileData = fileDataRepository.findFirstByPath(path);
+        if (fileData == null) {
+            throw new HttpException(I18n.get("fileNotExist"));
+        }
+        String mimeType = fileData.getMimeType();
+        String fileHash = fileData.getHashValue();
+        if (!StringUtils.hasLength(fileHash) || !thumbnailUtil.hasThumbnail(mimeType)) {
+            throw new HttpException(I18n.get("fileNotSupportThumbnail"));
+        }
+        Path thumbnailPath = thumbnailUtil.generateThumbnail(path, mimeType, fileHash);
+        if (thumbnailPath == null) {
+            return null;
+        }
+        return fileUtil.download(thumbnailPath);
     }
 
 }

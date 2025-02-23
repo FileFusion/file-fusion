@@ -9,7 +9,6 @@ import com.github.filefusion.file.model.SubmitDownloadFilesResponse;
 import com.github.filefusion.file.service.FileDataService;
 import com.github.filefusion.util.CurrentUser;
 import com.github.filefusion.util.I18n;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -179,8 +178,24 @@ public class FileDataController {
      * @return file list
      */
     @GetMapping("/_download/{downloadId}")
-    public ResponseEntity<StreamingResponseBody> downloadFiles(@PathVariable String downloadId, HttpServletResponse response) {
-        return fileDataService.download(downloadId, response);
+    public ResponseEntity<StreamingResponseBody> downloadFiles(@PathVariable String downloadId) {
+        return fileDataService.download(downloadId);
+    }
+
+    /**
+     * thumbnail file
+     *
+     * @param fileData path
+     * @return file thumbnail
+     */
+    @PostMapping("/_thumbnail")
+    public ResponseEntity<StreamingResponseBody> thumbnailFile(@RequestBody FileData fileData) {
+        String path = fileData.getPath();
+        String userPath = CurrentUser.get().getId() + FileAttribute.SEPARATOR;
+        if (!StringUtils.startsWithIgnoreCase(path, userPath)) {
+            throw new HttpException(I18n.get("noOperationPermission"));
+        }
+        return fileDataService.thumbnailFile(path);
     }
 
 }
