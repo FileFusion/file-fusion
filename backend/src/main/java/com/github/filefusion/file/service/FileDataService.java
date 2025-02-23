@@ -41,26 +41,26 @@ import java.util.stream.IntStream;
 @Service
 public class FileDataService {
 
+    private final Duration fileDownloadLinkTimeout;
+    private final RedissonClient redissonClient;
     private final FileDataRepository fileDataRepository;
     private final DistributedLock distributedLock;
     private final FileUtil fileUtil;
     private final ThumbnailUtil thumbnailUtil;
-    private final RedissonClient redissonClient;
-    private final Duration fileDownloadLinkTimeout;
 
     @Autowired
-    public FileDataService(FileDataRepository fileDataRepository,
+    public FileDataService(@Value("${file.download-link-timeout}") Duration fileDownloadLinkTimeout,
+                           RedissonClient redissonClient,
+                           FileDataRepository fileDataRepository,
                            DistributedLock distributedLock,
                            FileUtil fileUtil,
-                           ThumbnailUtil thumbnailUtil,
-                           RedissonClient redissonClient,
-                           @Value("${file.download-link-timeout}") Duration fileDownloadLinkTimeout) {
+                           ThumbnailUtil thumbnailUtil) {
+        this.fileDownloadLinkTimeout = fileDownloadLinkTimeout;
+        this.redissonClient = redissonClient;
         this.fileDataRepository = fileDataRepository;
         this.distributedLock = distributedLock;
         this.fileUtil = fileUtil;
         this.thumbnailUtil = thumbnailUtil;
-        this.redissonClient = redissonClient;
-        this.fileDownloadLinkTimeout = fileDownloadLinkTimeout;
     }
 
     private List<Path> getHierarchyPathList(String path) {
@@ -208,7 +208,7 @@ public class FileDataService {
         List<Path> safePathList = fileUtil.validatePaths(pathList);
         pathList.delete();
         Path pathFirst = safePathList.getFirst();
-        if (safePathList.size() == 1 && !Files.isDirectory(pathFirst)) {
+        if (safePathList.size() == 1 && Files.isRegularFile(pathFirst)) {
             return fileUtil.download(pathFirst);
         } else {
             return fileUtil.download(FileAttribute.DOWNLOAD_ZIP_NAME, new ZipStreamingResponseBody(safePathList));

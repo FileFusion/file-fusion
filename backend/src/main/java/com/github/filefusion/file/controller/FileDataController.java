@@ -160,7 +160,7 @@ public class FileDataController {
     @PreAuthorize("hasAuthority('personal_file:download')")
     public SubmitDownloadFilesResponse submitDownloadFiles(@RequestBody List<String> pathList) {
         if (CollectionUtils.isEmpty(pathList)) {
-            return null;
+            throw new HttpException(I18n.get("downloadFileSelectCheck"));
         }
         String userPath = CurrentUser.get().getId() + FileAttribute.SEPARATOR;
         for (String path : pathList) {

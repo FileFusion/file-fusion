@@ -1,14 +1,17 @@
 package com.github.filefusion.util;
 
+import com.github.filefusion.common.HttpException;
+import com.github.filefusion.constant.FileAttribute;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -20,28 +23,55 @@ import java.util.List;
 @Component
 public final class ThumbnailUtil {
 
+    private static final String GENERATE_IMAGE_THUMBNAIL_EXEC = "vipsthumbnail %s --size 256 --export-profile srgb -o %s[Q=75,keep=none]";
+    private static final String GENERATE_VIDEO_THUMBNAIL_EXEC = "ffmpeg -i %s -loglevel error -vf \"thumbnail,scale=256:-1\" -an -q:v 31 -vframes 1 -update 1 -y %s";
+
     private final Path baseDir;
     private final Duration thumbnailGenerateTimeout;
-    private final List<String> thumbnailMimeType;
+    private final List<String> thumbnailImageMimeType;
+    private final List<String> thumbnailVideoMimeType;
+    private final FileUtil fileUtil;
 
     @Autowired
     public ThumbnailUtil(@Value("${thumbnail.dir}") String thumbnailDir,
                          @Value("${thumbnail.generate-timeout}") Duration thumbnailGenerateTimeout,
-                         @Value("${thumbnail.mime-type}") List<String> thumbnailMimeType) {
+                         @Value("${thumbnail.image-mime-type}") List<String> thumbnailImageMimeType,
+                         @Value("${thumbnail.video-mime-type}") List<String> thumbnailVideoMimeType,
+                         FileUtil fileUtil) {
         this.baseDir = Paths.get(thumbnailDir).normalize().toAbsolutePath();
         this.thumbnailGenerateTimeout = thumbnailGenerateTimeout;
-        this.thumbnailMimeType = thumbnailMimeType;
+        this.thumbnailImageMimeType = thumbnailImageMimeType;
+        this.thumbnailVideoMimeType = thumbnailVideoMimeType;
+        this.fileUtil = fileUtil;
     }
 
     public boolean hasThumbnail(String mimeType) {
-        if (CollectionUtils.isEmpty(thumbnailMimeType) || !StringUtils.hasLength(mimeType)) {
+        if (!StringUtils.hasLength(mimeType)) {
             return false;
         }
-        return thumbnailMimeType.contains(mimeType);
+        return thumbnailImageMimeType.contains(mimeType) || thumbnailVideoMimeType.contains(mimeType);
     }
 
     public Path generateThumbnail(String path, String mimeType, String hash) {
-        return null;
+        Path thumbnailFilePath = baseDir.resolve(hash + FileAttribute.THUMBNAIL_FILE_TYPE).normalize();
+        if (Files.isRegularFile(thumbnailFilePath)) {
+            return thumbnailFilePath;
+        }
+        fileUtil.delete(thumbnailFilePath);
+        Path sourceFilePath = fileUtil.validatePath(path);
+        String exec;
+        if (thumbnailImageMimeType.contains(mimeType)) {
+            exec = GENERATE_IMAGE_THUMBNAIL_EXEC.formatted(sourceFilePath, thumbnailFilePath);
+        } else if (thumbnailVideoMimeType.contains(mimeType)) {
+            exec = GENERATE_VIDEO_THUMBNAIL_EXEC.formatted(sourceFilePath, thumbnailFilePath);
+        } else {
+            throw new HttpException(I18n.get("fileNotSupportThumbnail"));
+        }
+        boolean execResult = ExecUtil.exec(Arrays.asList(exec.split(" ")), thumbnailGenerateTimeout);
+        if (!execResult || !Files.exists(thumbnailFilePath)) {
+            throw new HttpException(I18n.get("thumbnailGenerationFailed"));
+        }
+        return thumbnailFilePath;
     }
 
 }

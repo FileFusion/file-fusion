@@ -43,7 +43,7 @@ file:
 thumbnail:
   dir: ${FF_THUMBNAIL_DIR:/opt/file_fusion/data/thumbnail}
   generate-timeout: ${FF_TIMEOUT:60s}
-  mime-type: "${FF_THUMBNAIL_MIME_TYPE:application/pdf,\
+  image-mime-type: "${FF_THUMBNAIL_IMAGE_MIME_TYPE:application/pdf,\
   application/postscript,\
   image/bmp,\
   image/gif,\
@@ -56,3 +56,14 @@ thumbnail:
   image/vnd.adobe.photoshop,\
   image/webp,\
   image/x-xbitmap}"
+  video-mime-type: "${FF_THUMBNAIL_VIDEO_MIME_TYPE:application/vnd.rn-realmedia,\
+  video/x-ms-wmv,\
+  video/mp4,\
+  video/mpeg,\
+  video/3gpp,\
+  video/x-flv,\
+  video/quicktime,\
+  video/mp4,\
+  video/x-flv,\
+  video/webm,\
+  video/avi}"

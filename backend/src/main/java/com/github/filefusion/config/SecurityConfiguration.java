@@ -30,16 +30,16 @@ import java.util.Arrays;
 public class SecurityConfiguration {
 
     private final SecurityProperties securityProperties;
-    private final UserDetailsService userDetailsService;
     private final WebServerFactory webServerFactory;
+    private final UserDetailsService userDetailsService;
 
     @Autowired
     public SecurityConfiguration(SecurityProperties securityProperties,
-                                 UserDetailsService userDetailsService,
-                                 WebServerFactory webServerFactory) {
+                                 WebServerFactory webServerFactory,
+                                 UserDetailsService userDetailsService) {
         this.securityProperties = securityProperties;
-        this.userDetailsService = userDetailsService;
         this.webServerFactory = webServerFactory;
+        this.userDetailsService = userDetailsService;
     }
 
     private static String buildFullPath(String path) {

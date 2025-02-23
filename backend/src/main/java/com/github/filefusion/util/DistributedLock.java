@@ -25,14 +25,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Component
 public class DistributedLock {
 
-    private final RedissonClient redissonClient;
     private final Duration fileLockTimeout;
+    private final RedissonClient redissonClient;
 
     @Autowired
-    public DistributedLock(RedissonClient redissonClient,
-                           @Value("${file.lock-timeout}") Duration fileLockTimeout) {
-        this.redissonClient = redissonClient;
+    public DistributedLock(@Value("${file.lock-timeout}") Duration fileLockTimeout,
+                           RedissonClient redissonClient) {
         this.fileLockTimeout = fileLockTimeout;
+        this.redissonClient = redissonClient;
     }
 
     public void tryLock(String key, Runnable task) {

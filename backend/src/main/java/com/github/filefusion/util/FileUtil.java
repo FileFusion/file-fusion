@@ -55,6 +55,14 @@ public class FileUtil {
                 .toList();
     }
 
+    public Path validatePath(String path) {
+        Path targetPath = resolveSafePath(path);
+        if (!Files.exists(targetPath)) {
+            throw new HttpException(I18n.get("noOperationPermission"));
+        }
+        return targetPath;
+    }
+
     public void createFolder(String path) {
         Path targetPath = resolveSafePath(path);
         try {
@@ -116,7 +124,7 @@ public class FileUtil {
         }
     }
 
-    private void delete(Path path) {
+    public void delete(Path path) {
         if (!Files.exists(path)) {
             return;
         }
