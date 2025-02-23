@@ -225,11 +225,7 @@ public class FileDataService {
         if (!StringUtils.hasLength(fileHash) || !thumbnailUtil.hasThumbnail(mimeType)) {
             throw new HttpException(I18n.get("fileNotSupportThumbnail"));
         }
-        Path thumbnailPath = thumbnailUtil.generateThumbnail(path, mimeType, fileHash);
-        if (thumbnailPath == null) {
-            return null;
-        }
-        return fileUtil.download(thumbnailPath);
+        return fileUtil.download(thumbnailUtil.generateThumbnail(path, mimeType, fileHash));
     }
 
 }
