@@ -4,29 +4,29 @@ import zhCN from '@/assets/languages/zh-CN.json';
 
 type MessageSchema = typeof enUS;
 
-export enum SupportLanguages {
+export enum SUPPORT_LANGUAGES {
   EN_US = 'en-US',
   ZH_CN = 'zh-CN'
 }
 
-function getDefaultLanguage(): SupportLanguages {
+function getDefaultLanguage(): SUPPORT_LANGUAGES {
   const language = localStorage.getItem('language') || navigator.language;
   if (language) {
-    for (const supportLanguage of Object.values(SupportLanguages)) {
+    for (const supportLanguage of Object.values(SUPPORT_LANGUAGES)) {
       if (language.toLowerCase() === supportLanguage.toLowerCase()) {
         return supportLanguage;
       }
     }
   }
-  return SupportLanguages.EN_US;
+  return SUPPORT_LANGUAGES.EN_US;
 }
 
 export const DefaultLanguage = getDefaultLanguage();
 
-export default createI18n<[MessageSchema], SupportLanguages>({
+export default createI18n<[MessageSchema], SUPPORT_LANGUAGES>({
   legacy: false,
   locale: DefaultLanguage,
-  fallbackLocale: SupportLanguages.EN_US,
+  fallbackLocale: SUPPORT_LANGUAGES.EN_US,
   messages: {
     'en-US': enUS,
     'zh-CN': zhCN

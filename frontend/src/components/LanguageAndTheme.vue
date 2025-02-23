@@ -36,7 +36,7 @@ import IconMoon from '~icons/icon-park-outline/moon';
 import IconIntermediateMode from '~icons/icon-park-outline/intermediate-mode';
 import { mainStore } from '@/store';
 import { renderIconMethod } from '@/commons/utils.ts';
-import { SupportLanguages } from '@/commons/i18n.ts';
+import { SUPPORT_LANGUAGES } from '@/commons/i18n.ts';
 import { SupportThemes } from '@/commons/theme.ts';
 
 const mStore = mainStore();
@@ -45,12 +45,12 @@ const { t, locale } = useI18n();
 const languagesOptions = [
   {
     label: 'English',
-    key: SupportLanguages.EN_US,
+    key: SUPPORT_LANGUAGES.EN_US,
     icon: renderIconMethod(IconEnglish)
   },
   {
     label: '中文',
-    key: SupportLanguages.ZH_CN,
+    key: SUPPORT_LANGUAGES.ZH_CN,
     icon: renderIconMethod(IconChinese)
   }
 ];
@@ -76,7 +76,7 @@ const themeOptions = computed(() => [
 switchLanguage(mStore.getLanguage);
 switchTheme(mStore.getTheme);
 
-function switchLanguage(language: SupportLanguages) {
+function switchLanguage(language: SUPPORT_LANGUAGES) {
   locale.value = language;
   mStore.setLanguage(language);
 }

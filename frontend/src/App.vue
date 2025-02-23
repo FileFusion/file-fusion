@@ -34,7 +34,7 @@ import { computed, nextTick, onMounted, watch } from 'vue';
 import { mainStore } from '@/store';
 import lightThemeParams from '@/assets/themes/light.json';
 import darkThemeParams from '@/assets/themes/dark.json';
-import { SupportLanguages } from '@/commons/i18n.ts';
+import { SUPPORT_LANGUAGES } from '@/commons/i18n.ts';
 import { osThemeChange } from '@/commons/theme.ts';
 
 const mStore = mainStore();
@@ -42,7 +42,7 @@ const actualTheme = useOsTheme();
 
 const language = computed(() => {
   const language = mStore.getLanguage;
-  if (language === SupportLanguages.ZH_CN) {
+  if (language === SUPPORT_LANGUAGES.ZH_CN) {
     return {
       language: zhCN,
       date: dateZhCN
