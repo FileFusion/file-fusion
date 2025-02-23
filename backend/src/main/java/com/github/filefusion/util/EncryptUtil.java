@@ -1,10 +1,8 @@
 package com.github.filefusion.util;
 
-import com.github.filefusion.common.HttpException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -75,7 +73,7 @@ public class EncryptUtil {
             return cipher;
         } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException
                  | NoSuchPaddingException | InvalidKeyException e) {
-            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -109,7 +107,7 @@ public class EncryptUtil {
             MessageDigest messageDigest = MessageDigest.getInstance(SHA_256);
             return bytesToHex(messageDigest.digest(original.getBytes(StandardCharsets.UTF_8)));
         } catch (NoSuchAlgorithmException e) {
-            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -118,7 +116,7 @@ public class EncryptUtil {
             Cipher cipher = getCipher(Cipher.ENCRYPT_MODE);
             return bytesToHex(cipher.doFinal(original.getBytes(StandardCharsets.UTF_8)));
         } catch (BadPaddingException | IllegalBlockSizeException e) {
-            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -127,7 +125,7 @@ public class EncryptUtil {
             Cipher cipher = getCipher(Cipher.DECRYPT_MODE);
             return new String(cipher.doFinal(hexToBytes(original)), StandardCharsets.UTF_8);
         } catch (IllegalBlockSizeException | BadPaddingException e) {
-            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, e);
+            throw new RuntimeException(e);
         }
     }
 
