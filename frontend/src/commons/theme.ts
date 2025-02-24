@@ -7,7 +7,7 @@ export enum SUPPORT_THEMES {
 }
 
 function getDefaultTheme(): SUPPORT_THEMES {
-  const theme = localStorage.getItem('theme') as SUPPORT_THEMES;
+  const theme = <SUPPORT_THEMES>localStorage.getItem('theme');
   return Object.values(SUPPORT_THEMES).includes(theme)
     ? theme
     : SUPPORT_THEMES.SYNC_SYSTEM;
@@ -51,7 +51,7 @@ export function osThemeChange(theme: string | null) {
   const targetTheme =
     theme === SUPPORT_THEMES.DARK ? SUPPORT_THEMES.DARK : SUPPORT_THEMES.LIGHT;
   Object.values(ICON_MAP).forEach(({ selector, paths }) => {
-    const icon = document.querySelector(selector) as HTMLLinkElement;
+    const icon = <HTMLLinkElement>document.querySelector(selector);
     if (icon) {
       icon.href = paths[targetTheme];
     }

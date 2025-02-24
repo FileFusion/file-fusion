@@ -24,7 +24,7 @@ function getDefaultLanguage(): SUPPORT_LANGUAGES {
 }
 
 export function languageChange(language: SUPPORT_LANGUAGES) {
-  i18n.global.locale.value = language;
+  (<any>i18n.global.locale).value = language;
   document.documentElement.setAttribute('lang', language);
   document.title = getRouteTitle(router.currentRoute.value);
 }
