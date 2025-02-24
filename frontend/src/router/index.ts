@@ -1,5 +1,6 @@
 import type { Component } from 'vue';
 import type { RouteLocationNormalized } from 'vue-router';
+import type { PermissionType } from '@/commons/permission';
 import { createRouter, createWebHistory } from 'vue-router';
 import IconDocumentFolder from '~icons/icon-park-outline/document-folder';
 import IconPeople from '~icons/icon-park-outline/people';
@@ -15,7 +16,7 @@ declare module 'vue-router' {
     requiresAuth: boolean;
     title?: string;
     icon?: Component;
-    permission?: string[] | string;
+    permission?: PermissionType;
     permissionOr?: boolean;
   }
 }
@@ -99,25 +100,25 @@ const router = createRouter({
 router.beforeEach(async (to: RouteLocationNormalized) => {
   const mStore = mainStore(window.$pinia);
   const token = mStore.getToken;
-  if (to.meta.requiresAuth) {
-    if (!token) {
-      return {
-        path: '/login',
-        query: { redirect: to.path }
-      };
-    }
-    if (to.meta.permission) {
-      if (!mStore.getUser) {
-        const user: any = await window.$http.Get<any>('/user/current');
-        mStore.setUser(user);
-      }
-      if (!hasPermission(to.meta.permission, to.meta.permissionOr)) {
-        return { path: '/' };
-      }
-    }
-  } else {
+  if (!to.meta.requiresAuth) {
     if (to.name === 'login' && token) {
       window.$msg.success(window.$t('router.isLogin'));
+      return { path: '/' };
+    }
+    return true;
+  }
+  if (!token) {
+    return {
+      path: '/login',
+      query: { redirect: to.path }
+    };
+  }
+  if (to.meta.permission) {
+    if (!mStore.getUser) {
+      const user: any = await window.$http.Get<any>('/user/current');
+      mStore.setUser(user);
+    }
+    if (!hasPermission(to.meta.permission, to.meta.permissionOr)) {
       return { path: '/' };
     }
   }

@@ -1,7 +1,7 @@
 import type { Directive, DirectiveBinding } from 'vue';
 import { mainStore } from '@/store';
 
-type PermissionType = string | string[];
+export type PermissionType = string | string[];
 interface PermissionDirectiveBinding extends DirectiveBinding {
   value: PermissionType;
 }
@@ -25,7 +25,7 @@ function validatePermissionFormat(value: unknown) {
 }
 
 export function hasPermission(
-  permissions: string | string[],
+  permissions: PermissionType,
   or?: boolean
 ): boolean {
   const mStore = mainStore(window.$pinia);
@@ -41,7 +41,7 @@ export function hasPermission(
     : permissions.every((p) => userPermissionIds.includes(p));
 }
 
-export function hasPermissionOr(permissions: string | string[]): boolean {
+export function hasPermissionOr(permissions: PermissionType): boolean {
   return hasPermission(permissions, true);
 }
 
