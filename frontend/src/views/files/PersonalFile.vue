@@ -2,7 +2,12 @@
   <div>
     <n-card hoverable>
       <n-flex justify="space-between">
-        <n-flex>
+        <n-flex align="center">
+          <n-checkbox
+            v-if="fileShowType === 'grid'"
+            :checked="fileGridAllIsCheck"
+            :indeterminate="fileGridAllIsIndeterminate"
+            @update:checked="fileGridHandleCheck" />
           <n-button
             v-permission="'personal_file:download'"
             :loading="downloadFileLoading"
@@ -24,7 +29,7 @@
             {{ $t('common.batchDeleteConfirm') }}
           </n-popconfirm>
         </n-flex>
-        <n-flex :wrap="false" justify="end">
+        <n-flex :wrap="false" justify="end" align="center">
           <n-dropdown
             v-if="fileShowType === 'grid'"
             :options="getFileTableSorterOptions"
@@ -602,6 +607,25 @@ const { loading: renameFileLoading, send: doRenameFile } = useRequest(
   showRenameFileModal.value = false;
   fileTableReload();
 });
+
+const fileGridAllIsCheck = computed(() => {
+  return fileTableCheck.value.length === fileTableData.value.length;
+});
+
+const fileGridAllIsIndeterminate = computed(() => {
+  return (
+    fileTableCheck.value.length > 0 &&
+    fileTableCheck.value.length !== fileTableData.value.length
+  );
+});
+
+function fileGridHandleCheck(allIsCheck: boolean) {
+  if (!allIsCheck) {
+    fileTableCheck.value = [];
+  } else {
+    fileTableCheck.value = fileTableData.value.map((f: any) => f.path);
+  }
+}
 
 function fileGridIsCheck(rowKey: string) {
   return fileTableCheck.value.includes(rowKey);
