@@ -1,5 +1,6 @@
 <template>
   <n-image
+    :key="props.path"
     :src="thumbnailFileUrl ? thumbnailFileUrl : fileIcon"
     :width="props.size"
     :height="props.size"
@@ -122,18 +123,25 @@ const { data: thumbnailFile, send: doGetThumbnailFile } = useRequest(
 });
 
 watch(
-  () => props.thumbnail,
-  (thumbnail) => {
-    if (thumbnail) {
+  props,
+  (newProps) => {
+    if (newProps.thumbnail) {
       doGetThumbnailFile();
+    } else {
+      revokeThumbnailFile();
     }
   },
   { immediate: true }
 );
 
 onBeforeUnmount(() => {
+  revokeThumbnailFile();
+});
+
+function revokeThumbnailFile() {
   if (thumbnailFileUrl.value) {
     URL.revokeObjectURL(thumbnailFileUrl.value);
+    thumbnailFileUrl.value = '';
   }
-});
+}
 </script>
