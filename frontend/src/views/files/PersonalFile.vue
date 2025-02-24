@@ -340,6 +340,8 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
           {
             icon: () =>
               h(FilePreview, {
+                path: row.path,
+                thumbnail: row.hasThumbnail,
                 type: row.mimeType,
                 size: 18
               }),
