@@ -73,9 +73,6 @@ const themeOptions = computed(() => [
   }
 ]);
 
-switchLanguage(mStore.getLanguage);
-switchTheme(mStore.getTheme);
-
 function switchLanguage(language: SUPPORT_LANGUAGES) {
   locale.value = language;
   mStore.setLanguage(language);

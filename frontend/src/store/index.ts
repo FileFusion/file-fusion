@@ -2,7 +2,7 @@ import type { SUPPORT_LANGUAGES } from '@/commons/i18n';
 import type { SUPPORT_THEMES } from '@/commons/theme';
 import { defineStore } from 'pinia';
 import { defaultLanguage } from '@/commons/i18n';
-import { DefaultTheme, getTheme } from '@/commons/theme';
+import { defaultTheme, getTheme } from '@/commons/theme';
 import route, { getRouteTitle } from '@/router';
 
 interface MainState {
@@ -17,7 +17,7 @@ interface MainState {
 export const mainStore = defineStore('main', {
   state: (): MainState => ({
     language: defaultLanguage,
-    theme: DefaultTheme,
+    theme: defaultTheme,
     sideMenuCollapsed: localStorage.getItem('sideMenuCollapsed'),
     token: localStorage.getItem('token') || sessionStorage.getItem('token'),
     user: null,

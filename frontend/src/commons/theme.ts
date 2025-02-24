@@ -7,57 +7,55 @@ export enum SUPPORT_THEMES {
 }
 
 function getDefaultTheme(): SUPPORT_THEMES {
-  const theme = localStorage.getItem('theme');
-  if (theme) {
-    for (const supportTheme of Object.values(SUPPORT_THEMES)) {
-      if (theme === supportTheme) {
-        return supportTheme;
-      }
-    }
-  }
-  return SUPPORT_THEMES.SYNC_SYSTEM;
+  const theme = localStorage.getItem('theme') as SUPPORT_THEMES;
+  return Object.values(SUPPORT_THEMES).includes(theme)
+    ? theme
+    : SUPPORT_THEMES.SYNC_SYSTEM;
 }
 
 export function getTheme(theme: SUPPORT_THEMES): SUPPORT_THEMES {
-  if (theme === SUPPORT_THEMES.LIGHT || theme === SUPPORT_THEMES.DARK) {
+  if (theme !== SUPPORT_THEMES.SYNC_SYSTEM) {
     return theme;
-  } else if (theme === SUPPORT_THEMES.SYNC_SYSTEM) {
-    const osThemeRef = useOsTheme();
-    return osThemeRef.value === SUPPORT_THEMES.DARK
-      ? SUPPORT_THEMES.DARK
-      : SUPPORT_THEMES.LIGHT;
   }
-  return SUPPORT_THEMES.LIGHT;
+  const osTheme = useOsTheme().value;
+  return osTheme === SUPPORT_THEMES.DARK
+    ? SUPPORT_THEMES.DARK
+    : SUPPORT_THEMES.LIGHT;
 }
+
+const ICON_MAP = {
+  icon: {
+    selector: 'link[rel="icon"]',
+    paths: {
+      [SUPPORT_THEMES.DARK]: '/favicon-white.svg',
+      [SUPPORT_THEMES.LIGHT]: '/favicon.svg'
+    }
+  },
+  shortcutIcon: {
+    selector: 'link[rel="shortcut icon"]',
+    paths: {
+      [SUPPORT_THEMES.DARK]: '/favicon-white.ico',
+      [SUPPORT_THEMES.LIGHT]: '/favicon.ico'
+    }
+  },
+  appleTouchIconPrecomposed: {
+    selector: 'link[rel="apple-touch-icon-precomposed"]',
+    paths: {
+      [SUPPORT_THEMES.DARK]: '/icon72x72@2x-white.png',
+      [SUPPORT_THEMES.LIGHT]: '/icon72x72@2x.png'
+    }
+  }
+};
 
 export function osThemeChange(theme: string | null) {
-  const at =
+  const targetTheme =
     theme === SUPPORT_THEMES.DARK ? SUPPORT_THEMES.DARK : SUPPORT_THEMES.LIGHT;
-  const icon = document.querySelector('link[rel="icon"]');
-  if (icon) {
-    icon.setAttribute(
-      'href',
-      at === SUPPORT_THEMES.DARK ? '/favicon-white.svg' : '/favicon.svg'
-    );
-  }
-  const shortcutIcon = document.querySelector('link[rel="shortcut icon"]');
-  if (shortcutIcon) {
-    shortcutIcon.setAttribute(
-      'href',
-      at === SUPPORT_THEMES.DARK ? '/favicon-white.ico' : '/favicon.ico'
-    );
-  }
-  const appleTouchIconPrecomposed = document.querySelector(
-    'link[rel="apple-touch-icon-precomposed"]'
-  );
-  if (appleTouchIconPrecomposed) {
-    appleTouchIconPrecomposed.setAttribute(
-      'href',
-      at === SUPPORT_THEMES.DARK
-        ? '/icon72x72@2x-white.png'
-        : '/icon72x72@2x.png'
-    );
-  }
+  Object.values(ICON_MAP).forEach(({ selector, paths }) => {
+    const icon = document.querySelector(selector) as HTMLLinkElement;
+    if (icon) {
+      icon.href = paths[targetTheme];
+    }
+  });
 }
 
-export const DefaultTheme = getDefaultTheme();
+export const defaultTheme = getDefaultTheme();
