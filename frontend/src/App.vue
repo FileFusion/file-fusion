@@ -35,7 +35,7 @@ import { mainStore } from '@/store';
 import lightThemeParams from '@/assets/themes/light.json';
 import darkThemeParams from '@/assets/themes/dark.json';
 import { SUPPORT_LANGUAGES } from '@/commons/i18n.ts';
-import { osThemeChange } from '@/commons/theme.ts';
+import { osThemeChange, SUPPORT_THEMES } from '@/commons/theme.ts';
 
 const mStore = mainStore();
 const actualTheme = useOsTheme();
@@ -57,7 +57,7 @@ const language = computed(() => {
 
 const uiTheme = computed(() => {
   const theme = mStore.getTheme;
-  if (theme === 'dark') {
+  if (theme === SUPPORT_THEMES.DARK) {
     return darkTheme;
   } else {
     return null;

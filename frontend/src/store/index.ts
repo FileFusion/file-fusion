@@ -3,7 +3,6 @@ import type { SUPPORT_THEMES } from '@/commons/theme';
 import { defineStore } from 'pinia';
 import { defaultLanguage } from '@/commons/i18n';
 import { defaultTheme, getTheme } from '@/commons/theme';
-import route, { getRouteTitle } from '@/router';
 
 interface MainState {
   language: SUPPORT_LANGUAGES;
@@ -31,9 +30,6 @@ export const mainStore = defineStore('main', {
       return getTheme(state.theme);
     },
     getSideMenuCollapsed(state): boolean {
-      if (state.sideMenuCollapsed === null) {
-        return false;
-      }
       return state.sideMenuCollapsed === 'true';
     },
     getToken(state): string | null {
@@ -42,7 +38,7 @@ export const mainStore = defineStore('main', {
     getUser(state): any | null {
       return state.user;
     },
-    getPermissionIds(state): any[] | null {
+    getPermissionIds(state): string[] | null {
       return state.permissionIds;
     }
   },
@@ -50,16 +46,10 @@ export const mainStore = defineStore('main', {
     setLanguage(language: SUPPORT_LANGUAGES) {
       this.language = language;
       localStorage.setItem('language', language);
-      document.documentElement.setAttribute('lang', language);
-      document.title = getRouteTitle(route.currentRoute.value);
     },
     setTheme(theme: SUPPORT_THEMES) {
       this.theme = theme;
       localStorage.setItem('theme', theme);
-      document.documentElement.setAttribute(
-        'class',
-        getTheme(theme) + '-theme'
-      );
     },
     setSideMenuCollapsed(sideMenuCollapsed: boolean) {
       this.sideMenuCollapsed = '' + sideMenuCollapsed;
