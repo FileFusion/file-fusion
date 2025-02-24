@@ -11,7 +11,7 @@ interface MainState {
   sideMenuCollapsed: string | null;
   token: string | null;
   user: any | null;
-  permissions: any[] | null;
+  permissionIds: string[] | null;
 }
 
 export const mainStore = defineStore('main', {
@@ -21,7 +21,7 @@ export const mainStore = defineStore('main', {
     sideMenuCollapsed: localStorage.getItem('sideMenuCollapsed'),
     token: localStorage.getItem('token') || sessionStorage.getItem('token'),
     user: null,
-    permissions: null
+    permissionIds: null
   }),
   getters: {
     getLanguage(state): SUPPORT_LANGUAGES {
@@ -42,8 +42,8 @@ export const mainStore = defineStore('main', {
     getUser(state): any | null {
       return state.user;
     },
-    getPermissions(state): any[] | null {
-      return state.permissions;
+    getPermissionIds(state): any[] | null {
+      return state.permissionIds;
     }
   },
   actions: {
@@ -75,13 +75,15 @@ export const mainStore = defineStore('main', {
         }
       } else {
         this.user = null;
-        this.permissions = null;
+        this.permissionIds = null;
         localStorage.removeItem('token');
         sessionStorage.removeItem('token');
       }
     },
     setUser(user: any) {
-      this.permissions = user.permissions;
+      this.permissionIds = user.permissions.map((permission: any) => {
+        return permission.id;
+      });
       user.permissions = null;
       this.user = user;
     }

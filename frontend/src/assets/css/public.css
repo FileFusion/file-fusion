@@ -5,3 +5,7 @@ body,
   overflow-x: hidden;
   font-family: AlibabaPuHuiTi, PingFangSC-Regular, 'Microsoft Yahei', sans-serif;
 }
+
+.permission-hidden {
+  display: none !important;
+}

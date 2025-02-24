@@ -193,8 +193,8 @@ function logout() {
 }
 
 function openAbout() {
-  showAbout.value = true;
   doGetLicense();
+  showAbout.value = true;
 }
 
 function handleClose() {
