@@ -81,9 +81,7 @@ export const mainStore = defineStore('main', {
       }
     },
     setUser(user: any) {
-      this.permissionIds = user.permissions.map((permission: any) => {
-        return permission.id;
-      });
+      this.permissionIds = user.permissions.map((p: any) => p.id);
       user.permissions = null;
       this.user = user;
     }
