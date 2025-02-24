@@ -113,15 +113,17 @@ router.beforeEach(async (to: RouteLocationNormalized) => {
       query: { redirect: to.path }
     };
   }
-  if (to.meta.permission) {
-    if (!mStore.getUser) {
-      const user: any = await window.$http.Get<any>('/user/current');
-      mStore.setUser(user);
-    }
-    if (!hasPermission(to.meta.permission, to.meta.permissionOr)) {
-      return { path: '/' };
-    }
+  if (!mStore.getUser) {
+    const user: any = await window.$http.Get<any>('/user/current');
+    mStore.setUser(user);
   }
+  if (
+    to.meta.permission &&
+    !hasPermission(to.meta.permission, to.meta.permissionOr)
+  ) {
+    return { path: '/' };
+  }
+  return true;
 });
 
 router.afterEach((to: RouteLocationNormalized) => {
