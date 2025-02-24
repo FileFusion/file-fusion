@@ -45,7 +45,6 @@ declare module 'vue' {
     NDrawer: typeof import('naive-ui')['NDrawer']
     NDrawerContent: typeof import('naive-ui')['NDrawerContent']
     NDropdown: typeof import('naive-ui')['NDropdown']
-    NEl: typeof import('naive-ui')['NEl']
     NEllipsis: typeof import('naive-ui')['NEllipsis']
     NEmpty: typeof import('naive-ui')['NEmpty']
     NFlex: typeof import('naive-ui')['NFlex']
@@ -95,6 +94,5 @@ declare module 'vue' {
     RouterView: typeof import('vue-router')['RouterView']
     RouterViewContent: typeof import('./src/components/RouterViewContent.vue')['default']
     SideMenu: typeof import('./src/components/SideMenu.vue')['default']
-    UploadView: typeof import('./src/components/UploadView.vue')['default']
   }
 }

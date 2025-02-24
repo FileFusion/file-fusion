@@ -47,7 +47,7 @@ public final class ThumbnailUtil {
         this.fileUtil = fileUtil;
         if (!Files.exists(baseDir)) {
             try {
-                Files.createDirectory(baseDir);
+                Files.createDirectories(baseDir);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
