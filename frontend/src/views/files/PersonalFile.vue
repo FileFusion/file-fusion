@@ -200,6 +200,7 @@
         </div>
       </n-spin>
     </n-modal>
+    <video-view />
   </div>
 </template>
 
@@ -224,6 +225,7 @@ import { hasPermission } from '@/commons/permission';
 import { formatFileSize, renderIconMethod } from '@/commons/utils';
 import { useRouter, useRoute } from 'vue-router';
 import FilePreview from '@/views/files/components/FilePreview.vue';
+import VideoView from '@/views/files/components/VideoView.vue';
 
 const { t } = useI18n();
 const http = window.$http;
