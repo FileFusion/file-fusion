@@ -58,4 +58,8 @@ export function osThemeChange(theme: string | null) {
   });
 }
 
+export function themeChange(theme: SUPPORT_THEMES) {
+  document.documentElement.setAttribute('class', theme + '-theme');
+}
+
 export const defaultTheme = getDefaultTheme();

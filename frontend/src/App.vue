@@ -1,8 +1,8 @@
 <template>
   <suspense>
     <n-config-provider
-      :date-locale="language.date"
-      :locale="language.language"
+      :date-locale="uiLanguage.date"
+      :locale="uiLanguage.language"
       :theme="uiTheme"
       :theme-overrides="uiTheme === null ? lightThemeParams : darkThemeParams"
       class="h-full">
@@ -34,15 +34,16 @@ import { computed, nextTick, onMounted, watch } from 'vue';
 import { mainStore } from '@/store';
 import lightThemeParams from '@/assets/themes/light.json';
 import darkThemeParams from '@/assets/themes/dark.json';
-import { SUPPORT_LANGUAGES } from '@/commons/i18n.ts';
-import { osThemeChange, SUPPORT_THEMES } from '@/commons/theme.ts';
+import { languageChange, SUPPORT_LANGUAGES } from '@/commons/i18n.ts';
+import { themeChange, osThemeChange, SUPPORT_THEMES } from '@/commons/theme.ts';
 
 const mStore = mainStore();
 const actualTheme = useOsTheme();
+const theme = computed(() => mStore.getTheme);
+const language = computed(() => mStore.getLanguage);
 
-const language = computed(() => {
-  const language = mStore.getLanguage;
-  if (language === SUPPORT_LANGUAGES.ZH_CN) {
+const uiLanguage = computed(() => {
+  if (language.value === SUPPORT_LANGUAGES.ZH_CN) {
     return {
       language: zhCN,
       date: dateZhCN
@@ -56,8 +57,7 @@ const language = computed(() => {
 });
 
 const uiTheme = computed(() => {
-  const theme = mStore.getTheme;
-  if (theme === SUPPORT_THEMES.DARK) {
+  if (theme.value === SUPPORT_THEMES.DARK) {
     return darkTheme;
   } else {
     return null;
@@ -73,4 +73,6 @@ onMounted(async () => {
 });
 
 watch(actualTheme, osThemeChange, { immediate: true });
+watch(theme, themeChange, { immediate: true });
+watch(language, languageChange, { immediate: true });
 </script>

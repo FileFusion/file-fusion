@@ -29,7 +29,6 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRoute } from 'vue-router';
 import IconEnglish from '~icons/icon-park-outline/english';
 import IconChinese from '~icons/icon-park-outline/chinese';
 import IconSun from '~icons/icon-park-outline/sun';
@@ -39,11 +38,9 @@ import { mainStore } from '@/store';
 import { renderIconMethod } from '@/commons/utils.ts';
 import { SUPPORT_LANGUAGES } from '@/commons/i18n.ts';
 import { SUPPORT_THEMES } from '@/commons/theme.ts';
-import { getRouteTitle } from '@/router';
 
 const mStore = mainStore();
-const { t, locale } = useI18n();
-const route = useRoute();
+const { t } = useI18n();
 
 const languagesOptions = [
   {
@@ -78,13 +75,9 @@ const themeOptions = computed(() => [
 
 function switchLanguage(language: SUPPORT_LANGUAGES) {
   mStore.setLanguage(language);
-  locale.value = language;
-  document.documentElement.setAttribute('lang', language);
-  document.title = getRouteTitle(route);
 }
 
 function switchTheme(theme: SUPPORT_THEMES) {
   mStore.setTheme(theme);
-  document.documentElement.setAttribute('class', theme + '-theme');
 }
 </script>
