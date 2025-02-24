@@ -51,7 +51,7 @@ function treeForeachCustom(
 
 function renderIcon(icon: Component, color?: string, size?: number) {
   if (!icon) {
-    return null;
+    return undefined;
   }
   const props: any = {};
   if (color) {
