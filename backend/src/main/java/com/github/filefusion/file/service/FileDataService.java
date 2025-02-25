@@ -21,7 +21,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -237,6 +236,25 @@ public class FileDataService {
         }
     }
 
+    public ResponseEntity<StreamingResponseBody> downloadChunked(String path, String range) {
+        Path safePath = fileUtil.validatePath(path);
+        String[] ranges = null;
+        if (StringUtils.hasLength(range)) {
+            ranges = range.replace("bytes=", "").split("-");
+        }
+        long start = 0;
+        long end = -1;
+        if (ranges != null) {
+            if (ranges.length > 0) {
+                start = Long.parseLong(ranges[0]);
+            }
+            if (ranges.length > 1) {
+                end = Long.parseLong(ranges[1]);
+            }
+        }
+        return fileUtil.download(safePath, start, end);
+    }
+
     public ResponseEntity<StreamingResponseBody> thumbnailFile(String path) {
         FileData fileData = fileDataRepository.findFirstByPath(path);
         if (fileData == null) {
@@ -248,23 +266,6 @@ public class FileDataService {
             throw new HttpException(I18n.get("fileNotSupportThumbnail"));
         }
         return fileUtil.download(thumbnailUtil.generateThumbnail(path, mimeType, fileHash));
-    }
-
-    public ResponseEntity<StreamingResponseBody> playVideo(String path, String range) {
-        Path safePath = fileUtil.validatePath(path);
-        long fileSize;
-        try {
-            fileSize = Files.size(safePath);
-        } catch (IOException e) {
-            throw new HttpException(I18n.get("getFileSizeFailed"));
-        }
-        String[] ranges = range.replace("bytes=", "").split("-");
-        long start = Long.parseLong(ranges[0]);
-        long end = fileSize - 1;
-        if (ranges.length > 1) {
-            end = Long.parseLong(ranges[1]);
-        }
-        return fileUtil.download(safePath, start, end, fileSize);
     }
 
 }

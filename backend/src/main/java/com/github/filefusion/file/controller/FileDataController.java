@@ -149,28 +149,31 @@ public class FileDataController {
     }
 
     /**
+     * download chunked
+     *
+     * @param fileData path
+     * @param range    chunked range
+     * @return file chunked
+     */
+    @PostMapping("/_download_chunked")
+    @PreAuthorize("hasAuthority('personal_file:download')")
+    public ResponseEntity<StreamingResponseBody> downloadChunked(@RequestBody FileData fileData,
+                                                                 @RequestHeader(required = false) String range) {
+        fileDataService.verifyUserAuthorize(CurrentUser.get().getId(), fileData.getPath());
+        return fileDataService.downloadChunked(fileData.getPath(), range);
+    }
+
+    /**
      * thumbnail file
      *
      * @param fileData path
      * @return file thumbnail
      */
     @PostMapping("/_thumbnail")
+    @PreAuthorize("hasAuthority('personal_file:read')")
     public ResponseEntity<StreamingResponseBody> thumbnailFile(@RequestBody FileData fileData) {
         fileDataService.verifyUserAuthorize(CurrentUser.get().getId(), fileData.getPath());
         return fileDataService.thumbnailFile(fileData.getPath());
-    }
-
-    /**
-     * play video
-     *
-     * @param fileData path
-     * @return video
-     */
-    @PostMapping("/_play_video")
-    public ResponseEntity<StreamingResponseBody> playVideo(@RequestBody FileData fileData,
-                                                           @RequestHeader String range) {
-        fileDataService.verifyUserAuthorize(CurrentUser.get().getId(), fileData.getPath());
-        return fileDataService.playVideo(fileData.getPath(), range);
     }
 
 }

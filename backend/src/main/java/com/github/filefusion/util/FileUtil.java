@@ -160,25 +160,28 @@ public class FileUtil {
     }
 
     public ResponseEntity<StreamingResponseBody> download(Path path) {
-        return download(path.getFileName().toString(),
-                getFileMediaType(path),
-                HttpStatus.OK,
-                out -> Files.copy(path, out),
-                null);
+        return download(path, 0, -1);
     }
 
-    public ResponseEntity<StreamingResponseBody> download(Path path, long start, long end, long fileSize) {
+    public ResponseEntity<StreamingResponseBody> download(Path path, long start, long end) {
+        long fileSize;
+        try {
+            fileSize = Files.size(path);
+        } catch (IOException e) {
+            throw new HttpException(I18n.get("getFileSizeFailed"));
+        }
+        long endReal = end == -1 ? fileSize - 1 : end;
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.ACCEPT_RANGES, "bytes");
-        headers.add(HttpHeaders.CONTENT_RANGE, String.format("bytes %d-%d/%d", start, end, fileSize));
-        headers.add(HttpHeaders.CONTENT_LENGTH, String.valueOf(end - start + 1));
+        headers.add(HttpHeaders.CONTENT_RANGE, String.format("bytes %d-%d/%d", start, endReal, fileSize));
+        headers.add(HttpHeaders.CONTENT_LENGTH, String.valueOf(endReal - start + 1));
         return download(path.getFileName().toString(),
                 getFileMediaType(path),
                 HttpStatus.PARTIAL_CONTENT,
                 out -> {
                     try (FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.READ);
                          WritableByteChannel outChannel = Channels.newChannel(out)) {
-                        fileChannel.transferTo(start, end - start + 1, outChannel);
+                        fileChannel.transferTo(start, endReal - start + 1, outChannel);
                     }
                 },
                 headers);
@@ -189,7 +192,7 @@ public class FileUtil {
                 FileAttribute.ZIP_MIME_TYPE,
                 HttpStatus.OK,
                 new ZipStreamingResponseBody(pathList),
-                null);
+                new HttpHeaders());
     }
 
     private ResponseEntity<StreamingResponseBody> download(String filename,
