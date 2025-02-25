@@ -1,8 +1,7 @@
 package com.github.filefusion.config;
 
-import org.apache.catalina.connector.Connector;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
+import org.springframework.boot.web.embedded.undertow.UndertowServletWebServerFactory;
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -14,7 +13,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
  * @since 2022/4/1
  */
 @Configuration
-public class WebServerFactory implements WebServerFactoryCustomizer<TomcatServletWebServerFactory> {
+public class WebServerFactory implements WebServerFactoryCustomizer<UndertowServletWebServerFactory> {
 
     @Value("${server.ssl.enabled}")
     private Boolean serverSslEnabled;
@@ -26,14 +25,10 @@ public class WebServerFactory implements WebServerFactoryCustomizer<TomcatServle
     private Boolean serverSslForced;
 
     @Override
-    public void customize(TomcatServletWebServerFactory server) {
+    public void customize(UndertowServletWebServerFactory server) {
         if (serverSslEnabled) {
             server.setPort(serverSslPort);
-            Connector connector = new Connector("org.apache.coyote.http11.Http11NioProtocol");
-            connector.setScheme("http");
-            connector.setPort(serverHttpPort);
-            connector.setSecure(false);
-            server.addAdditionalTomcatConnectors(connector);
+            server.addBuilderCustomizers(builder -> builder.addHttpListener(serverHttpPort, "0.0.0.0"));
         } else {
             server.setPort(serverHttpPort);
         }
