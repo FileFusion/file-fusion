@@ -70,6 +70,27 @@ public class FileDataService {
                 .toList();
     }
 
+    public String formatUserPath(String userId, String path) {
+        if (!StringUtils.hasLength(path)) {
+            path = userId;
+        } else {
+            path = userId + FileAttribute.SEPARATOR + path;
+        }
+        return path;
+    }
+
+    public void verifyUserAuthorize(String userId, String... pathList) {
+        if (pathList == null || pathList.length == 0) {
+            throw new HttpException(I18n.get("operationFileSelectCheck"));
+        }
+        String userPath = userId + FileAttribute.SEPARATOR;
+        for (String path : pathList) {
+            if (!StringUtils.startsWithIgnoreCase(path, userPath)) {
+                throw new HttpException(I18n.get("noOperationPermission"));
+            }
+        }
+    }
+
     public Page<FileData> get(PageRequest page, String path, String name) {
         path = path + "%";
         if (StringUtils.hasLength(name)) {
@@ -227,6 +248,10 @@ public class FileDataService {
             throw new HttpException(I18n.get("fileNotSupportThumbnail"));
         }
         return fileUtil.download(thumbnailUtil.generateThumbnail(path, mimeType, fileHash));
+    }
+
+    public ResponseEntity<StreamingResponseBody> playVideo(String path) {
+        return fileUtil.download(fileUtil.validatePath(path));
     }
 
 }

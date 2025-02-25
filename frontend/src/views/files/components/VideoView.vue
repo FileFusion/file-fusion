@@ -6,27 +6,24 @@
     :title="props.file.name"
     :bordered="false"
     content-style="padding: 0;"
-    @after-enter="doDownloadFile"
+    @after-enter="initPlayer"
     @after-leave="destroyPlayer">
-    <n-spin
-      :show="downloadFileLoading"
-      class="h-full w-full"
-      content-style="height: 100%;width: 100%;">
-      <div ref="playerContainer"></div>
-    </n-spin>
+    <div ref="playerContainer"></div>
   </n-modal>
 </template>
 
 <script lang="ts" setup>
 import type PresetPlayer from 'xgplayer';
 import Player from 'xgplayer';
+import Mp4Plugin from 'xgplayer-mp4';
 import 'xgplayer/dist/index.min.css';
 import { ref, onBeforeUnmount } from 'vue';
 import { useThemeVars } from 'naive-ui';
-import { useRequest } from 'alova/client';
+import { mainStore } from '@/store';
 
 const themeVars = useThemeVars();
 const http = window.$http;
+const mStore = mainStore();
 
 const model = defineModel<boolean>();
 const props = defineProps({
@@ -36,16 +33,7 @@ const props = defineProps({
 const playerContainer = ref<HTMLElement | undefined>(undefined);
 const playerInstance = ref<PresetPlayer | null>(null);
 
-const { loading: downloadFileLoading, send: doDownloadFile } = useRequest(
-  () => http.Post('/file_data/_submit_download', [props.file.path]),
-  { immediate: false }
-).onSuccess((response: any) => {
-  initPlayer(
-    http.options.baseURL + '/file_data/_download/' + response.data.downloadId
-  );
-});
-
-function initPlayer(url: string) {
+function initPlayer() {
   if (!playerContainer.value) {
     return;
   }
@@ -54,7 +42,7 @@ function initPlayer(url: string) {
   }
   playerInstance.value = new Player({
     el: playerContainer.value,
-    url: url,
+    url: http.options.baseURL + '/file_data/_play_video',
     height: '100%',
     width: '100%',
     videoFillMode: 'contain',
@@ -63,6 +51,21 @@ function initPlayer(url: string) {
     commonStyle: {
       playedColor: themeVars.value.primaryColor,
       volumeColor: themeVars.value.primaryColor
+    },
+    plugins: [Mp4Plugin],
+    mp4plugin: {
+      reqOptions: {
+        mode: 'cors',
+        method: 'POST',
+        headers: {
+          'Accept-Language': mStore.getLanguage,
+          Authorization: mStore.getToken,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          path: props.file.path
+        })
+      }
     }
   });
 }

@@ -1,6 +1,5 @@
 package com.github.filefusion.file.controller;
 
-import com.github.filefusion.common.HttpException;
 import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.constant.SorterOrder;
 import com.github.filefusion.file.entity.FileData;
@@ -8,13 +7,11 @@ import com.github.filefusion.file.model.RenameFileModel;
 import com.github.filefusion.file.model.SubmitDownloadFilesResponse;
 import com.github.filefusion.file.service.FileDataService;
 import com.github.filefusion.util.CurrentUser;
-import com.github.filefusion.util.I18n;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -80,15 +77,7 @@ public class FileDataController {
     @PostMapping("/_batch_delete")
     @PreAuthorize("hasAuthority('personal_file:delete')")
     public void batchDelete(@RequestBody List<String> pathList) {
-        if (CollectionUtils.isEmpty(pathList)) {
-            return;
-        }
-        String userPath = CurrentUser.get().getId() + FileAttribute.SEPARATOR;
-        for (String path : pathList) {
-            if (!StringUtils.startsWithIgnoreCase(path, userPath)) {
-                throw new HttpException(I18n.get("noOperationPermission"));
-            }
-        }
+        fileDataService.verifyUserAuthorize(CurrentUser.get().getId(), pathList.toArray(new String[0]));
         fileDataService.batchDelete(pathList);
     }
 
@@ -100,12 +89,7 @@ public class FileDataController {
     @PostMapping("/_create_folder")
     @PreAuthorize("hasAuthority('personal_file:upload')")
     public void createFolder(@RequestBody FileData fileData) {
-        String path = fileData.getPath();
-        if (!StringUtils.hasLength(path)) {
-            path = CurrentUser.get().getId();
-        } else {
-            path = CurrentUser.get().getId() + FileAttribute.SEPARATOR + path;
-        }
+        String path = fileDataService.formatUserPath(CurrentUser.get().getId(), fileData.getPath());
         fileDataService.createFolder(path, System.currentTimeMillis(), false);
     }
 
@@ -125,11 +109,7 @@ public class FileDataController {
                        @RequestParam("path") String path,
                        @RequestParam("type") String type,
                        @RequestParam("lastModified") Long lastModified) {
-        if (!StringUtils.hasLength(path)) {
-            path = CurrentUser.get().getId();
-        } else {
-            path = CurrentUser.get().getId() + FileAttribute.SEPARATOR + path;
-        }
+        path = fileDataService.formatUserPath(CurrentUser.get().getId(), path);
         fileDataService.upload(file, name, path, type, lastModified);
     }
 
@@ -141,12 +121,7 @@ public class FileDataController {
     @PostMapping("/_rename")
     @PreAuthorize("hasAuthority('personal_file:edit')")
     public void rename(@RequestBody RenameFileModel renameFileModel) {
-        String path = renameFileModel.getPath();
-        if (!StringUtils.hasLength(path)) {
-            path = CurrentUser.get().getId();
-        } else {
-            path = CurrentUser.get().getId() + FileAttribute.SEPARATOR + path;
-        }
+        String path = fileDataService.formatUserPath(CurrentUser.get().getId(), renameFileModel.getPath());
         fileDataService.rename(path, renameFileModel.getOriginalName(), renameFileModel.getTargetName());
     }
 
@@ -159,15 +134,7 @@ public class FileDataController {
     @PostMapping("/_submit_download")
     @PreAuthorize("hasAuthority('personal_file:download')")
     public SubmitDownloadFilesResponse submitDownloadFiles(@RequestBody List<String> pathList) {
-        if (CollectionUtils.isEmpty(pathList)) {
-            throw new HttpException(I18n.get("downloadFileSelectCheck"));
-        }
-        String userPath = CurrentUser.get().getId() + FileAttribute.SEPARATOR;
-        for (String path : pathList) {
-            if (!StringUtils.startsWithIgnoreCase(path, userPath)) {
-                throw new HttpException(I18n.get("noOperationPermission"));
-            }
-        }
+        fileDataService.verifyUserAuthorize(CurrentUser.get().getId(), pathList.toArray(new String[0]));
         return fileDataService.submitDownload(pathList);
     }
 
@@ -190,12 +157,20 @@ public class FileDataController {
      */
     @PostMapping("/_thumbnail")
     public ResponseEntity<StreamingResponseBody> thumbnailFile(@RequestBody FileData fileData) {
-        String path = fileData.getPath();
-        String userPath = CurrentUser.get().getId() + FileAttribute.SEPARATOR;
-        if (!StringUtils.startsWithIgnoreCase(path, userPath)) {
-            throw new HttpException(I18n.get("noOperationPermission"));
-        }
-        return fileDataService.thumbnailFile(path);
+        fileDataService.verifyUserAuthorize(CurrentUser.get().getId(), fileData.getPath());
+        return fileDataService.thumbnailFile(fileData.getPath());
+    }
+
+    /**
+     * play video
+     *
+     * @param fileData path
+     * @return video
+     */
+    @PostMapping("/_play_video")
+    public ResponseEntity<StreamingResponseBody> playVideo(@RequestBody FileData fileData) {
+        fileDataService.verifyUserAuthorize(CurrentUser.get().getId(), fileData.getPath());
+        return fileDataService.playVideo(fileData.getPath());
     }
 
 }
