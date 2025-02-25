@@ -158,7 +158,7 @@ public class FileDataController {
     @PostMapping("/_download_chunked")
     @PreAuthorize("hasAuthority('personal_file:download')")
     public ResponseEntity<StreamingResponseBody> downloadChunked(@RequestBody FileData fileData,
-                                                                 @RequestHeader(required = false) String range) {
+                                                                 @RequestHeader String range) {
         fileDataService.verifyUserAuthorize(CurrentUser.get().getId(), fileData.getPath());
         return fileDataService.downloadChunked(fileData.getPath(), range);
     }

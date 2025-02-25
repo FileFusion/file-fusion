@@ -42,7 +42,7 @@ function initPlayer() {
   }
   playerInstance.value = new Player({
     el: playerContainer.value,
-    url: http.options.baseURL + '/file_data/_play_video',
+    url: http.options.baseURL + '/file_data/_download_chunked',
     height: '100%',
     width: '100%',
     videoFillMode: 'contain',

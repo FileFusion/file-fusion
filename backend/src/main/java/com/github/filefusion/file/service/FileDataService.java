@@ -238,19 +238,14 @@ public class FileDataService {
 
     public ResponseEntity<StreamingResponseBody> downloadChunked(String path, String range) {
         Path safePath = fileUtil.validatePath(path);
-        String[] ranges = null;
-        if (StringUtils.hasLength(range)) {
-            ranges = range.replace("bytes=", "").split("-");
-        }
+        String[] ranges = range.replace("bytes=", "").split("-");
         long start = 0;
         long end = -1;
-        if (ranges != null) {
-            if (ranges.length > 0) {
-                start = Long.parseLong(ranges[0]);
-            }
-            if (ranges.length > 1) {
-                end = Long.parseLong(ranges[1]);
-            }
+        if (ranges.length > 0) {
+            start = Long.parseLong(ranges[0]);
+        }
+        if (ranges.length > 1) {
+            end = Long.parseLong(ranges[1]);
         }
         return fileUtil.download(safePath, start, end);
     }

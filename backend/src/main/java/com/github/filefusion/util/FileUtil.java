@@ -181,7 +181,11 @@ public class FileUtil {
     }
 
     public ResponseEntity<StreamingResponseBody> download(Path path) {
-        return download(path, 0, -1);
+        return download(path.getFileName().toString(),
+                getFileMediaType(path),
+                HttpStatus.OK,
+                out -> Files.copy(path, out),
+                new HttpHeaders());
     }
 
     public ResponseEntity<StreamingResponseBody> download(Path path, long start, long end) {
