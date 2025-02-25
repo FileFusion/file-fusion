@@ -20,6 +20,9 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.zip.Deflater;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * FileUtil
@@ -35,6 +38,24 @@ public class FileUtil {
     @Autowired
     public FileUtil(@Value("${file.dir}") String fileDir) {
         this.baseDir = Paths.get(fileDir).normalize().toAbsolutePath();
+    }
+
+    private void addToZip(ZipOutputStream zos, Path path, String parent) throws IOException {
+        String entryName = parent + path.getFileName();
+        if (Files.isDirectory(path)) {
+            entryName += FileAttribute.SEPARATOR;
+            zos.putNextEntry(new ZipEntry(entryName));
+            zos.closeEntry();
+            try (DirectoryStream<Path> children = Files.newDirectoryStream(path)) {
+                for (Path child : children) {
+                    addToZip(zos, child, entryName);
+                }
+            }
+        } else {
+            zos.putNextEntry(new ZipEntry(entryName));
+            Files.copy(path, zos);
+            zos.closeEntry();
+        }
     }
 
     private MediaType getFileMediaType(Path path) {
@@ -191,7 +212,14 @@ public class FileUtil {
         return download(FileAttribute.DOWNLOAD_ZIP_NAME,
                 FileAttribute.ZIP_MIME_TYPE,
                 HttpStatus.OK,
-                new ZipStreamingResponseBody(pathList),
+                out -> {
+                    try (ZipOutputStream zos = new ZipOutputStream(out, StandardCharsets.UTF_8)) {
+                        zos.setLevel(Deflater.BEST_SPEED);
+                        for (Path path : pathList) {
+                            addToZip(zos, path, "");
+                        }
+                    }
+                },
                 new HttpHeaders());
     }
 
