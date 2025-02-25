@@ -148,7 +148,8 @@
       "folderNameError": "The folder name needs to be less than 255 characters and cannot contain '/'",
       "renameFile": "Rename",
       "fileNameEmpty": "Please enter file name",
-      "fileNameError": "The file name needs to be less than 255 characters and cannot contain '/'"
+      "fileNameError": "The file name needs to be less than 255 characters and cannot contain '/'",
+      "fileNotSupportPreview": "This file does not support online preview"
     },
     "orgFile": "Organization file",
     "recycleBin": "Recycle bin"

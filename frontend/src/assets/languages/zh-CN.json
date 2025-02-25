@@ -148,7 +148,8 @@
       "folderNameError": "文件夹名称需要小于255个字符且不能包含'/'",
       "renameFile": "重命名",
       "fileNameEmpty": "请输入文件名",
-      "fileNameError": "文件名称需要小于255个字符且不能包含'/'"
+      "fileNameError": "文件名称需要小于255个字符且不能包含'/'",
+      "fileNotSupportPreview": "该文件不支持在线预览"
     },
     "orgFile": "组织文件",
     "recycleBin": "回收站"

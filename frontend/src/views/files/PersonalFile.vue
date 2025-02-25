@@ -170,37 +170,12 @@
         @update:page="fileTablePageChange"
         @update:page-size="fileTablePageSizeChange" />
     </n-card>
-    <n-modal
-      v-model:show="showRenameFileModal"
-      :auto-focus="false"
-      :show-icon="false"
-      :title="$t('files.personal.renameFile')"
-      preset="dialog">
-      <n-spin :show="renameFileLoading">
-        <n-form
-          ref="renameFileFormRef"
-          :model="renameFileForm"
-          :rules="renameFileFormRules">
-          <n-form-item path="name">
-            <n-input
-              v-model:value="renameFileForm.targetName"
-              :placeholder="$t('files.personal.fileName')"
-              clearable
-              maxlength="255"
-              show-count />
-          </n-form-item>
-        </n-form>
-        <div class="text-right">
-          <n-button
-            size="small"
-            type="primary"
-            @click="validateRenameFileForm()">
-            {{ $t('common.save') }}
-          </n-button>
-        </div>
-      </n-spin>
-    </n-modal>
-    <video-view />
+    <file-rename
+      v-model="showRenameFile"
+      :path="filePathPattern"
+      :name="renameFileName"
+      @submit="fileTableReload" />
+    <video-view v-model="showVideoFile" :file="videoFile" />
   </div>
 </template>
 
@@ -208,8 +183,6 @@
 import type {
   DataTableColumn,
   DataTableSortState,
-  FormItemRule,
-  FormRules,
   PaginationInfo
 } from 'naive-ui';
 import { NButton, NDropdown, NTime } from 'naive-ui';
@@ -224,6 +197,7 @@ import { useRequest, usePagination } from 'alova/client';
 import { hasPermission } from '@/commons/permission';
 import { formatFileSize, renderIconMethod } from '@/commons/utils';
 import { useRouter, useRoute } from 'vue-router';
+import FileRename from '@/views/files/components/FileRename.vue';
 import FilePreview from '@/views/files/components/FilePreview.vue';
 import VideoView from '@/views/files/components/VideoView.vue';
 
@@ -258,31 +232,11 @@ const fileTableSorter = ref<any>({
   lastModifiedDate: <any>false
 });
 
-const renameFileFormRef = ref<HTMLFormElement>();
-const showRenameFileModal = ref(false);
-const renameFileForm = ref({
-  originalName: '',
-  targetName: ''
-});
-const renameFileFormRules = computed<FormRules>(() => {
-  return {
-    targetName: [
-      {
-        required: true,
-        validator(_rule: FormItemRule, value: string) {
-          if (!value || value.length === 0) {
-            return new Error(t('files.personal.fileNameEmpty'));
-          }
-          if (value.length > 255 || value.indexOf('/') !== -1) {
-            return new Error(t('files.personal.fileNameError'));
-          }
-          return true;
-        },
-        trigger: ['input', 'blur']
-      }
-    ]
-  };
-});
+const showRenameFile = ref<boolean>(false);
+const renameFileName = ref<string>('');
+
+const showVideoFile = ref<boolean>(false);
+const videoFile = ref<any>({});
 
 function getFileDropdownOptions(file: any) {
   return [
@@ -594,22 +548,6 @@ const { loading: deleteFileLoading, send: doDeleteFile } = useRequest(
   fileTableReload();
 });
 
-const { loading: renameFileLoading, send: doRenameFile } = useRequest(
-  () =>
-    http.Post('/file_data/_rename', {
-      path: filePathPattern.value,
-      originalName: renameFileForm.value.originalName,
-      targetName: renameFileForm.value.targetName
-    }),
-  {
-    immediate: false
-  }
-).onSuccess(() => {
-  window.$msg.success(t('common.saveSuccess'));
-  showRenameFileModal.value = false;
-  fileTableReload();
-});
-
 const fileGridAllIsCheck = computed(() => {
   return fileTableCheck.value.length === fileTableData.value.length;
 });
@@ -663,19 +601,8 @@ function fileTableReload() {
 }
 
 function renameFile(file: any) {
-  renameFileForm.value.originalName = file.name;
-  renameFileForm.value.targetName = file.name;
-  showRenameFileModal.value = true;
-}
-
-function validateRenameFileForm() {
-  if (renameFileFormRef.value) {
-    renameFileFormRef.value.validate((errors: any) => {
-      if (!errors) {
-        doRenameFile();
-      }
-    });
-  }
+  showRenameFile.value = true;
+  renameFileName.value = file.name;
 }
 
 function downloadFiles(filePathList: string[]) {
@@ -717,6 +644,13 @@ function clickFile(file: any) {
       name: 'files-personal',
       params: { path: path.split('/') }
     });
+  } else {
+    if (file.mimeType === 'video/mp4') {
+      showVideoFile.value = true;
+      videoFile.value = file;
+    } else {
+      window.$msg.info(t('files.personal.fileNotSupportPreview'));
+    }
   }
 }
 </script>

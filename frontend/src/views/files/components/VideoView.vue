@@ -1,12 +1,12 @@
 <template>
   <n-modal
-    v-model:show="showVideoModal"
+    v-model:show="model"
     style="width: 80vw; height: 80vh"
     preset="card"
-    title="视频播放"
+    :title="props.file.name"
     :bordered="false"
     content-style="padding: 0;"
-    @after-enter="initPlayer()"
+    @after-enter="initPlayer"
     @after-leave="destroyPlayer">
     <div ref="playerContainer"></div>
   </n-modal>
@@ -21,10 +21,10 @@ import { useThemeVars } from 'naive-ui';
 
 const themeVars = useThemeVars();
 
-const showVideoModal = ref<boolean>(false);
-setTimeout(() => {
-  showVideoModal.value = true;
-}, 3000);
+const model = defineModel<boolean>();
+const props = defineProps({
+  file: { type: Object, required: true }
+});
 
 const playerContainer = ref<HTMLElement | undefined>(undefined);
 const playerInstance = ref<PresetPlayer | null>(null);
