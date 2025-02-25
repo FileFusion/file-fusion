@@ -1,14 +1,17 @@
 <template>
   <n-modal
     v-model:show="model"
-    style="width: 80vw; height: 80vh"
+    class="h-80vh w-80vw"
     preset="card"
     :title="props.file.name"
     :bordered="false"
     content-style="padding: 0;"
     @after-enter="doDownloadFile"
     @after-leave="destroyPlayer">
-    <n-spin :show="downloadFileLoading" class="h-full w-full">
+    <n-spin
+      :show="downloadFileLoading"
+      class="h-full w-full"
+      content-style="height: 100%;width: 100%;">
       <div ref="playerContainer"></div>
     </n-spin>
   </n-modal>
