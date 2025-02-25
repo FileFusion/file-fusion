@@ -148,16 +148,22 @@ public class FileUtil {
     }
 
     public ResponseEntity<StreamingResponseBody> download(Path path) {
-        return download(path.getFileName().toString(), out -> Files.copy(path, out));
+        MediaType mediaType;
+        try {
+            mediaType = MediaType.parseMediaType(Files.probeContentType(path));
+        } catch (Exception e) {
+            mediaType = MediaType.APPLICATION_OCTET_STREAM;
+        }
+        return download(path.getFileName().toString(), mediaType, out -> Files.copy(path, out));
     }
 
-    public ResponseEntity<StreamingResponseBody> download(String filename, StreamingResponseBody streamingResponseBody) {
+    public ResponseEntity<StreamingResponseBody> download(String filename, MediaType mediaType, StreamingResponseBody streamingResponseBody) {
         String contentDisposition = ContentDisposition.attachment()
                 .filename(filename, StandardCharsets.UTF_8)
                 .build().toString();
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .contentType(mediaType)
                 .body(streamingResponseBody);
     }
 

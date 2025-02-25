@@ -117,7 +117,7 @@ public class FileDataService {
                 fileData.setPath(folderPath);
                 fileData.setName(folderName);
                 fileData.setType(FileAttribute.Type.FOLDER);
-                fileData.setMimeType(FileAttribute.FOLDER_MIME_TYPE);
+                fileData.setMimeType(FileAttribute.FOLDER_MIME_TYPE.toString());
                 fileData.setSize(0L);
                 fileData.setEncrypted(false);
                 fileData.setHashValue(EncryptUtil.sha256(folderName));
@@ -211,7 +211,8 @@ public class FileDataService {
         if (safePathList.size() == 1 && Files.isRegularFile(pathFirst)) {
             return fileUtil.download(pathFirst);
         } else {
-            return fileUtil.download(FileAttribute.DOWNLOAD_ZIP_NAME, new ZipStreamingResponseBody(safePathList));
+            return fileUtil.download(FileAttribute.DOWNLOAD_ZIP_NAME, FileAttribute.ZIP_MIME_TYPE,
+                    new ZipStreamingResponseBody(safePathList));
         }
     }
 

@@ -8,7 +8,7 @@
     content-style="padding: 0;"
     @after-enter="doDownloadFile"
     @after-leave="destroyPlayer">
-    <n-spin :show="downloadFileLoading" class="w-100% h-100%">
+    <n-spin :show="downloadFileLoading" class="h-full w-full">
       <div ref="playerContainer"></div>
     </n-spin>
   </n-modal>
