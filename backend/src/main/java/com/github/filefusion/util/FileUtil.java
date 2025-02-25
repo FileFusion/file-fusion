@@ -1,6 +1,7 @@
 package com.github.filefusion.util;
 
 import com.github.filefusion.common.HttpException;
+import com.github.filefusion.constant.FileAttribute;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -10,6 +11,9 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.io.IOException;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.WritableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -31,6 +35,14 @@ public class FileUtil {
     @Autowired
     public FileUtil(@Value("${file.dir}") String fileDir) {
         this.baseDir = Paths.get(fileDir).normalize().toAbsolutePath();
+    }
+
+    private MediaType getFileMediaType(Path path) {
+        try {
+            return MediaType.parseMediaType(Files.probeContentType(path));
+        } catch (Exception e) {
+            return MediaType.APPLICATION_OCTET_STREAM;
+        }
     }
 
     private Path resolveSafePath(String path) {
@@ -148,21 +160,49 @@ public class FileUtil {
     }
 
     public ResponseEntity<StreamingResponseBody> download(Path path) {
-        MediaType mediaType;
-        try {
-            mediaType = MediaType.parseMediaType(Files.probeContentType(path));
-        } catch (Exception e) {
-            mediaType = MediaType.APPLICATION_OCTET_STREAM;
-        }
-        return download(path.getFileName().toString(), mediaType, out -> Files.copy(path, out));
+        return download(path.getFileName().toString(),
+                getFileMediaType(path),
+                HttpStatus.OK,
+                out -> Files.copy(path, out),
+                null);
     }
 
-    public ResponseEntity<StreamingResponseBody> download(String filename, MediaType mediaType, StreamingResponseBody streamingResponseBody) {
+    public ResponseEntity<StreamingResponseBody> download(Path path, long start, long end, long fileSize) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.ACCEPT_RANGES, "bytes");
+        headers.add(HttpHeaders.CONTENT_RANGE, String.format("bytes %d-%d/%d", start, end, fileSize));
+        headers.add(HttpHeaders.CONTENT_LENGTH, String.valueOf(end - start + 1));
+        return download(path.getFileName().toString(),
+                getFileMediaType(path),
+                HttpStatus.PARTIAL_CONTENT,
+                out -> {
+                    try (FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.READ);
+                         WritableByteChannel outChannel = Channels.newChannel(out)) {
+                        fileChannel.transferTo(start, end - start + 1, outChannel);
+                    }
+                },
+                headers);
+    }
+
+    public ResponseEntity<StreamingResponseBody> download(List<Path> pathList) {
+        return download(FileAttribute.DOWNLOAD_ZIP_NAME,
+                FileAttribute.ZIP_MIME_TYPE,
+                HttpStatus.OK,
+                new ZipStreamingResponseBody(pathList),
+                null);
+    }
+
+    private ResponseEntity<StreamingResponseBody> download(String filename,
+                                                           MediaType mediaType,
+                                                           HttpStatus httpStatus,
+                                                           StreamingResponseBody streamingResponseBody,
+                                                           HttpHeaders httpHeaders) {
         String contentDisposition = ContentDisposition.attachment()
                 .filename(filename, StandardCharsets.UTF_8)
                 .build().toString();
-        return ResponseEntity.ok()
+        return ResponseEntity.status(httpStatus)
                 .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
+                .headers(httpHeaders)
                 .contentType(mediaType)
                 .body(streamingResponseBody);
     }

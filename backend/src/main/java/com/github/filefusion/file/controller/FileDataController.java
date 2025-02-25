@@ -168,9 +168,10 @@ public class FileDataController {
      * @return video
      */
     @PostMapping("/_play_video")
-    public ResponseEntity<StreamingResponseBody> playVideo(@RequestBody FileData fileData) {
+    public ResponseEntity<StreamingResponseBody> playVideo(@RequestBody FileData fileData,
+                                                           @RequestHeader String range) {
         fileDataService.verifyUserAuthorize(CurrentUser.get().getId(), fileData.getPath());
-        return fileDataService.playVideo(fileData.getPath());
+        return fileDataService.playVideo(fileData.getPath(), range);
     }
 
 }
