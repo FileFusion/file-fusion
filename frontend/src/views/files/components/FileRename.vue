@@ -29,8 +29,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
 import type { FormItemRule, FormRules } from 'naive-ui';
+import { computed, ref, watch } from 'vue';
 import { useRequest } from 'alova/client';
 import { useI18n } from 'vue-i18n';
 
