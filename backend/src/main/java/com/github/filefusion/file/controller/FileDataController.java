@@ -68,7 +68,6 @@ public class FileDataController {
         return fileDataService.get(PageRequest.of(page - 1, pageSize, sorterOrder.order(), sorter), path, name);
     }
 
-
     /**
      * batch delete file
      *
