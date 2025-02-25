@@ -1,9 +1,6 @@
 <template>
   <n-modal
     v-model:show="model"
-    class="h-80vh w-80vw"
-    preset="card"
-    :title="props.file.name"
     :bordered="false"
     content-style="padding: 0;"
     @after-enter="initPlayer"
@@ -51,8 +48,8 @@ function initPlayer() {
   playerInstance.value = new Player({
     el: playerContainer.value,
     url: http.options.baseURL + '/file_data/_download_chunked',
-    height: '100%',
-    width: '100%',
+    height: '75vh',
+    width: '75vw',
     videoFillMode: 'contain',
     lang: playerLanguage.value,
     pip: true,
