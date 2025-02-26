@@ -1,9 +1,11 @@
 <template>
-  <n-modal v-model:show="model">
+  <n-modal v-model:show="show">
     <n-spin :show="imagePreviewFileLoading">
       <n-image-group
         :show-toolbar-tooltip="true"
-        :render-toolbar="renderToolbar">
+        :render-toolbar="renderToolbar"
+        @preview-prev="emit('preview-prev')"
+        @preview-next="emit('preview-next')">
         <n-image
           ref="imagePreview"
           width="0"
@@ -16,36 +18,30 @@
 
 <script lang="ts" setup>
 import type { ImageRenderToolbarProps } from 'naive-ui';
-import { h, ref, nextTick, watch, computed } from 'vue';
+import { h, ref, nextTick, watch } from 'vue';
 import { useRequest } from 'alova/client';
 
 const http = window.$http;
 
-const model = defineModel<boolean>();
-const props = defineProps({
-  file: { type: Object, required: true }
-});
+const emit = defineEmits(['preview-prev', 'preview-next']);
+const show = defineModel<boolean>('show');
+const path = defineModel<string | null>('path');
 
 const imagePreview = ref<any>(null);
-const imagePreviewUrl = computed(() => {
-  if (!imagePreviewFile.value) {
-    return null;
-  }
-  return (
-    http.options.baseURL +
-    '/file_data/_download/' +
-    imagePreviewFile.value.downloadId
-  );
-});
+const imagePreviewUrl = ref<string | null>(null);
 
 const downloadMethod = () =>
-  http.Post<any>('/file_data/_submit_download', [props.file.path]);
+  http.Post<any>('/file_data/_submit_download', [path.value]);
 
-const {
-  loading: imagePreviewFileLoading,
-  data: imagePreviewFile,
-  send: doGetImagePreviewFile
-} = useRequest(downloadMethod, { immediate: false });
+const { loading: imagePreviewFileLoading, send: doGetImagePreviewFile } =
+  useRequest(downloadMethod, { immediate: false }).onSuccess(
+    (response: any) => {
+      imagePreviewUrl.value =
+        http.options.baseURL +
+        '/file_data/_download/' +
+        response.data.downloadId;
+    }
+  );
 
 const { send: doDownloadImagePreviewFile } = useRequest(downloadMethod, {
   immediate: false
@@ -53,18 +49,6 @@ const { send: doDownloadImagePreviewFile } = useRequest(downloadMethod, {
   window.location.href =
     http.options.baseURL + '/file_data/_download/' + response.data.downloadId;
 });
-
-async function initImage() {
-  await doGetImagePreviewFile();
-  imagePreview.value.$el.firstChild.click();
-  await nextTick();
-  (<any>document.getElementsByClassName('n-image-preview-overlay')[0]).onclick =
-    destroyImage;
-}
-
-function destroyImage() {
-  model.value = false;
-}
 
 function renderToolbar({ nodes }: ImageRenderToolbarProps) {
   return [
@@ -101,9 +85,24 @@ function renderToolbar({ nodes }: ImageRenderToolbarProps) {
   ];
 }
 
-watch(model, async (newValue) => {
-  if (newValue) {
-    await initImage();
+function destroyImage() {
+  show.value = false;
+  path.value = null;
+}
+
+watch([show, path], async ([newShow, newPath], [oldShow, oldPath]) => {
+  if (!newShow) {
+    return;
+  }
+  if (newPath !== oldPath) {
+    await doGetImagePreviewFile();
+  }
+  if (newShow !== oldShow) {
+    imagePreview.value.$el.firstChild.click();
+    await nextTick();
+    (<any>(
+      document.getElementsByClassName('n-image-preview-overlay')[0]
+    )).onclick = destroyImage;
   }
 });
 </script>

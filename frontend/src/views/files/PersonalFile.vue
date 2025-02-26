@@ -176,7 +176,11 @@
       :name="renameFileName"
       @submit="fileTableReload" />
     <video-view v-model="showVideoFile" :file="videoFile" />
-    <image-view v-model="showImageFile" :file="imageFile" />
+    <image-view
+      v-model:show="showImageFile"
+      v-model:path="imageFilePath"
+      @preview-prev="imagePreviewPrevNext(true)"
+      @preview-next="imagePreviewPrevNext(false)" />
   </div>
 </template>
 
@@ -241,7 +245,7 @@ const showVideoFile = ref<boolean>(false);
 const videoFile = ref<any>({});
 
 const showImageFile = ref<boolean>(false);
-const imageFile = ref<any>({});
+const imageFilePath = ref<string | null>(null);
 
 function getFileDropdownOptions(file: any) {
   return [
@@ -662,10 +666,30 @@ function clickFile(file: any) {
       videoFile.value = file;
     } else if (supportImagePreviewType.includes(file.mimeType)) {
       showImageFile.value = true;
-      imageFile.value = file;
+      imageFilePath.value = file.path;
     } else {
       window.$msg.info(t('files.personal.fileNotSupportPreview'));
     }
   }
+}
+
+const supportImagePreviewFile = computed(() => {
+  return fileTableData.value.filter((file: any) =>
+    supportImagePreviewType.includes(file.mimeType)
+  );
+});
+function imagePreviewPrevNext(prev: boolean) {
+  const fileMap = new Map<any, number>(
+    supportImagePreviewFile.value.map((file: any, index: number) => [
+      file.path,
+      index
+    ])
+  );
+  const currentIndex = fileMap.get(imageFilePath.value) ?? -1;
+  const targetIndex = Math.max(
+    0,
+    Math.min(currentIndex + (prev ? -1 : 1), fileMap.size - 1)
+  );
+  imageFilePath.value = supportImagePreviewFile.value[targetIndex].path;
 }
 </script>
