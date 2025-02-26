@@ -176,6 +176,7 @@
       :name="renameFileName"
       @submit="fileTableReload" />
     <video-view v-model="showVideoFile" :file="videoFile" />
+    <image-view v-model="showImageFile" :file="imageFile" />
   </div>
 </template>
 
@@ -200,6 +201,7 @@ import { useRouter, useRoute } from 'vue-router';
 import FileRename from '@/views/files/components/FileRename.vue';
 import FilePreview from '@/views/files/components/FilePreview.vue';
 import VideoView from '@/views/files/components/VideoView.vue';
+import ImageView from '@/views/files/components/ImageView.vue';
 
 const { t } = useI18n();
 const http = window.$http;
@@ -237,6 +239,9 @@ const renameFileName = ref<string>('');
 
 const showVideoFile = ref<boolean>(false);
 const videoFile = ref<any>({});
+
+const showImageFile = ref<boolean>(false);
+const imageFile = ref<any>({});
 
 function getFileDropdownOptions(file: any) {
   return [
@@ -633,6 +638,13 @@ function deleteFiles(filePathList: string[]) {
   doDeleteFile(filePathList);
 }
 
+const supportImagePreviewType = [
+  'image/gif',
+  'image/jpeg',
+  'image/png',
+  'image/svg+xml',
+  'image/webp'
+];
 function clickFile(file: any) {
   if (file.type === 'FOLDER') {
     let path = '';
@@ -648,6 +660,9 @@ function clickFile(file: any) {
     if (file.mimeType === 'video/mp4') {
       showVideoFile.value = true;
       videoFile.value = file;
+    } else if (supportImagePreviewType.includes(file.mimeType)) {
+      showImageFile.value = true;
+      imageFile.value = file;
     } else {
       window.$msg.info(t('files.personal.fileNotSupportPreview'));
     }
