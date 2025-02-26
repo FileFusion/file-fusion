@@ -82,7 +82,7 @@
         <n-checkbox-group
           v-if="fileTableData.length > 0"
           v-model:value="fileTableCheck">
-          <n-flex class="mt-3" :size="[50, 20]">
+          <n-flex class="mt-3" :size="[40, 20]">
             <n-card
               v-for="(fileData, index) in fileTableData"
               :key="index"
