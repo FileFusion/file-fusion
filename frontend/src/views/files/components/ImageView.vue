@@ -18,7 +18,7 @@
 
 <script lang="ts" setup>
 import type { ImageRenderToolbarProps } from 'naive-ui';
-import { h, ref, nextTick, watch } from 'vue';
+import { h, ref, nextTick, watch, computed } from 'vue';
 import { useRequest } from 'alova/client';
 
 const http = window.$http;
@@ -50,40 +50,38 @@ const { send: doDownloadImagePreviewFile } = useRequest(downloadMethod, {
     http.options.baseURL + '/file_data/_download/' + response.data.downloadId;
 });
 
-function renderToolbar({ nodes }: ImageRenderToolbarProps) {
-  return [
-    nodes.prev,
-    nodes.next,
-    nodes.rotateCounterclockwise,
-    nodes.rotateClockwise,
-    nodes.resizeToOriginalSize,
-    nodes.zoomOut,
-    nodes.zoomIn,
-    h(
-      'div',
-      {
-        style: {
-          'line-height': '1em'
-        },
-        onClickCapture: (e: MouseEvent) => {
-          e.stopPropagation();
-          doDownloadImagePreviewFile();
-        }
+const renderToolbar = computed(() => ({ nodes }: ImageRenderToolbarProps) => [
+  nodes.prev,
+  nodes.next,
+  nodes.rotateCounterclockwise,
+  nodes.rotateClockwise,
+  nodes.resizeToOriginalSize,
+  nodes.zoomOut,
+  nodes.zoomIn,
+  h(
+    'div',
+    {
+      style: {
+        'line-height': '1em'
       },
-      nodes.download
-    ),
-    h(
-      'div',
-      {
-        style: {
-          'line-height': '1em'
-        },
-        onClick: destroyImage
+      onClickCapture: (e: MouseEvent) => {
+        e.stopPropagation();
+        doDownloadImagePreviewFile();
+      }
+    },
+    nodes.download
+  ),
+  h(
+    'div',
+    {
+      style: {
+        'line-height': '1em'
       },
-      nodes.close
-    )
-  ];
-}
+      onClick: destroyImage
+    },
+    nodes.close
+  )
+]);
 
 function destroyImage() {
   show.value = false;

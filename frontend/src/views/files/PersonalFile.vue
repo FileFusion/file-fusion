@@ -679,16 +679,16 @@ const supportImagePreviewFile = computed(() => {
   );
 });
 function imagePreviewPrevNext(prev: boolean) {
-  const fileMap = new Map<any, number>(
+  const filePathIndexMap = new Map<any, number>(
     supportImagePreviewFile.value.map((file: any, index: number) => [
       file.path,
       index
     ])
   );
-  const currentIndex = fileMap.get(imageFilePath.value) ?? -1;
+  const currentIndex = filePathIndexMap.get(imageFilePath.value) ?? -1;
   const targetIndex = Math.max(
     0,
-    Math.min(currentIndex + (prev ? -1 : 1), fileMap.size - 1)
+    Math.min(currentIndex + (prev ? -1 : 1), filePathIndexMap.size - 1)
   );
   imageFilePath.value = supportImagePreviewFile.value[targetIndex].path;
 }
