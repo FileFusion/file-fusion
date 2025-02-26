@@ -62,7 +62,9 @@
               {{ $t('common.search') }}
             </n-button>
           </n-input-group>
-          <n-radio-group v-model:value="fileShowType">
+          <n-radio-group
+            :value="fileShowType"
+            @update:value="switchFileShowType">
             <n-radio-button value="grid">
               <n-icon>
                 <i-grid-four />
@@ -202,6 +204,7 @@ import { useRequest, usePagination } from 'alova/client';
 import { hasPermission } from '@/commons/permission';
 import { formatFileSize, renderIconMethod } from '@/commons/utils';
 import { useRouter, useRoute } from 'vue-router';
+import { mainStore } from '@/store';
 import FileRename from '@/views/files/components/FileRename.vue';
 import FilePreview from '@/views/files/components/FilePreview.vue';
 import VideoView from '@/views/files/components/VideoView.vue';
@@ -211,6 +214,7 @@ const { t } = useI18n();
 const http = window.$http;
 const router = useRouter();
 const route = useRoute();
+const mStore = mainStore();
 
 const permission = ref({
   personalFileDownload: hasPermission('personal_file:download'),
@@ -229,7 +233,7 @@ window.$event.on('UploadView:FileChangeEvent', () => {
   fileTableReload();
 });
 
-const fileShowType = ref<string>('grid');
+const fileShowType = computed(() => mStore.getFileShowType);
 const fileNamePattern = ref<string>('');
 const fileTableCheck = ref<string[]>([]);
 const fileTableSorter = ref<any>({
@@ -246,6 +250,10 @@ const videoFile = ref<any>({});
 
 const showImageFile = ref<boolean>(false);
 const imageFilePath = ref<string | null>(null);
+
+function switchFileShowType(value: string) {
+  mStore.setFileShowType(value);
+}
 
 function getFileDropdownOptions(file: any) {
   return [
@@ -682,6 +690,7 @@ const supportImagePreviewFile = computed(() => {
     supportImagePreviewType.includes(file.mimeType)
   );
 });
+
 function imagePreviewPrevNext(prev: boolean) {
   const filePathIndexMap = new Map<any, number>(
     supportImagePreviewFile.value.map((file: any, index: number) => [

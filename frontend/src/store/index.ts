@@ -11,6 +11,7 @@ interface MainState {
   token: string | null;
   user: any | null;
   permissionIds: string[] | null;
+  fileShowType: string | null;
 }
 
 export const mainStore = defineStore('main', {
@@ -20,7 +21,8 @@ export const mainStore = defineStore('main', {
     sideMenuCollapsed: localStorage.getItem('sideMenuCollapsed'),
     token: localStorage.getItem('token') || sessionStorage.getItem('token'),
     user: null,
-    permissionIds: null
+    permissionIds: null,
+    fileShowType: localStorage.getItem('fileShowType')
   }),
   getters: {
     getLanguage(state): SUPPORT_LANGUAGES {
@@ -40,6 +42,9 @@ export const mainStore = defineStore('main', {
     },
     getPermissionIds(state): string[] | null {
       return state.permissionIds;
+    },
+    getFileShowType(state): string {
+      return state.fileShowType ? state.fileShowType : 'grid';
     }
   },
   actions: {
@@ -74,6 +79,10 @@ export const mainStore = defineStore('main', {
       this.permissionIds = user.permissions.map((p: any) => p.id);
       user.permissions = null;
       this.user = user;
+    },
+    setFileShowType(fileShowType: string) {
+      this.fileShowType = fileShowType;
+      localStorage.setItem('fileShowType', this.fileShowType);
     }
   }
 });
