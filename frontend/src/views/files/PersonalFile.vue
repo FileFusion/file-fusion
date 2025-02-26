@@ -660,16 +660,20 @@ function clickFile(file: any) {
       name: 'files-personal',
       params: { path: path.split('/') }
     });
+    return;
+  }
+  if (!permission.value.personalFileDownload) {
+    window.$msg.warning(t('files.personal.noPermissionDownloadFile'));
+    return;
+  }
+  if (file.mimeType === 'video/mp4') {
+    showVideoFile.value = true;
+    videoFile.value = file;
+  } else if (supportImagePreviewType.includes(file.mimeType)) {
+    showImageFile.value = true;
+    imageFilePath.value = file.path;
   } else {
-    if (file.mimeType === 'video/mp4') {
-      showVideoFile.value = true;
-      videoFile.value = file;
-    } else if (supportImagePreviewType.includes(file.mimeType)) {
-      showImageFile.value = true;
-      imageFilePath.value = file.path;
-    } else {
-      window.$msg.info(t('files.personal.fileNotSupportPreview'));
-    }
+    window.$msg.info(t('files.personal.fileNotSupportPreview'));
   }
 }
 

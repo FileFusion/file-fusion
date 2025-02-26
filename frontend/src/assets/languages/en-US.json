@@ -149,7 +149,8 @@
       "renameFile": "Rename",
       "fileNameEmpty": "Please enter file name",
       "fileNameError": "The file name needs to be less than 255 characters and cannot contain '/'",
-      "fileNotSupportPreview": "This file does not support online preview"
+      "fileNotSupportPreview": "This file does not support online preview",
+      "noPermissionDownloadFile": "No permission to download file"
     },
     "orgFile": "Organization file",
     "recycleBin": "Recycle bin"
