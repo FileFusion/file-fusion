@@ -1,10 +1,5 @@
 <template>
-  <n-modal
-    v-model:show="model"
-    :bordered="false"
-    content-style="padding: 0;"
-    @after-enter="initPlayer"
-    @after-leave="destroyPlayer">
+  <n-modal v-model:show="model" :bordered="false" content-style="padding: 0;">
     <div ref="playerContainer"></div>
   </n-modal>
 </template>
@@ -14,7 +9,7 @@ import type PresetPlayer from 'xgplayer';
 import Player from 'xgplayer';
 import Mp4Plugin from 'xgplayer-mp4';
 import 'xgplayer/dist/index.min.css';
-import { ref, onBeforeUnmount, computed, watch } from 'vue';
+import { ref, onBeforeUnmount, computed, watch, nextTick } from 'vue';
 import { useThemeVars } from 'naive-ui';
 import { mainStore } from '@/store';
 import { SUPPORT_LANGUAGES } from '@/commons/i18n.ts';
@@ -23,6 +18,7 @@ const themeVars = useThemeVars();
 const http = window.$http;
 const mStore = mainStore();
 const language = computed(() => mStore.getLanguage);
+const token = computed(() => mStore.getToken);
 
 const model = defineModel<boolean>();
 const props = defineProps({
@@ -63,8 +59,8 @@ function initPlayer() {
         mode: 'cors',
         method: 'POST',
         headers: {
-          'Accept-Language': mStore.getLanguage,
-          Authorization: mStore.getToken,
+          'Accept-Language': language.value,
+          Authorization: token.value,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -81,6 +77,15 @@ function destroyPlayer() {
     playerInstance.value = null;
   }
 }
+
+watch(model, async (newValue) => {
+  if (newValue) {
+    await nextTick();
+    initPlayer();
+  } else {
+    destroyPlayer();
+  }
+});
 
 watch(language, (newValue) => {
   if (playerInstance.value) {
