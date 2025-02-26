@@ -3,14 +3,8 @@
     <n-spin :show="imagePreviewFileLoading">
       <n-image-group
         :show-toolbar-tooltip="true"
-        :render-toolbar="renderToolbar"
-        @preview-prev="emit('preview-prev')"
-        @preview-next="emit('preview-next')">
-        <n-image
-          ref="imagePreview"
-          width="0"
-          height="0"
-          :preview-src="imagePreviewUrl" />
+        :render-toolbar="renderToolbar">
+        <n-image ref="imagePreview" width="0" height="0" />
       </n-image-group>
     </n-spin>
   </n-modal>
@@ -28,20 +22,15 @@ const show = defineModel<boolean>('show');
 const path = defineModel<string | null>('path');
 
 const imagePreview = ref<any>(null);
-const imagePreviewUrl = ref<string | null>(null);
 
 const downloadMethod = () =>
   http.Post<any>('/file_data/_submit_download', [path.value]);
 
-const { loading: imagePreviewFileLoading, send: doGetImagePreviewFile } =
-  useRequest(downloadMethod, { immediate: false }).onSuccess(
-    (response: any) => {
-      imagePreviewUrl.value =
-        http.options.baseURL +
-        '/file_data/_download/' +
-        response.data.downloadId;
-    }
-  );
+const {
+  loading: imagePreviewFileLoading,
+  data: imagePreviewUrl,
+  send: doGetImagePreviewFile
+} = useRequest(downloadMethod, { immediate: false });
 
 const { send: doDownloadImagePreviewFile } = useRequest(downloadMethod, {
   immediate: false
@@ -51,8 +40,32 @@ const { send: doDownloadImagePreviewFile } = useRequest(downloadMethod, {
 });
 
 const renderToolbar = computed(() => ({ nodes }: ImageRenderToolbarProps) => [
-  nodes.prev,
-  nodes.next,
+  h(
+    'div',
+    {
+      style: {
+        'line-height': '1em'
+      },
+      onClickCapture: (e: MouseEvent) => {
+        e.stopPropagation();
+        emit('preview-prev');
+      }
+    },
+    nodes.prev
+  ),
+  h(
+    'div',
+    {
+      style: {
+        'line-height': '1em'
+      },
+      onClickCapture: (e: MouseEvent) => {
+        e.stopPropagation();
+        emit('preview-next');
+      }
+    },
+    nodes.next
+  ),
   nodes.rotateCounterclockwise,
   nodes.rotateClockwise,
   nodes.resizeToOriginalSize,
@@ -92,15 +105,22 @@ watch([show, path], async ([newShow, newPath], [oldShow, oldPath]) => {
   if (!newShow) {
     return;
   }
-  if (newPath !== oldPath) {
-    await doGetImagePreviewFile();
-  }
-  if (newShow !== oldShow) {
+  if (!oldShow) {
+    await nextTick();
     imagePreview.value.$el.firstChild.click();
     await nextTick();
     (<any>(
       document.getElementsByClassName('n-image-preview-overlay')[0]
     )).onclick = destroyImage;
+  }
+  if (newPath != oldPath) {
+    await doGetImagePreviewFile();
+    (<any>(
+      document.getElementsByClassName('n-image-preview-wrapper')[0].firstChild
+    )).src =
+      http.options.baseURL +
+      '/file_data/_download/' +
+      imagePreviewUrl.value.downloadId;
   }
 });
 </script>
