@@ -98,7 +98,7 @@ const renderMenuLabel = (option: MenuOption) => {
 
 const renderMenuIcon = (option: MenuOption) => {
   const icon = <Component>option.customIcon;
-  return renderIcon(icon, undefined, undefined);
+  return renderIcon(icon);
 };
 
 watchEffect(async () => {

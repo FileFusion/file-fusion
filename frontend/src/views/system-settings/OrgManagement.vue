@@ -547,10 +547,7 @@ function userTableHandleCheck(rowKeys: string[]) {
 
 function deleteOrgUsers() {
   if (!userTableCheck.value || userTableCheck.value.length === 0) {
-    window.$msg.warning(
-      undefined,
-      t('systemSettings.org.orgUsersDeleteSelectCheck')
-    );
+    window.$msg.warning(t('systemSettings.org.orgUsersDeleteSelectCheck'));
     return;
   }
   doRemoveUsersFromOrg();

@@ -164,7 +164,7 @@ const {
 } = useRequest(() => http.Get<any>('/license/current'), {
   immediate: false,
   initialData: {
-    authorizedTo: undefined,
+    authorizedTo: null,
     startDate: null,
     endDate: null,
     edition: null

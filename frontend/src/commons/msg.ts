@@ -1,19 +1,19 @@
 import type { NotificationType } from 'naive-ui';
 import { format } from 'date-fns';
 
-function info(title: string | number | undefined, content?: string) {
+function info(title: string | number | null, content?: string) {
   notify('info', title ? title : window.$t('common.info'), content);
 }
 
-function success(title: string | number | undefined, content?: string) {
+function success(title: string | number | null, content?: string) {
   notify('success', title ? title : window.$t('common.success'), content);
 }
 
-function warning(title: string | number | undefined, content?: string) {
+function warning(title: string | number | null, content?: string) {
   notify('warning', title ? title : window.$t('common.warning'), content);
 }
 
-function error(title: string | number | undefined, content?: string) {
+function error(title: string | number | null, content?: string) {
   notify('error', title ? title : window.$t('common.error'), content);
 }
 

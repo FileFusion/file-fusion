@@ -25,7 +25,7 @@ const props = defineProps({
   file: { type: Object, required: true }
 });
 
-const playerContainer = ref<HTMLElement | undefined>(undefined);
+const playerContainer = ref<HTMLElement | null>(null);
 const playerInstance = ref<PresetPlayer | null>(null);
 const playerLanguage = computed(() => {
   if (language.value === SUPPORT_LANGUAGES.ZH_CN) {
