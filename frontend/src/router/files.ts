@@ -1,5 +1,4 @@
 import IconLog from '~icons/icon-park-outline/log';
-import IconTableReport from '~icons/icon-park-outline/table-report';
 import IconRecycleBin from '~icons/icon-park-outline/recycle-bin';
 
 export default [
@@ -13,17 +12,6 @@ export default [
       permission: 'personal_file:read'
     },
     component: () => import('@/views/files/PersonalFile.vue')
-  },
-  {
-    path: 'org/:path*',
-    name: 'files-org',
-    meta: {
-      requiresAuth: true,
-      title: 'files.orgFile',
-      icon: IconTableReport,
-      permission: 'org_file:read'
-    },
-    component: () => import('@/views/files/OrgFile.vue')
   },
   {
     path: 'recycle-bin/:path*',

@@ -35,11 +35,7 @@ const routes = [
           requiresAuth: true,
           title: 'common.files',
           icon: IconDocumentFolder,
-          permission: [
-            'personal_file:read',
-            'org_file:read',
-            'recycle_bin_file:read'
-          ],
+          permission: ['personal_file:read', 'recycle_bin_file:read'],
           permissionOr: true
         },
         children: files

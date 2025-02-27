@@ -100,25 +100,6 @@ VALUES ('personal_file:download', 'personal_file', 'Personal file download', 'Do
         '01JJK6FQS0K3N6K4JAEAP5ZC7P', '2022-04-01 00:00:00', null, null);
 
 INSERT INTO permission
-VALUES ('org_file', 'root', 'Organization file', 'Organization file', false,
-        '01JJK6FQS0K3N6K4JAEAP5ZC7P', '2022-04-01 00:00:00', null, null);
-INSERT INTO permission
-VALUES ('org_file:read', 'org_file', 'Organization file read', 'Read organization file', false,
-        '01JJK6FQS0K3N6K4JAEAP5ZC7P', '2022-04-01 00:00:00', null, null);
-INSERT INTO permission
-VALUES ('org_file:edit', 'org_file', 'Organization file edit', 'Edit organization file', false,
-        '01JJK6FQS0K3N6K4JAEAP5ZC7P', '2022-04-01 00:00:00', null, null);
-INSERT INTO permission
-VALUES ('org_file:delete', 'org_file', 'Organization file delete', 'Delete organization file', false,
-        '01JJK6FQS0K3N6K4JAEAP5ZC7P', '2022-04-01 00:00:00', null, null);
-INSERT INTO permission
-VALUES ('org_file:upload', 'org_file', 'Organization file upload', 'Upload organization file', false,
-        '01JJK6FQS0K3N6K4JAEAP5ZC7P', '2022-04-01 00:00:00', null, null);
-INSERT INTO permission
-VALUES ('org_file:download', 'org_file', 'Organization file download', 'Download organization file', false,
-        '01JJK6FQS0K3N6K4JAEAP5ZC7P', '2022-04-01 00:00:00', null, null);
-
-INSERT INTO permission
 VALUES ('recycle_bin_file', 'root', 'Recycle bin file', 'Personal file', false,
         '01JJK6FQS0K3N6K4JAEAP5ZC7P', '2022-04-01 00:00:00', null, null);
 INSERT INTO permission

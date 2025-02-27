@@ -76,19 +76,6 @@ INSERT INTO role_permission
 VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'personal_file:download');
 
 INSERT INTO role_permission
-VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'org_file');
-INSERT INTO role_permission
-VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'org_file:read');
-INSERT INTO role_permission
-VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'org_file:edit');
-INSERT INTO role_permission
-VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'org_file:delete');
-INSERT INTO role_permission
-VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'org_file:upload');
-INSERT INTO role_permission
-VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'org_file:download');
-
-INSERT INTO role_permission
 VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'recycle_bin_file');
 INSERT INTO role_permission
 VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'recycle_bin_file:read');
