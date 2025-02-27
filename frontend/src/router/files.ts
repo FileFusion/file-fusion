@@ -1,5 +1,5 @@
 import IconLog from '~icons/icon-park-outline/log';
-import IconRecycleBin from '~icons/icon-park-outline/recycle-bin';
+import IconDeleteThemes from '~icons/icon-park-outline/delete-themes';
 
 export default [
   {
@@ -19,7 +19,7 @@ export default [
     meta: {
       requiresAuth: true,
       title: 'files.recycleBin',
-      icon: IconRecycleBin,
+      icon: IconDeleteThemes,
       permission: 'recycle_bin_file:read'
     },
     component: () => import('@/views/files/RecycleBinFile.vue')

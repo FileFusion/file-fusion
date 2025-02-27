@@ -566,7 +566,10 @@ const { loading: deleteFileLoading, send: doDeleteFile } = useRequest(
 });
 
 const fileGridAllIsCheck = computed(() => {
-  return fileTableCheck.value.length === fileTableData.value.length;
+  return (
+    fileTableData.value.length !== 0 &&
+    fileTableCheck.value.length === fileTableData.value.length
+  );
 });
 
 const fileGridAllIsIndeterminate = computed(() => {
