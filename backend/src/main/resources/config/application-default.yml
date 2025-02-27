@@ -36,6 +36,8 @@ security:
   secret:
     key: ${FF_SECRET_KEY:fDdXuRJmui73NjU9}
     iv: ${FF_SECRET_IV:t7M1BjL1wLKE6hyc}
+task:
+  clear-thumbnail-file: ${FF_TASK_CLEAR_THUMBNAIL_FILE:0 0 1 * * ?}
 file:
   dir: ${FF_FILE_DIR:/opt/file_fusion/data/file}
   lock-timeout: ${FF_TIMEOUT:60s}
