@@ -228,21 +228,15 @@ public class FileDataService {
 
     public ResponseEntity<StreamingResponseBody> download(String downloadId) {
         RList<String> pathList = redissonClient.getList(RedisAttribute.DOWNLOAD_ID_PREFIX + RedisAttribute.SEPARATOR + downloadId);
-        try {
-            if (CollectionUtils.isEmpty(pathList)) {
-                throw new HttpException(I18n.get("downloadLinkExpired"));
-            }
-            List<Path> safePathList = fileUtil.validatePaths(pathList);
-            Path pathFirst = safePathList.getFirst();
-            if (safePathList.size() == 1 && Files.isRegularFile(pathFirst)) {
-                return fileUtil.download(pathFirst);
-            } else {
-                return fileUtil.download(safePathList);
-            }
-        } finally {
-            if (pathList != null) {
-                pathList.delete();
-            }
+        if (CollectionUtils.isEmpty(pathList)) {
+            throw new HttpException(I18n.get("downloadLinkExpired"));
+        }
+        List<Path> safePathList = fileUtil.validatePaths(pathList);
+        Path pathFirst = safePathList.getFirst();
+        if (safePathList.size() == 1 && Files.isRegularFile(pathFirst)) {
+            return fileUtil.download(pathFirst);
+        } else {
+            return fileUtil.download(safePathList);
         }
     }
 

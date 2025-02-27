@@ -10,7 +10,7 @@ server:
     key-store-password: ${FF_HTTPS_CERT_PASSWORD:123456}
   servlet:
     session:
-      timeout: ${FF_TIMEOUT:60s}
+      timeout: ${FF_SESSION_TIMEOUT:60s}
 logging:
   level:
     com.github.filefusion: ${FF_LOG_LEVEL:INFO}
@@ -37,15 +37,15 @@ security:
     key: ${FF_SECRET_KEY:fDdXuRJmui73NjU9}
     iv: ${FF_SECRET_IV:t7M1BjL1wLKE6hyc}
 task:
-  lock-timeout: ${FF_TIMEOUT:60s}
+  lock-timeout: ${FF_TASK_LOCK_TIMEOUT:60s}
   clear-thumbnail-file: ${FF_TASK_CLEAR_THUMBNAIL_FILE:0 0 1 * * ?}
 file:
+  lock-timeout: ${FF_FILE_LOCK_TIMEOUT:60s}
+  download-link-timeout: ${FF_FILE_DOWNLOAD_LINK_TIMEOUT:60s}
   dir: ${FF_FILE_DIR:/opt/file_fusion/data/file}
-  lock-timeout: ${FF_TIMEOUT:60s}
-  download-link-timeout: ${FF_TIMEOUT:60s}
 thumbnail:
+  generate-timeout: ${FF_THUMBNAIL_GENERATE_TIMEOUT:60s}
   dir: ${FF_THUMBNAIL_DIR:/opt/file_fusion/data/thumbnail}
-  generate-timeout: ${FF_TIMEOUT:60s}
   image-mime-type: "${FF_THUMBNAIL_IMAGE_MIME_TYPE:application/pdf,\
   application/postscript,\
   image/bmp,\
