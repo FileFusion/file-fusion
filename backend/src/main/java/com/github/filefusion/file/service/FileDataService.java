@@ -41,6 +41,7 @@ import java.util.stream.IntStream;
 @Service
 public class FileDataService {
 
+    private final Duration fileLockTimeout;
     private final Duration fileDownloadLinkTimeout;
     private final RedissonClient redissonClient;
     private final FileDataRepository fileDataRepository;
@@ -49,12 +50,14 @@ public class FileDataService {
     private final ThumbnailUtil thumbnailUtil;
 
     @Autowired
-    public FileDataService(@Value("${file.download-link-timeout}") Duration fileDownloadLinkTimeout,
+    public FileDataService(@Value("${file.lock-timeout}") Duration fileLockTimeout,
+                           @Value("${file.download-link-timeout}") Duration fileDownloadLinkTimeout,
                            RedissonClient redissonClient,
                            FileDataRepository fileDataRepository,
                            DistributedLock distributedLock,
                            FileUtil fileUtil,
                            ThumbnailUtil thumbnailUtil) {
+        this.fileLockTimeout = fileLockTimeout;
         this.fileDownloadLinkTimeout = fileDownloadLinkTimeout;
         this.redissonClient = redissonClient;
         this.fileDataRepository = fileDataRepository;
@@ -111,17 +114,17 @@ public class FileDataService {
         List<String> allPathList = pathList.stream()
                 .flatMap(path -> fileDataRepository.findAllByPathOrPathLike(path, path + FileAttribute.SEPARATOR + "%").stream())
                 .map(FileData::getPath).distinct().toList();
-        distributedLock.tryMultiLock(allPathList, () -> {
+        distributedLock.tryMultiLock(RedisAttribute.LockType.file, allPathList, () -> {
             fileDataRepository.deleteAllByPathIn(allPathList);
             fileUtil.delete(allPathList);
-        });
+        }, fileLockTimeout);
     }
 
     public void createFolder(final String path, Long lastModified, final boolean allowExists) {
         final Date lastModifiedDate = new Date(lastModified);
         final List<Path> hierarchyPathList = getHierarchyPathList(path);
         final List<String> sortedPathList = hierarchyPathList.stream().map(Path::toString).toList();
-        distributedLock.tryMultiLock(sortedPathList, () -> {
+        distributedLock.tryMultiLock(RedisAttribute.LockType.file, sortedPathList, () -> {
             if (!allowExists && fileDataRepository.existsByPath(path)) {
                 throw new HttpException(I18n.get("folderExits"));
             }
@@ -143,11 +146,12 @@ public class FileDataService {
                 fileData.setEncrypted(false);
                 fileData.setHashValue(EncryptUtil.sha256(folderName));
                 fileData.setFileLastModifiedDate(lastModifiedDate);
+                fileData.setDeleted(false);
                 fileDataList.add(fileData);
             }
             fileUtil.createFolder(path);
             fileDataRepository.saveAll(fileDataList);
-        });
+        }, fileLockTimeout);
     }
 
     public void upload(final MultipartFile file, final String name,
@@ -155,7 +159,7 @@ public class FileDataService {
         createFolder(path, lastModified, true);
 
         final String filePath = path + FileAttribute.SEPARATOR + name;
-        distributedLock.tryLock(filePath, () -> {
+        distributedLock.tryLock(RedisAttribute.LockType.file, filePath, () -> {
             FileData fileData = fileDataRepository.findFirstByPath(filePath);
             if (fileData == null) {
                 fileData = new FileData();
@@ -167,9 +171,10 @@ public class FileDataService {
             fileData.setSize(file.getSize());
             fileData.setEncrypted(false);
             fileData.setFileLastModifiedDate(new Date(lastModified));
+            fileData.setDeleted(false);
             fileData.setHashValue(fileUtil.upload(file, filePath));
             fileDataRepository.save(fileData);
-        });
+        }, fileLockTimeout);
     }
 
     @Transactional(rollbackFor = HttpException.class)
@@ -198,7 +203,7 @@ public class FileDataService {
         List<String> allPathList = originalFileList.stream().map(FileData::getPath).collect(Collectors.toList());
         allPathList.add(originalPath);
         allPathList.add(targetPath);
-        distributedLock.tryMultiLock(allPathList, () -> {
+        distributedLock.tryMultiLock(RedisAttribute.LockType.file, allPathList, () -> {
             originalFile.setPath(targetPath);
             originalFile.setName(targetName);
             for (FileData fileData : originalFileList) {
@@ -210,7 +215,7 @@ public class FileDataService {
 
             fileDataRepository.saveAll(originalFileList);
             fileUtil.move(originalPath, targetPath);
-        });
+        }, fileLockTimeout);
     }
 
     public SubmitDownloadFilesResponse submitDownload(List<String> pathList) {

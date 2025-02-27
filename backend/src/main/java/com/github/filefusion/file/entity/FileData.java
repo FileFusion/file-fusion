@@ -61,6 +61,21 @@ public class FileData extends BaseEntity {
     private Date fileLastModifiedDate;
 
     /**
+     * deleted
+     */
+    private Boolean deleted;
+
+    /**
+     * deleted date
+     */
+    private Date deletedDate;
+
+    /**
+     * recycle path
+     */
+    private String recyclePath;
+
+    /**
      * has thumbnail
      */
     @Transient

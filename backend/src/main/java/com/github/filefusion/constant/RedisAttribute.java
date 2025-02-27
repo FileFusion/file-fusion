@@ -12,4 +12,9 @@ public final class RedisAttribute {
     public static final String LOCK_PREFIX = "lock";
     public static final String DOWNLOAD_ID_PREFIX = "download";
 
+    public enum LockType {
+        task,
+        file
+    }
+
 }
