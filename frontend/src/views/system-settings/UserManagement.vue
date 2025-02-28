@@ -306,7 +306,7 @@ const profileRules = computed<FormRules>(() => {
     email: [
       {
         validator(_rule: FormItemRule, value: string) {
-          if (value && value !== '') {
+          if (value) {
             const regular = new RegExp(
               /^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]+$/
             );
@@ -324,7 +324,7 @@ const profileRules = computed<FormRules>(() => {
     phone: [
       {
         validator(_rule: FormItemRule, value: string) {
-          if (value && value !== '') {
+          if (value) {
             const regular = new RegExp(/^\d+$/);
             if (!regular.test(value)) {
               return new Error(t('userSettings.profile.validator.phoneError'));

@@ -18,6 +18,7 @@
     "user": "User",
     "role": "Role",
     "org": "Organization",
+    "config": "Config",
     "search": "Search",
     "description": "Description",
     "add": "Add",
@@ -95,6 +96,14 @@
       "resetPassword": "Reset password",
       "usersDeleteSelectCheck": "Please select the user to be deleted",
       "userRolesSelectPlaceholder": "Select user role"
+    },
+    "sysConfig": {
+      "enableRecycleBin": "Whether to enable the recycle bin",
+      "recycleBinRetentionDays": "Recycle bin retention days",
+      "recycleBinRetentionDaysPlaceholder": "Recycle bin retention days (Set to 0 to never expire)",
+      "validator": {
+        "recycleBinRetentionDaysEmpty": "Please enter recycle bin retention day"
+      }
     }
   },
   "userSettings": {

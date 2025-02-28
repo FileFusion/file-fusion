@@ -18,6 +18,7 @@
     "user": "用户",
     "role": "角色",
     "org": "组织",
+    "config": "配置",
     "search": "搜索",
     "description": "描述",
     "add": "新增",
@@ -95,6 +96,14 @@
       "resetPassword": "重置密码",
       "usersDeleteSelectCheck": "请选择需要删除的用户",
       "userRolesSelectPlaceholder": "选择用户角色"
+    },
+    "sysConfig": {
+      "enableRecycleBin": "是否开启回收站",
+      "recycleBinRetentionDays": "回收站保留天数",
+      "recycleBinRetentionDaysPlaceholder": "回收站保留天数（设置为0则永不过期）",
+      "validator": {
+        "recycleBinRetentionDaysEmpty": "请输入回收站保留天数"
+      }
     }
   },
   "userSettings": {

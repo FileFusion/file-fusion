@@ -9,6 +9,6 @@ package com.github.filefusion.constant;
 public enum SysConfigKey {
 
     RECYCLE_BIN,
-    RECYCLE_BIN_RETENTION_TIME
+    RECYCLE_BIN_RETENTION_DAYS
 
 }
