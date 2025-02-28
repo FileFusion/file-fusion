@@ -126,12 +126,16 @@ public class FileDataService {
             if (allHashList.isEmpty()) {
                 return;
             }
-            Map<String, Long> hashCountMap = fileDataRepository.countByHashValueList(allHashList)
-                    .stream().collect(Collectors.toMap(FileHashUsageCount::getHashValue, FileHashUsageCount::getCount));
-            List<String> deleteHashList = allHashList.stream()
-                    .filter(hash -> hashCountMap.getOrDefault(hash, 0L) == 0L).toList();
-            thumbnailUtil.deleteThumbnail(deleteHashList);
+            clearThumbnailFile(allHashList);
         }, fileLockTimeout);
+    }
+
+    public void clearThumbnailFile(Collection<String> needClearHashList) {
+        Map<String, Long> needClearHashCountMap = fileDataRepository.countByHashValueList(needClearHashList)
+                .stream().collect(Collectors.toMap(FileHashUsageCount::getHashValue, FileHashUsageCount::getCount));
+        List<String> deleteHashList = needClearHashList.stream()
+                .filter(hash -> needClearHashCountMap.getOrDefault(hash, 0L) == 0L).toList();
+        thumbnailUtil.deleteThumbnail(deleteHashList);
     }
 
     public void createFolder(String path, Long lastModified, boolean allowExists) {

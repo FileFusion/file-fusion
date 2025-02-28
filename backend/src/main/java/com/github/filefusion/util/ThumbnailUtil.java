@@ -2,6 +2,7 @@ package com.github.filefusion.util;
 
 import com.github.filefusion.common.HttpException;
 import com.github.filefusion.constant.FileAttribute;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -29,6 +30,7 @@ public final class ThumbnailUtil {
     private static final String GENERATE_IMAGE_THUMBNAIL_EXEC = "vipsthumbnail %s --size 256 --export-profile srgb -o %s[Q=75,keep=none]";
     private static final String GENERATE_VIDEO_THUMBNAIL_EXEC = "ffmpeg -i %s -loglevel error -vf \"thumbnail,scale=256:-1\" -an -q:v 31 -vframes 1 -update 1 -y %s";
 
+    @Getter
     private final Path baseDir;
     private final Duration thumbnailGenerateTimeout;
     private final List<String> thumbnailImageMimeType;
@@ -46,9 +48,9 @@ public final class ThumbnailUtil {
         this.thumbnailImageMimeType = thumbnailImageMimeType;
         this.thumbnailVideoMimeType = thumbnailVideoMimeType;
         this.fileUtil = fileUtil;
-        if (!Files.exists(baseDir)) {
+        if (!Files.exists(this.baseDir)) {
             try {
-                Files.createDirectories(baseDir);
+                Files.createDirectories(this.baseDir);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
