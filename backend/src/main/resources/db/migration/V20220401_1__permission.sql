@@ -1,6 +1,6 @@
 CREATE TABLE permission
 (
-    id                 VARCHAR(26)  NOT NULL,
+    id                 VARCHAR(100) NOT NULL,
     parent_id          VARCHAR(26)  NOT NULL,
     name               VARCHAR(100) NOT NULL,
     description        VARCHAR(500) DEFAULT NULL,

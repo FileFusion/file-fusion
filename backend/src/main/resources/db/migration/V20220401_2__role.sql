@@ -13,8 +13,8 @@ CREATE TABLE role
 
 CREATE TABLE role_permission
 (
-    role_id       VARCHAR(26) NOT NULL,
-    permission_id VARCHAR(26) NOT NULL,
+    role_id       VARCHAR(26)  NOT NULL,
+    permission_id VARCHAR(100) NOT NULL,
     PRIMARY KEY (role_id, permission_id)
 );
 
