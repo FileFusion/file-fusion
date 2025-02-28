@@ -214,7 +214,7 @@ public class FileUtil {
 
     public ResponseEntity<StreamingResponseBody> download(List<Path> pathList) {
         return download(FileAttribute.DOWNLOAD_ZIP_NAME,
-                FileAttribute.ZIP_MIME_TYPE,
+                FileAttribute.MimeType.ZIP.value(),
                 HttpStatus.OK,
                 out -> {
                     try (ZipOutputStream zos = new ZipOutputStream(out, StandardCharsets.UTF_8)) {

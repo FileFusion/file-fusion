@@ -29,7 +29,7 @@ import java.util.List;
 @Service
 public class OrgService {
 
-    private static final String ROOT = "root";
+    private static final String ORG_ROOT = "root";
 
     private final OrgRepository orgRepository;
     private final OrgUserRepository orgUserRepository;
@@ -87,7 +87,7 @@ public class OrgService {
     private void getOrgAllParentId(List<String> orgAllParentIds, String orgId) {
         Org org = orgRepository.findById(orgId).orElseThrow();
         orgAllParentIds.add(orgId);
-        if (ROOT.equals(org.getParentId())) {
+        if (ORG_ROOT.equals(org.getParentId())) {
             return;
         }
         getOrgAllParentId(orgAllParentIds, org.getParentId());

@@ -11,14 +11,27 @@ import org.springframework.http.MediaType;
 public final class FileAttribute {
 
     public static final String SEPARATOR = "/";
-    public static final MediaType FOLDER_MIME_TYPE = MediaType.parseMediaType("custom/folder");
     public static final String DOWNLOAD_ZIP_NAME = "download.zip";
-    public static final MediaType ZIP_MIME_TYPE = MediaType.parseMediaType("application/zip");
     public static final String THUMBNAIL_FILE_TYPE = ".png";
 
     public enum Type {
         FILE,
         FOLDER
+    }
+
+    public enum MimeType {
+        FOLDER(MediaType.parseMediaType("custom/folder")),
+        ZIP(MediaType.parseMediaType("application/zip"));
+
+        private final MediaType value;
+
+        MimeType(MediaType value) {
+            this.value = value;
+        }
+
+        public MediaType value() {
+            return this.value;
+        }
     }
 
 }

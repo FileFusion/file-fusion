@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class LicenseService {
 
-    private static final String PERSONAL = "Personal";
+    private static final String PERSONAL_AUTHORIZATION = "Personal";
 
     private final LicenseRepository licenseRepository;
 
@@ -28,7 +28,7 @@ public class LicenseService {
         if (license != null) {
             return license;
         }
-        return licenseRepository.findFirstByAuthorizedTo(PERSONAL);
+        return licenseRepository.findFirstByAuthorizedTo(PERSONAL_AUTHORIZATION);
     }
 
 }

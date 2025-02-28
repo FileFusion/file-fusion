@@ -31,7 +31,7 @@ public class EncryptUtil {
 
     public static final String AES = "AES";
     public static final String SHA_256 = "SHA-256";
-    private static final String AES_TRANSFORMATION = "AES/CBC/PKCS5Padding";
+    public static final String AES_TRANSFORMATION = "AES/CBC/PKCS5Padding";
 
     private static final byte[] HEX_LOOKUP = new byte[128];
     private static final char[] HEX_TABLE = new char[256 * 2];

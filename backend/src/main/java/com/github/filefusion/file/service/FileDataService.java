@@ -141,7 +141,7 @@ public class FileDataService {
                 fileData.setPath(folderPath);
                 fileData.setName(folderName);
                 fileData.setType(FileAttribute.Type.FOLDER);
-                fileData.setMimeType(FileAttribute.FOLDER_MIME_TYPE.toString());
+                fileData.setMimeType(FileAttribute.MimeType.FOLDER.value().toString());
                 fileData.setSize(0L);
                 fileData.setEncrypted(false);
                 fileData.setHashValue(EncryptUtil.sha256(folderName));
