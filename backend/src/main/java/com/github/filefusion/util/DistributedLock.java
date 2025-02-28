@@ -11,9 +11,8 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.time.Duration;
-import java.util.List;
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * DistributedLock
@@ -39,7 +38,7 @@ public class DistributedLock {
         tryLock(lock, task, lockTimeout);
     }
 
-    public void tryMultiLock(RedisAttribute.LockType lockType, List<String> keyList, Runnable task, Duration lockTimeout) {
+    public void tryMultiLock(RedisAttribute.LockType lockType, Collection<String> keyList, Runnable task, Duration lockTimeout) {
         if (lockType == null || CollectionUtils.isEmpty(keyList) || lockTimeout == null || lockTimeout.isNegative()) {
             return;
         }
@@ -51,17 +50,17 @@ public class DistributedLock {
     }
 
     private void tryLock(RLock lock, Runnable task, Duration lockTimeout) {
-        final AtomicBoolean isLockAcquired = new AtomicBoolean(false);
+        boolean isLockAcquired = false;
         try {
-            isLockAcquired.set(lock.tryLock(lockTimeout.toMillis(), TimeUnit.MILLISECONDS));
-            if (!isLockAcquired.get()) {
+            isLockAcquired = lock.tryLock(lockTimeout.toMillis(), TimeUnit.MILLISECONDS);
+            if (!isLockAcquired) {
                 throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("lockAcquisitionFailed"));
             }
             task.run();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         } finally {
-            if (isLockAcquired.get() && lock.isHeldByCurrentThread()) {
+            if (isLockAcquired && lock.isHeldByCurrentThread()) {
                 lock.unlock();
             }
         }

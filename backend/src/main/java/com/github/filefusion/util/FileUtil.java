@@ -18,8 +18,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -116,9 +118,7 @@ public class FileUtil {
 
     public String upload(MultipartFile file, String path) {
         Path targetPath = resolveSafePath(path);
-        if (Files.exists(targetPath)) {
-            delete(targetPath);
-        }
+        delete(targetPath);
         try (HashingInputStream hashingInputStream = new HashingInputStream(file.getInputStream())) {
             Files.copy(hashingInputStream, targetPath);
             return hashingInputStream.getHashString();
@@ -133,9 +133,7 @@ public class FileUtil {
             throw new HttpException(I18n.get("fileNotExist"));
         }
         Path targetPath = resolveSafePath(target);
-        if (Files.exists(targetPath)) {
-            delete(targetPath);
-        }
+        delete(targetPath);
         try {
             Files.move(originalPath, targetPath, StandardCopyOption.ATOMIC_MOVE);
         } catch (IOException e) {
@@ -143,16 +141,24 @@ public class FileUtil {
         }
     }
 
-    public void delete(List<String> pathList) {
-        final AtomicBoolean success = new AtomicBoolean(true);
-        for (String path : pathList) {
+    public void deleteSafe(Collection<String> pathList) {
+        deleteAll(pathList, this::resolveSafePath);
+    }
+
+    public void delete(Collection<Path> pathList) {
+        deleteAll(pathList, Function.identity());
+    }
+
+    private <T> void deleteAll(Collection<T> items, Function<T, Path> pathResolver) {
+        boolean success = true;
+        for (T item : items) {
             try {
-                delete(resolveSafePath(path));
+                delete(pathResolver.apply(item));
             } catch (Exception e) {
-                success.set(false);
+                success = false;
             }
         }
-        if (!success.get()) {
+        if (!success) {
             throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileDeletionFailed"));
         }
     }
@@ -161,21 +167,33 @@ public class FileUtil {
         if (!Files.exists(path)) {
             return;
         }
+        AtomicBoolean success = new AtomicBoolean(true);
         try {
             Files.walkFileTree(path, new SimpleFileVisitor<>() {
                 @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    Files.delete(file);
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                    try {
+                        Files.deleteIfExists(file);
+                    } catch (IOException e) {
+                        success.set(false);
+                    }
                     return FileVisitResult.CONTINUE;
                 }
 
                 @Override
-                public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                    Files.delete(dir);
+                public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
+                    try {
+                        Files.deleteIfExists(dir);
+                    } catch (IOException e) {
+                        success.set(false);
+                    }
                     return FileVisitResult.CONTINUE;
                 }
             });
         } catch (IOException e) {
+            success.set(false);
+        }
+        if (!success.get()) {
             throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileDeletionFailed"));
         }
     }

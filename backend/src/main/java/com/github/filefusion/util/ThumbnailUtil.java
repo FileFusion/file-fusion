@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
@@ -81,6 +82,16 @@ public final class ThumbnailUtil {
             throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("thumbnailGenerationFailed"));
         }
         return thumbnailFilePath;
+    }
+
+    public void deleteThumbnail(List<String> hashList) {
+        if (CollectionUtils.isEmpty(hashList)) {
+            return;
+        }
+        List<Path> pathList = hashList.stream()
+                .map(hash -> baseDir.resolve(hash + FileAttribute.THUMBNAIL_FILE_TYPE).normalize())
+                .toList();
+        fileUtil.delete(pathList);
     }
 
 }

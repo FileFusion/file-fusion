@@ -4,6 +4,7 @@ import com.github.filefusion.common.HttpException;
 import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.constant.RedisAttribute;
 import com.github.filefusion.file.entity.FileData;
+import com.github.filefusion.file.model.FileHashUsageCount;
 import com.github.filefusion.file.model.SubmitDownloadFilesResponse;
 import com.github.filefusion.file.repository.FileDataRepository;
 import com.github.filefusion.util.*;
@@ -25,10 +26,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -111,12 +110,27 @@ public class FileDataService {
 
     @Transactional(rollbackFor = HttpException.class)
     public void batchDelete(List<String> pathList) {
-        List<String> allPathList = pathList.stream()
+        Map<String, FileData> allFileMap = pathList.stream()
                 .flatMap(path -> fileDataRepository.findAllByPathOrPathLike(path, path + FileAttribute.SEPARATOR + "%").stream())
-                .map(FileData::getPath).distinct().toList();
+                .collect(Collectors.toMap(FileData::getPath, Function.identity(), (existing, replacement) -> existing));
+        if (allFileMap.isEmpty()) {
+            return;
+        }
+        Set<String> allPathList = allFileMap.keySet();
+        Set<String> allHashList = allFileMap.values().stream().map(FileData::getHashValue)
+                .filter(StringUtils::hasLength).collect(Collectors.toSet());
         distributedLock.tryMultiLock(RedisAttribute.LockType.file, allPathList, () -> {
             fileDataRepository.deleteAllByPathIn(allPathList);
-            fileUtil.delete(allPathList);
+            fileUtil.deleteSafe(allPathList);
+
+            if (allHashList.isEmpty()) {
+                return;
+            }
+            Map<String, Long> hashCountMap = fileDataRepository.countByHashValueList(allHashList)
+                    .stream().collect(Collectors.toMap(FileHashUsageCount::getHashValue, FileHashUsageCount::getCount));
+            List<String> deleteHashList = allHashList.stream()
+                    .filter(hash -> hashCountMap.getOrDefault(hash, 0L) == 0L).toList();
+            thumbnailUtil.deleteThumbnail(deleteHashList);
         }, fileLockTimeout);
     }
 

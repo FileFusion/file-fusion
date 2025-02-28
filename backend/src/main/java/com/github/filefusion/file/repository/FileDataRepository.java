@@ -1,11 +1,15 @@
 package com.github.filefusion.file.repository;
 
 import com.github.filefusion.file.entity.FileData;
+import com.github.filefusion.file.model.FileHashUsageCount;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -50,7 +54,7 @@ public interface FileDataRepository extends JpaRepository<FileData, String> {
      *
      * @param pathList path list
      */
-    void deleteAllByPathIn(List<String> pathList);
+    void deleteAllByPathIn(Collection<String> pathList);
 
     /**
      * existsByPath
@@ -75,5 +79,14 @@ public interface FileDataRepository extends JpaRepository<FileData, String> {
      * @return file
      */
     FileData findFirstByPath(String path);
+
+    /**
+     * countByHashValueList
+     *
+     * @param hashList hash list
+     * @return hash count
+     */
+    @Query("SELECT new com.github.filefusion.file.model.FileHashUsageCount(f.hashValue, COUNT(f)) FROM file_data f WHERE f.hashValue IN :hashList GROUP BY f.hashValue")
+    List<FileHashUsageCount> countByHashValueList(@Param("hashList") Collection<String> hashList);
 
 }
