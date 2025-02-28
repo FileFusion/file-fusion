@@ -81,6 +81,18 @@ VALUES ('role:delete', 'role', 'Role delete', 'Delete role', false,
         '01JJK6FQS0K3N6K4JAEAP5ZC7P', '2022-04-01 00:00:00', null, null);
 
 INSERT INTO permission
+VALUES ('sys_config', 'root', 'Sys config', 'Sys config', false,
+        '01JJK6FQS0K3N6K4JAEAP5ZC7P', '2022-04-01 00:00:00', null, null);
+INSERT INTO permission
+VALUES ('sys_config:recycle_bin_read', 'sys_config', 'Sys recycle bin config read', 'Read sys recycle bin config',
+        false,
+        '01JJK6FQS0K3N6K4JAEAP5ZC7P', '2022-04-01 00:00:00', null, null);
+INSERT INTO permission
+VALUES ('sys_config:recycle_bin_edit', 'sys_config', 'Sys recycle bin config edit', 'Edit sys recycle bin config',
+        false,
+        '01JJK6FQS0K3N6K4JAEAP5ZC7P', '2022-04-01 00:00:00', null, null);
+
+INSERT INTO permission
 VALUES ('personal_file', 'root', 'Personal file', 'Personal file', false,
         '01JJK6FQS0K3N6K4JAEAP5ZC7P', '2022-04-01 00:00:00', null, null);
 INSERT INTO permission

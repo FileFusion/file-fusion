@@ -63,6 +63,13 @@ INSERT INTO role_permission
 VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'role:delete');
 
 INSERT INTO role_permission
+VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'sys_config');
+INSERT INTO role_permission
+VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'sys_config:recycle_bin_read');
+INSERT INTO role_permission
+VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'sys_config:recycle_bin_edit');
+
+INSERT INTO role_permission
 VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'personal_file');
 INSERT INTO role_permission
 VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'personal_file:read');
