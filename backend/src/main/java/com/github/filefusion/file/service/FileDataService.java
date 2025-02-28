@@ -134,10 +134,10 @@ public class FileDataService {
         }, fileLockTimeout);
     }
 
-    public void createFolder(final String path, Long lastModified, final boolean allowExists) {
-        final Date lastModifiedDate = new Date(lastModified);
-        final List<Path> hierarchyPathList = getHierarchyPathList(path);
-        final List<String> sortedPathList = hierarchyPathList.stream().map(Path::toString).toList();
+    public void createFolder(String path, Long lastModified, boolean allowExists) {
+        Date lastModifiedDate = new Date(lastModified);
+        List<Path> hierarchyPathList = getHierarchyPathList(path);
+        List<String> sortedPathList = hierarchyPathList.stream().map(Path::toString).toList();
         distributedLock.tryMultiLock(RedisAttribute.LockType.file, sortedPathList, () -> {
             if (!allowExists && fileDataRepository.existsByPath(path)) {
                 throw new HttpException(I18n.get("folderExits"));
@@ -168,11 +168,11 @@ public class FileDataService {
         }, fileLockTimeout);
     }
 
-    public void upload(final MultipartFile file, final String name,
-                       String path, final String type, final Long lastModified) {
+    public void upload(MultipartFile file, String name,
+                       String path, String type, Long lastModified) {
         createFolder(path, lastModified, true);
 
-        final String filePath = path + FileAttribute.SEPARATOR + name;
+        String filePath = path + FileAttribute.SEPARATOR + name;
         distributedLock.tryLock(RedisAttribute.LockType.file, filePath, () -> {
             FileData fileData = fileDataRepository.findFirstByPath(filePath);
             if (fileData == null) {
@@ -192,12 +192,12 @@ public class FileDataService {
     }
 
     @Transactional(rollbackFor = HttpException.class)
-    public void rename(String path, String originalName, final String targetName) {
+    public void rename(String path, String originalName, String targetName) {
         if (!StringUtils.hasLength(originalName)) {
             throw new HttpException(I18n.get("renameFileSelectCheck"));
         }
-        final String originalPath = path + FileAttribute.SEPARATOR + originalName;
-        final FileData originalFile = fileDataRepository.findFirstByPath(originalPath);
+        String originalPath = path + FileAttribute.SEPARATOR + originalName;
+        FileData originalFile = fileDataRepository.findFirstByPath(originalPath);
         if (originalFile == null) {
             throw new HttpException(I18n.get("fileNotExist"));
         }
@@ -205,14 +205,14 @@ public class FileDataService {
         if (!StringUtils.hasLength(targetName)) {
             throw new HttpException(I18n.get("fileNameEmpty"));
         }
-        final String targetPath = path + FileAttribute.SEPARATOR + targetName;
+        String targetPath = path + FileAttribute.SEPARATOR + targetName;
         if (fileDataRepository.existsByPath(targetPath)) {
             throw new HttpException(I18n.get("fileNameAlreadyExists"));
         }
 
-        final String originalPathFolder = originalPath + FileAttribute.SEPARATOR;
-        final String targetPathFolder = targetPath + FileAttribute.SEPARATOR;
-        final List<FileData> originalFileList = fileDataRepository.findAllByPathLike(originalPathFolder + "%");
+        String originalPathFolder = originalPath + FileAttribute.SEPARATOR;
+        String targetPathFolder = targetPath + FileAttribute.SEPARATOR;
+        List<FileData> originalFileList = fileDataRepository.findAllByPathLike(originalPathFolder + "%");
 
         List<String> allPathList = originalFileList.stream().map(FileData::getPath).collect(Collectors.toList());
         allPathList.add(originalPath);
