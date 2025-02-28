@@ -21,6 +21,11 @@ public class FileHashUsageCount implements Serializable {
     private String hashValue;
 
     /**
+     * mime type
+     */
+    private String mimeType;
+
+    /**
      * count
      */
     private Long count;

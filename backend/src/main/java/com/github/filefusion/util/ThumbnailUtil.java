@@ -33,7 +33,9 @@ public final class ThumbnailUtil {
     @Getter
     private final Path baseDir;
     private final Duration thumbnailGenerateTimeout;
+    @Getter
     private final List<String> thumbnailImageMimeType;
+    @Getter
     private final List<String> thumbnailVideoMimeType;
     private final FileUtil fileUtil;
 

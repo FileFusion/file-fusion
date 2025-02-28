@@ -45,6 +45,10 @@ public class ClearThumbnailFileTask {
         this.fileDataService = fileDataService;
     }
 
+    /**
+     * Because the format of the files to be previewed can be adjusted at any time,
+     * So need to clean up expired preview images regularly.
+     */
     @Scheduled(cron = "${task.clear-thumbnail-file}")
     public void clearThumbnailFileTask() {
         distributedLock.tryLock(RedisAttribute.LockType.task, "clearThumbnailFileTask", () -> {

@@ -131,11 +131,20 @@ public class FileDataService {
     }
 
     public void clearThumbnailFile(Collection<String> needClearHashList) {
-        Map<String, Long> needClearHashCountMap = fileDataRepository.countByHashValueList(needClearHashList)
-                .stream().collect(Collectors.toMap(FileHashUsageCount::getHashValue, FileHashUsageCount::getCount));
-        List<String> deleteHashList = needClearHashList.stream()
-                .filter(hash -> needClearHashCountMap.getOrDefault(hash, 0L) == 0L).toList();
-        thumbnailUtil.deleteThumbnail(deleteHashList);
+        Map<String, FileHashUsageCount> hashUsageCountMap = fileDataRepository.countByHashValueList(needClearHashList)
+                .stream().collect(Collectors.toMap(FileHashUsageCount::getHashValue, Function.identity()));
+        List<String> thumbnailImageMimeType = thumbnailUtil.getThumbnailImageMimeType();
+        List<String> thumbnailVideoMimeType = thumbnailUtil.getThumbnailVideoMimeType();
+        List<String> hashToDeleteList = needClearHashList.stream()
+                .filter(hash -> {
+                    FileHashUsageCount hashUsageCount = hashUsageCountMap.get(hash);
+                    return hashUsageCount == null
+                            || hashUsageCount.getCount() == null || hashUsageCount.getCount() == 0L
+                            || !StringUtils.hasLength(hashUsageCount.getMimeType())
+                            || (!thumbnailImageMimeType.contains(hashUsageCount.getMimeType())
+                            && !thumbnailVideoMimeType.contains(hashUsageCount.getMimeType()));
+                }).toList();
+        thumbnailUtil.deleteThumbnail(hashToDeleteList);
     }
 
     public void createFolder(String path, Long lastModified, boolean allowExists) {

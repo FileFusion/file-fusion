@@ -86,7 +86,7 @@ public interface FileDataRepository extends JpaRepository<FileData, String> {
      * @param hashList hash list
      * @return hash count
      */
-    @Query("SELECT new com.github.filefusion.file.model.FileHashUsageCount(f.hashValue, COUNT(f)) FROM file_data f WHERE f.hashValue IN :hashList GROUP BY f.hashValue")
+    @Query("SELECT new com.github.filefusion.file.model.FileHashUsageCount(f.hashValue, f.mimeType, COUNT(f.id)) FROM file_data f WHERE f.hashValue IN :hashList GROUP BY f.hashValue, f.mimeType")
     List<FileHashUsageCount> countByHashValueList(@Param("hashList") Collection<String> hashList);
 
 }
