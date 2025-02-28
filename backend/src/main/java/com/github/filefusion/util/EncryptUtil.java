@@ -78,10 +78,10 @@ public class EncryptUtil {
     }
 
     public static String bytesToHex(byte[] bytes) {
-        final int len = bytes.length;
-        final char[] hexChars = new char[len * 2];
+        int len = bytes.length;
+        char[] hexChars = new char[len * 2];
         for (int i = 0; i < len; i++) {
-            final int byteVal = bytes[i] & 0xFF;
+            int byteVal = bytes[i] & 0xFF;
             hexChars[i * 2] = HEX_TABLE[byteVal << 1];
             hexChars[i * 2 + 1] = HEX_TABLE[(byteVal << 1) + 1];
         }
