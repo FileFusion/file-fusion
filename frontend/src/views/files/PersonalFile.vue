@@ -132,7 +132,7 @@
                   <n-text depth="3">
                     <n-time
                       :time="fileData.lastModifiedDate"
-                      format="yyyy-MM-dd HH:mm" />
+                      format="PP HH:mm" />
                   </n-text>
                 </div>
               </div>
@@ -352,7 +352,7 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
       render: (row: any) => {
         return h(NTime, {
           time: row.lastModifiedDate,
-          format: 'yyyy-MM-dd HH:mm'
+          format: 'PP HH:mm'
         });
       }
     }

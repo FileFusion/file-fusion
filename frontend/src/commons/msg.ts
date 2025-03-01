@@ -1,5 +1,5 @@
 import type { NotificationType } from 'naive-ui';
-import { format } from 'date-fns';
+import { format } from '@/commons/date';
 
 function info(title: string | number | null, content?: string) {
   notify('info', title ? title : window.$t('common.info'), content);
@@ -25,7 +25,7 @@ function notify(
   window.$notice[type]({
     title: title + '',
     content: content,
-    meta: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+    meta: format(new Date()),
     duration: 3000
   });
 }

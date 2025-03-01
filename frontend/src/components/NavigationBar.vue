@@ -72,15 +72,15 @@
                 :label="$t('navigationBar.authorizationTime')">
                 <n-time
                   v-if="license.startDate"
-                  :time="new Date(license.startDate)"
-                  format="yyyy-MM-dd"></n-time>
+                  :time="license.startDate"
+                  format="PP"></n-time>
                 <n-text v-else>{{ $t('common.empty') }}</n-text>
               </n-descriptions-item>
               <n-descriptions-item :label="$t('navigationBar.expirationTime')">
                 <n-time
                   v-if="license.endDate"
-                  :time="new Date(license.endDate)"
-                  format="yyyy-MM-dd"></n-time>
+                  :time="license.endDate"
+                  format="PP"></n-time>
                 <n-text v-else>{{ $t('navigationBar.indefinitely') }}</n-text>
               </n-descriptions-item>
               <n-descriptions-item :label="$t('navigationBar.edition')">
