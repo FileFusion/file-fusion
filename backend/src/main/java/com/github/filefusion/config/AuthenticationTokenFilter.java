@@ -49,7 +49,7 @@ public final class AuthenticationTokenFilter extends OncePerRequestFilter {
                 return;
             }
             UserInfo user = (UserInfo) userDetailsService.loadUserByUsername(token.getUserId());
-            if (token.getCreatedDate().before(user.getEarliestCredentials())) {
+            if (token.getCreatedDate().isBefore(user.getEarliestCredentials())) {
                 response.sendError(HttpStatus.UNAUTHORIZED.value(), I18n.get("tokenExpired"));
                 return;
             }

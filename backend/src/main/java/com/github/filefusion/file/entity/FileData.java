@@ -7,7 +7,7 @@ import jakarta.persistence.Transient;
 import lombok.Data;
 import lombok.experimental.FieldNameConstants;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * FileData
@@ -58,7 +58,7 @@ public class FileData extends BaseEntity {
     /**
      * file last modified date
      */
-    private Date fileLastModifiedDate;
+    private LocalDateTime fileLastModifiedDate;
 
     /**
      * deleted
@@ -68,7 +68,7 @@ public class FileData extends BaseEntity {
     /**
      * deleted date
      */
-    private Date deletedDate;
+    private LocalDateTime deletedDate;
 
     /**
      * recycle path

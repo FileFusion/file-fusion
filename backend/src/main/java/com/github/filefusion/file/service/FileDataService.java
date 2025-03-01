@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -147,8 +148,7 @@ public class FileDataService {
         thumbnailUtil.deleteThumbnail(hashToDeleteList);
     }
 
-    public void createFolder(String path, Long lastModified, boolean allowExists) {
-        Date lastModifiedDate = new Date(lastModified);
+    public void createFolder(String path, LocalDateTime lastModifiedDate, boolean allowExists) {
         List<Path> hierarchyPathList = getHierarchyPathList(path);
         List<String> sortedPathList = hierarchyPathList.stream().map(Path::toString).toList();
         distributedLock.tryMultiLock(RedisAttribute.LockType.file, sortedPathList, () -> {
@@ -182,8 +182,8 @@ public class FileDataService {
     }
 
     public void upload(MultipartFile file, String name,
-                       String path, String type, Long lastModified) {
-        createFolder(path, lastModified, true);
+                       String path, String type, LocalDateTime lastModifiedDate) {
+        createFolder(path, lastModifiedDate, true);
 
         String filePath = path + FileAttribute.SEPARATOR + name;
         distributedLock.tryLock(RedisAttribute.LockType.file, filePath, () -> {
@@ -197,7 +197,7 @@ public class FileDataService {
             fileData.setMimeType(type);
             fileData.setSize(file.getSize());
             fileData.setEncrypted(false);
-            fileData.setFileLastModifiedDate(new Date(lastModified));
+            fileData.setFileLastModifiedDate(lastModifiedDate);
             fileData.setDeleted(false);
             fileData.setHashValue(fileUtil.upload(file, filePath));
             fileDataRepository.save(fileData);

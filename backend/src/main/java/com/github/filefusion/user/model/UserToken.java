@@ -8,7 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * UserToken
@@ -24,7 +24,7 @@ public class UserToken implements Serializable {
     private static final String TOKEN_HEADER = "Bearer ";
 
     private String userId;
-    private Date createdDate;
+    private LocalDateTime createdDate;
     private String random;
 
     public static UserToken decoder(String token) {
@@ -33,7 +33,7 @@ public class UserToken implements Serializable {
     }
 
     public static String encoder(String userId) {
-        UserToken userToken = new UserToken(userId, new Date(), ULID.randomULID());
+        UserToken userToken = new UserToken(userId, LocalDateTime.now(), ULID.randomULID());
         return TOKEN_HEADER + EncryptUtil.aesEncoder(Json.toJsonString(userToken));
     }
 

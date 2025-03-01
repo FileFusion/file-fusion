@@ -23,8 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -93,7 +93,7 @@ public class UserService implements UserDetailsService {
             throw new HttpException(I18n.get("originalPasswordError"));
         }
         u.setPassword(passwordEncoder.encode(EncryptUtil.sha256(newPassword)));
-        u.setEarliestCredentials(new Date());
+        u.setEarliestCredentials(LocalDateTime.now());
         userRepository.save(u);
     }
 
@@ -134,7 +134,7 @@ public class UserService implements UserDetailsService {
         }
         user.setId(null);
         user.setPassword(passwordEncoder.encode(EncryptUtil.sha256(user.getPassword())));
-        user.setEarliestCredentials(new Date());
+        user.setEarliestCredentials(LocalDateTime.now());
         user.setSystemdUser(false);
         user.setNonExpired(true);
         user.setNonLocked(true);
@@ -160,7 +160,7 @@ public class UserService implements UserDetailsService {
         }
 
         if (modifyPassword || oldUser.getEnabled() != user.getEnabled()) {
-            oldUser.setEarliestCredentials(new Date());
+            oldUser.setEarliestCredentials(LocalDateTime.now());
         }
         oldUser.setEnabled(user.getEnabled());
 

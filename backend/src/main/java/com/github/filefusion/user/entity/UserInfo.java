@@ -9,7 +9,7 @@ import lombok.experimental.FieldNameConstants;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -56,7 +56,7 @@ public class UserInfo extends BaseEntity implements UserDetails {
     /**
      * earliest credentials
      */
-    private Date earliestCredentials;
+    private LocalDateTime earliestCredentials;
 
     /**
      * is systemd user

@@ -5,7 +5,7 @@ import jakarta.persistence.Entity;
 import lombok.Data;
 import lombok.experimental.FieldNameConstants;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * License
@@ -31,11 +31,11 @@ public class License extends BaseEntity {
     /**
      * start date
      */
-    private Date startDate;
+    private LocalDateTime startDate;
 
     /**
      * end date
      */
-    private Date endDate;
+    private LocalDateTime endDate;
 
 }

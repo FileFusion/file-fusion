@@ -12,7 +12,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * BaseEntity
@@ -42,7 +42,7 @@ public abstract class BaseEntity implements Serializable {
      * created date
      */
     @CreatedDate
-    private Date createdDate;
+    private LocalDateTime createdDate;
 
     /**
      * last modified by
@@ -54,6 +54,6 @@ public abstract class BaseEntity implements Serializable {
      * last modified date
      */
     @LastModifiedDate
-    private Date lastModifiedDate;
+    private LocalDateTime lastModifiedDate;
 
 }

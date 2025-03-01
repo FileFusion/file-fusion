@@ -7,6 +7,7 @@ import com.github.filefusion.file.model.RenameFileModel;
 import com.github.filefusion.file.model.SubmitDownloadFilesResponse;
 import com.github.filefusion.file.service.FileDataService;
 import com.github.filefusion.util.CurrentUser;
+import com.github.filefusion.util.TimeUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -89,7 +91,7 @@ public class FileDataController {
     @PreAuthorize("hasAuthority('personal_file:upload')")
     public void createFolder(@RequestBody FileData fileData) {
         String path = fileDataService.formatUserPath(CurrentUser.get().getId(), fileData.getPath());
-        fileDataService.createFolder(path, System.currentTimeMillis(), false);
+        fileDataService.createFolder(path, LocalDateTime.now(), false);
     }
 
     /**
@@ -109,7 +111,7 @@ public class FileDataController {
                        @RequestParam("type") String type,
                        @RequestParam("lastModified") Long lastModified) {
         path = fileDataService.formatUserPath(CurrentUser.get().getId(), path);
-        fileDataService.upload(file, name, path, type, lastModified);
+        fileDataService.upload(file, name, path, type, TimeUtil.fromMillis(lastModified));
     }
 
     /**
