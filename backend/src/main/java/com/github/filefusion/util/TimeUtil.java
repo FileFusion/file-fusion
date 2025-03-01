@@ -12,7 +12,7 @@ import java.time.ZoneId;
  */
 public final class TimeUtil {
 
-    private static final ZoneId DEFAULT_ZONE = ZoneId.systemDefault();
+    public static final ZoneId DEFAULT_ZONE = ZoneId.systemDefault();
 
     public static LocalDateTime fromMillis(long milliseconds, ZoneId... zone) {
         return LocalDateTime.ofInstant(Instant.ofEpochMilli(milliseconds), zone.length > 0 ? zone[0] : DEFAULT_ZONE);
