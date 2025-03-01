@@ -30,7 +30,6 @@ public class JacksonConfig {
         simpleModule.addDeserializer(LocalDateTime.class, new LocalDateTimeDeserializer());
         return Jackson2ObjectMapperBuilder.json()
                 .timeZone(TimeZone.getTimeZone(TimeUtil.DEFAULT_ZONE))
-                .featuresToDisable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
                 .modulesToInstall(simpleModule)
                 .build();
     }
