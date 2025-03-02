@@ -13,7 +13,7 @@
             @positive-click="deleteFiles(fileTableCheck)">
             <template #trigger>
               <n-button
-                v-permission="'personal_file:delete'"
+                v-permission="'recycle_bin_file:delete'"
                 :loading="deleteFileLoading"
                 type="error">
                 {{ $t('common.delete') }}
@@ -207,8 +207,8 @@ const route = useRoute();
 const mStore = mainStore();
 
 const permission = ref({
-  personalFilePreview: hasPermission('personal_file:preview'),
-  personalFileDelete: hasPermission('personal_file:delete')
+  recycleBinFilePreview: hasPermission('recycle_bin_file:preview'),
+  recycleBinFileDelete: hasPermission('recycle_bin_file:delete')
 });
 
 watch(
@@ -249,7 +249,7 @@ function getFileDropdownOptions(file: any) {
           deleteFile(file);
         }
       },
-      show: permission.value.personalFileDelete
+      show: permission.value.recycleBinFileDelete
     }
   ];
 }
@@ -315,7 +315,7 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
       }
     }
   ];
-  if (permission.value.personalFileDelete) {
+  if (permission.value.recycleBinFileDelete) {
     tableColumn.push({
       title: t('common.options'),
       key: 'options',
@@ -598,7 +598,7 @@ function clickFile(file: any) {
     });
     return;
   }
-  if (!permission.value.personalFilePreview) {
+  if (!permission.value.recycleBinFilePreview) {
     window.$msg.warning(t('files.personal.noPermissionPreviewFile'));
     return;
   }
