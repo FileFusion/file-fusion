@@ -179,9 +179,14 @@ public class FileDataService {
         List<String> sortedPathList = hierarchyPathList.stream().map(Path::toString).toList();
         distributedLock.tryMultiLock(RedisAttribute.LockType.file, sortedPathList, () -> {
             if (!allowExists && fileDataRepository.existsByPath(path)) {
-                throw new HttpException(I18n.get("folderExits"));
+                throw new HttpException(I18n.get("fileExits", path));
             }
             List<FileData> existsFileList = fileDataRepository.findAllByPathIn(sortedPathList);
+            existsFileList.forEach(file -> {
+                if (!FileAttribute.Type.FOLDER.equals(file.getType())) {
+                    throw new HttpException(I18n.get("fileExits", file.getPath()));
+                }
+            });
             Map<String, FileData> existsFileMap = existsFileList.stream().collect(Collectors.toMap(FileData::getPath, fileData -> fileData));
             List<FileData> fileList = new ArrayList<>(hierarchyPathList.size());
             for (Path hierarchyPath : hierarchyPathList) {
@@ -245,18 +250,18 @@ public class FileDataService {
             throw new HttpException(I18n.get("fileNameEmpty"));
         }
         String targetPath = path + FileAttribute.SEPARATOR + targetName;
-        if (fileDataRepository.existsByPath(targetPath)) {
-            throw new HttpException(I18n.get("fileNameAlreadyExists"));
-        }
 
         String originalPathFolder = originalPath + FileAttribute.SEPARATOR;
         String targetPathFolder = targetPath + FileAttribute.SEPARATOR;
-        List<FileData> originalFileList = fileDataRepository.findAllByPathLike(originalPathFolder + "%");
 
+        List<FileData> originalFileList = fileDataRepository.findAllByPathLike(originalPathFolder + "%");
         List<String> allPathList = originalFileList.stream().map(FileData::getPath).collect(Collectors.toList());
         allPathList.add(originalPath);
         allPathList.add(targetPath);
         distributedLock.tryMultiLock(RedisAttribute.LockType.file, allPathList, () -> {
+            if (fileDataRepository.existsByPath(targetPath)) {
+                throw new HttpException(I18n.get("fileNameAlreadyExists"));
+            }
             originalFile.setPath(targetPath);
             originalFile.setName(targetName);
             for (FileData file : originalFileList) {
