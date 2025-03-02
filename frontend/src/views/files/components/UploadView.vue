@@ -135,6 +135,7 @@ const themeVars = useThemeVars();
 
 const isUploadDirectory = ref<boolean>(false);
 const fileList = ref<UploadFileInfo[]>([]);
+const lastFileBatchId = ref<string | null>(null);
 
 const createFolderFormRef = ref<HTMLFormElement>();
 const showCreateFolderModal = ref(false);
@@ -173,16 +174,21 @@ const filePathPattern = computed(() => {
 });
 
 const uploadPercentage = computed<number>(() => {
-  const files = fileList.value;
-  const fileCount = files.length;
-  if (fileCount === 0) {
+  if (!lastFileBatchId.value || fileList.value.length === 0) {
     return 0;
   }
+  let count = 0;
   let percentageCount = 0;
-  for (const file of files) {
-    percentageCount += file.percentage ? file.percentage : 0;
+  for (const file of fileList.value) {
+    if (file.batchId === lastFileBatchId.value) {
+      count++;
+      percentageCount += file.percentage ? file.percentage : 0;
+    }
   }
-  return Math.floor(percentageCount / fileCount);
+  if (percentageCount === 0 || count === 0) {
+    return 0;
+  }
+  return Math.floor(percentageCount / count);
 });
 
 function emitFileChangeEvent() {
@@ -239,6 +245,7 @@ const uploadFileRequest = ({
   onFinish,
   onError
 }: UploadCustomRequestOptions) => {
+  lastFileBatchId.value = file.batchId;
   const fileInfo: File = <File>file.file;
   let path;
   if (filePathPattern.value) {
