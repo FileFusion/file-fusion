@@ -8,13 +8,6 @@
             :checked="fileGridAllIsCheck"
             :indeterminate="fileGridAllIsIndeterminate"
             @update:checked="fileGridHandleCheck" />
-          <n-button
-            v-permission="'personal_file:download'"
-            :loading="downloadFileLoading"
-            type="primary"
-            @click="downloadFiles(fileTableCheck)">
-            {{ $t('files.personal.download') }}
-          </n-button>
           <n-popconfirm
             :positive-button-props="{ type: 'error' }"
             @positive-click="deleteFiles(fileTableCheck)">
@@ -172,11 +165,6 @@
         @update:page="fileTablePageChange"
         @update:page-size="fileTablePageSizeChange" />
     </n-card>
-    <file-rename
-      v-model="showRenameFile"
-      :path="filePathPattern"
-      :name="renameFileName"
-      @submit="fileTableReload" />
     <video-view v-model="showVideoFile" :file="videoFile" />
     <image-view
       v-model:show="showImageFile"
@@ -197,15 +185,12 @@ import { computed, h, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import IconCheck from '~icons/icon-park-outline/check';
 import IconDown from '~icons/icon-park-outline/down';
-import IconDownload from '~icons/icon-park-outline/download';
-import IconEditTwo from '~icons/icon-park-outline/edit-two';
 import IconDelete from '~icons/icon-park-outline/delete';
 import { useRequest, usePagination } from 'alova/client';
 import { hasPermission } from '@/commons/permission';
 import { formatFileSize, renderIconMethod } from '@/commons/utils';
 import { useRouter, useRoute } from 'vue-router';
 import { mainStore } from '@/store';
-import FileRename from '@/views/files/components/FileRename.vue';
 import FilePreview from '@/views/files/components/FilePreview.vue';
 import VideoView from '@/views/files/components/VideoView.vue';
 import ImageView from '@/views/files/components/ImageView.vue';
@@ -218,7 +203,6 @@ const mStore = mainStore();
 
 const permission = ref({
   personalFileDownload: hasPermission('personal_file:download'),
-  personalFileEdit: hasPermission('personal_file:edit'),
   personalFileDelete: hasPermission('personal_file:delete')
 });
 
@@ -229,10 +213,6 @@ watch(
   }
 );
 
-window.$event.on('UploadView:FileChangeEvent', () => {
-  fileTableReload();
-});
-
 const fileShowType = computed(() => mStore.getFileShowType);
 const fileNamePattern = ref<string>('');
 const fileTableCheck = ref<string[]>([]);
@@ -241,9 +221,6 @@ const fileTableSorter = ref<any>({
   size: <any>false,
   lastModifiedDate: <any>false
 });
-
-const showRenameFile = ref<boolean>(false);
-const renameFileName = ref<string>('');
 
 const showVideoFile = ref<boolean>(false);
 const videoFile = ref<any>({});
@@ -257,30 +234,6 @@ function switchFileShowType(value: string) {
 
 function getFileDropdownOptions(file: any) {
   return [
-    {
-      icon: renderIconMethod(IconDownload),
-      key: 'download',
-      label: t('files.personal.download'),
-      props: {
-        onClick: () => {
-          file.showOperateMenu = false;
-          downloadFiles([file.path]);
-        }
-      },
-      show: permission.value.personalFileDownload
-    },
-    {
-      icon: renderIconMethod(IconEditTwo),
-      key: 'edit',
-      label: t('files.personal.rename'),
-      props: {
-        onClick: () => {
-          file.showOperateMenu = false;
-          renameFile(file);
-        }
-      },
-      show: permission.value.personalFileEdit
-    },
     {
       icon: renderIconMethod(IconDelete),
       key: 'delete',
@@ -357,11 +310,7 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
       }
     }
   ];
-  if (
-    permission.value.personalFileDownload ||
-    permission.value.personalFileEdit ||
-    permission.value.personalFileDelete
-  ) {
+  if (permission.value.personalFileDelete) {
     tableColumn.push({
       title: t('common.options'),
       key: 'options',
@@ -545,15 +494,6 @@ const {
   }
 );
 
-const { loading: downloadFileLoading, send: doDownloadFile } = useRequest(
-  (filePathList: string[]) =>
-    http.Post('/file_data/_submit_download', filePathList),
-  { immediate: false }
-).onSuccess((response: any) => {
-  window.location.href =
-    http.options.baseURL + '/file_data/_download/' + response.data.downloadId;
-});
-
 const { loading: deleteFileLoading, send: doDeleteFile } = useRequest(
   (filePathList: string[]) =>
     http.Post('/file_data/_batch_delete', filePathList),
@@ -620,19 +560,6 @@ function fileTableReload() {
   fileTableReloadEvent();
 }
 
-function renameFile(file: any) {
-  showRenameFile.value = true;
-  renameFileName.value = file.name;
-}
-
-function downloadFiles(filePathList: string[]) {
-  if (!filePathList || filePathList.length === 0) {
-    window.$msg.warning(t('files.personal.fileDownloadSelectCheck'));
-    return;
-  }
-  doDownloadFile(filePathList);
-}
-
 function deleteFile(file: any) {
   window.$dialog.warning({
     title: t('common.warning'),
@@ -668,7 +595,7 @@ function clickFile(file: any) {
     }
     path += file.name;
     router.push({
-      name: 'files-personal',
+      name: 'files-recycle-bin',
       params: { path: path.split('/') }
     });
     return;
