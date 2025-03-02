@@ -46,9 +46,6 @@ public class ClearRecycleBinFileTask {
         distributedLock.tryLock(RedisAttribute.LockType.task, "clearRecycleBinFileTask", () -> {
             SysConfig recycleBinConfig = sysConfigService.get(SysConfigKey.RECYCLE_BIN);
             SysConfig recycleBinRetentionDaysConfig = sysConfigService.get(SysConfigKey.RECYCLE_BIN_RETENTION_DAYS);
-            if (recycleBinConfig == null || recycleBinRetentionDaysConfig == null) {
-                return;
-            }
             boolean recycleBin = Boolean.parseBoolean(recycleBinConfig.getConfigValue());
             int recycleBinRetentionDays = Integer.parseInt(recycleBinRetentionDaysConfig.getConfigValue());
             if (!recycleBin || recycleBinRetentionDays <= 0) {

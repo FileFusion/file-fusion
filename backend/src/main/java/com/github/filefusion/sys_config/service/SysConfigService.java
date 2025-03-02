@@ -26,14 +26,23 @@ public class SysConfigService {
     }
 
     public SysConfig get(SysConfigKey configKey) {
-        return sysConfigRepository.findFirstByConfigKey(configKey.name()).orElse(null);
+        return sysConfigRepository.findFirstByConfigKey(configKey.name()).orElseThrow();
     }
 
     public SysConfig update(SysConfig sysConfig) {
-        if (!StringUtils.hasLength(sysConfig.getConfigValue())) {
-            throw new HttpException(I18n.get("configKeyCannotNull"));
+        if (!StringUtils.hasLength(sysConfig.getConfigKey())) {
+            throw new HttpException(I18n.get("configKeyNotExist"));
         }
-        SysConfig oldSysConfig = sysConfigRepository.findFirstByConfigKey(sysConfig.getConfigKey()).orElseThrow();
+        if (!StringUtils.hasLength(sysConfig.getConfigValue())) {
+            throw new HttpException(I18n.get("configValueCannotNull"));
+        }
+        SysConfigKey sysConfigKey;
+        try {
+            sysConfigKey = SysConfigKey.valueOf(sysConfig.getConfigKey());
+        } catch (IllegalArgumentException e) {
+            throw new HttpException(I18n.get("configKeyNotExist"));
+        }
+        SysConfig oldSysConfig = get(sysConfigKey);
         oldSysConfig.setConfigValue(sysConfig.getConfigValue());
         return sysConfigRepository.save(oldSysConfig);
     }
