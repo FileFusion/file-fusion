@@ -110,25 +110,14 @@ public class FileUtil {
         Path targetPath = resolveSafePath(path);
         try {
             Files.createDirectories(targetPath);
-        } catch (FileAlreadyExistsException e) {
-            if (!Files.isDirectory(targetPath)) {
-                delete(targetPath);
-                try {
-                    Files.createDirectories(targetPath);
-                } catch (IOException e1) {
-                    throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("folderCreationFailed"));
-                }
-            }
         } catch (IOException e) {
             throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("folderCreationFailed"));
         }
     }
 
     public String upload(MultipartFile file, String path) {
-        Path targetPath = resolveSafePath(path);
-        delete(targetPath);
         try (HashingInputStream in = new HashingInputStream(file.getInputStream())) {
-            Files.copy(in, targetPath);
+            Files.copy(in, resolveSafePath(path));
             return in.getHashString();
         } catch (IOException | NoSuchAlgorithmException e) {
             throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
@@ -138,12 +127,8 @@ public class FileUtil {
     public void move(String original, String target) {
         Path originalPath = validatePath(original);
         Path targetPath = resolveSafePath(target);
-        delete(targetPath);
         try {
-            Path targetParentPath = targetPath.getParent();
-            if (targetParentPath != null) {
-                Files.createDirectories(targetParentPath);
-            }
+            Files.createDirectories(targetPath.getParent());
             Files.move(originalPath, targetPath, StandardCopyOption.ATOMIC_MOVE);
         } catch (IOException e) {
             throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileMoveFailed"));
@@ -172,7 +157,7 @@ public class FileUtil {
         }
     }
 
-    public void delete(Path path) {
+    private void delete(Path path) {
         if (!Files.exists(path)) {
             return;
         }
