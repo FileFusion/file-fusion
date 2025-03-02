@@ -136,10 +136,7 @@ public class FileUtil {
     }
 
     public void move(String original, String target) {
-        Path originalPath = resolveSafePath(original);
-        if (!Files.exists(originalPath)) {
-            throw new HttpException(I18n.get("fileNotExist"));
-        }
+        Path originalPath = validatePath(original);
         Path targetPath = resolveSafePath(target);
         delete(targetPath);
         try {
@@ -198,7 +195,7 @@ public class FileUtil {
                     return FileVisitResult.CONTINUE;
                 }
             });
-        } catch (IOException e) {
+        } catch (Exception e) {
             success.set(false);
         }
         if (!success.get()) {
