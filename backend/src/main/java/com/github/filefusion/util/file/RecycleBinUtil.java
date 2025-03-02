@@ -63,7 +63,7 @@ public final class RecycleBinUtil {
                 childFileList.forEach(childFile -> {
                     childFile.setDeleted(true);
                     childFile.setDeletedDate(deletedDate);
-                    String childFileRelativePath = childFile.getPath().substring(file.getPath().length() + 1, childFile.getPath().length() - 1);
+                    String childFileRelativePath = childFile.getPath().substring(file.getPath().length() + 1);
                     Path childFileRecyclePath = Paths.get(file.getRecyclePath(), childFileRelativePath);
                     childFile.setRecyclePath(childFileRecyclePath.toString());
                     allFileList.add(childFile);
