@@ -1,7 +1,8 @@
-package com.github.filefusion.util;
+package com.github.filefusion.util.file;
 
 import com.github.filefusion.common.HttpException;
 import com.github.filefusion.constant.FileAttribute;
+import com.github.filefusion.util.I18n;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;

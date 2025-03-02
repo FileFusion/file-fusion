@@ -1,5 +1,6 @@
-package com.github.filefusion.util;
+package com.github.filefusion.util.file;
 
+import com.github.filefusion.util.EncryptUtil;
 import jakarta.annotation.Nonnull;
 
 import java.io.IOException;

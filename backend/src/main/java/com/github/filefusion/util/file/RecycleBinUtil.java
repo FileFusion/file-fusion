@@ -1,4 +1,4 @@
-package com.github.filefusion.util;
+package com.github.filefusion.util.file;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

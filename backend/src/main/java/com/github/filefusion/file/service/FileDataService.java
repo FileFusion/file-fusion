@@ -8,6 +8,8 @@ import com.github.filefusion.file.model.FileHashUsageCount;
 import com.github.filefusion.file.model.SubmitDownloadFilesResponse;
 import com.github.filefusion.file.repository.FileDataRepository;
 import com.github.filefusion.util.*;
+import com.github.filefusion.util.file.FileUtil;
+import com.github.filefusion.util.file.ThumbnailUtil;
 import org.redisson.api.RList;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;

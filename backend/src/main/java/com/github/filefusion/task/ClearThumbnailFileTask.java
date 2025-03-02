@@ -4,7 +4,7 @@ import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.constant.RedisAttribute;
 import com.github.filefusion.file.service.FileDataService;
 import com.github.filefusion.util.DistributedLock;
-import com.github.filefusion.util.ThumbnailUtil;
+import com.github.filefusion.util.file.ThumbnailUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
