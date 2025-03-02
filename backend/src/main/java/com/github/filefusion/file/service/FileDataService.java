@@ -141,13 +141,13 @@ public class FileDataService {
     }
 
     private void batchRecycle(List<String> pathList) {
-        List<FileData> parentList = fileDataRepository.findAllByPathIn(pathList);
+        List<FileData> parentList = fileDataRepository.findAllByPathInAndDeletedFalse(pathList);
         if (parentList.isEmpty()) {
             return;
         }
         Map<String, List<FileData>> childMap = pathList.stream().collect(Collectors.toMap(
                 path -> path,
-                path -> fileDataRepository.findAllByPathLike(path + FileAttribute.SEPARATOR + "%")
+                path -> fileDataRepository.findAllByPathLikeAndDeletedFalse(path + FileAttribute.SEPARATOR + "%")
         ));
         List<String> allPathList = Stream.concat(
                 parentList.stream().map(FileData::getPath),
@@ -182,10 +182,10 @@ public class FileDataService {
         List<Path> hierarchyPathList = getHierarchyPathList(path);
         List<String> sortedPathList = hierarchyPathList.stream().map(Path::toString).toList();
         distributedLock.tryMultiLock(RedisAttribute.LockType.file, sortedPathList, () -> {
-            if (!allowExists && fileDataRepository.existsByPath(path)) {
+            if (!allowExists && fileDataRepository.existsByPathAndDeletedFalse(path)) {
                 throw new HttpException(I18n.get("fileExits", dismissUserPath(path)));
             }
-            List<FileData> existsFileList = fileDataRepository.findAllByPathIn(sortedPathList);
+            List<FileData> existsFileList = fileDataRepository.findAllByPathInAndDeletedFalse(sortedPathList);
             existsFileList.forEach(file -> {
                 if (!FileAttribute.Type.FOLDER.equals(file.getType())) {
                     throw new HttpException(I18n.get("fileExits", dismissUserPath(file.getPath())));
@@ -222,7 +222,7 @@ public class FileDataService {
 
         String filePath = path + FileAttribute.SEPARATOR + name;
         distributedLock.tryLock(RedisAttribute.LockType.file, filePath, () -> {
-            if (fileDataRepository.existsByPath(filePath)) {
+            if (fileDataRepository.existsByPathAndDeletedFalse(filePath)) {
                 throw new HttpException(I18n.get("fileExits", dismissUserPath(filePath)));
             }
             FileData file = new FileData();
@@ -245,7 +245,7 @@ public class FileDataService {
             throw new HttpException(I18n.get("renameFileSelectCheck"));
         }
         String originalPath = path + FileAttribute.SEPARATOR + originalName;
-        FileData originalFile = fileDataRepository.findFirstByPath(originalPath);
+        FileData originalFile = fileDataRepository.findFirstByPathAndDeletedFalse(originalPath);
         if (originalFile == null) {
             throw new HttpException(I18n.get("fileNotExist"));
         }
@@ -258,12 +258,12 @@ public class FileDataService {
         String originalPathFolder = originalPath + FileAttribute.SEPARATOR;
         String targetPathFolder = targetPath + FileAttribute.SEPARATOR;
 
-        List<FileData> originalFileList = fileDataRepository.findAllByPathLike(originalPathFolder + "%");
+        List<FileData> originalFileList = fileDataRepository.findAllByPathLikeAndDeletedFalse(originalPathFolder + "%");
         List<String> allPathList = originalFileList.stream().map(FileData::getPath).collect(Collectors.toList());
         allPathList.add(originalPath);
         allPathList.add(targetPath);
         distributedLock.tryMultiLock(RedisAttribute.LockType.file, allPathList, () -> {
-            if (fileDataRepository.existsByPath(targetPath)) {
+            if (fileDataRepository.existsByPathAndDeletedFalse(targetPath)) {
                 throw new HttpException(I18n.get("fileNameAlreadyExists"));
             }
             originalFile.setPath(targetPath);

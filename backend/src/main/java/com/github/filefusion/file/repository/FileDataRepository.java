@@ -44,12 +44,12 @@ public interface FileDataRepository extends JpaRepository<FileData, String> {
     List<FileData> findAllByPathOrPathLike(String path, String pathLike);
 
     /**
-     * findAllByPathLike
+     * findAllByPathLikeAndDeletedFalse
      *
      * @param pathLike path like
      * @return file list
      */
-    List<FileData> findAllByPathLike(String pathLike);
+    List<FileData> findAllByPathLikeAndDeletedFalse(String pathLike);
 
     /**
      * deleteAllByPathIn
@@ -59,20 +59,20 @@ public interface FileDataRepository extends JpaRepository<FileData, String> {
     void deleteAllByPathIn(Collection<String> pathList);
 
     /**
-     * existsByPath
+     * existsByPathAndDeletedFalse
      *
      * @param path path
      * @return exists
      */
-    Boolean existsByPath(String path);
+    Boolean existsByPathAndDeletedFalse(String path);
 
     /**
-     * findAllByPathIn
+     * findAllByPathInAndDeletedFalse
      *
      * @param pathList path list
      * @return file list
      */
-    List<FileData> findAllByPathIn(List<String> pathList);
+    List<FileData> findAllByPathInAndDeletedFalse(List<String> pathList);
 
     /**
      * findFirstByPath
@@ -81,6 +81,14 @@ public interface FileDataRepository extends JpaRepository<FileData, String> {
      * @return file
      */
     FileData findFirstByPath(String path);
+
+    /**
+     * findFirstByPathAndDeletedFalse
+     *
+     * @param path path
+     * @return file
+     */
+    FileData findFirstByPathAndDeletedFalse(String path);
 
     /**
      * countByHashValueList
