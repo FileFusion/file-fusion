@@ -69,7 +69,7 @@ public final class ThumbnailUtil {
     }
 
     public Path generateThumbnail(String path, String mimeType, String hash) {
-        Path thumbnailFilePath = baseDir.resolve(hash + FileAttribute.THUMBNAIL_FILE_TYPE).normalize();
+        Path thumbnailFilePath = baseDir.resolve(hash + FileAttribute.THUMBNAIL_FILE_TYPE);
         if (Files.isRegularFile(thumbnailFilePath)) {
             return thumbnailFilePath;
         }
@@ -95,7 +95,7 @@ public final class ThumbnailUtil {
             return;
         }
         List<Path> pathList = hashList.stream()
-                .map(hash -> baseDir.resolve(hash + FileAttribute.THUMBNAIL_FILE_TYPE).normalize())
+                .map(hash -> baseDir.resolve(hash + FileAttribute.THUMBNAIL_FILE_TYPE))
                 .toList();
         fileUtil.delete(pathList);
     }
