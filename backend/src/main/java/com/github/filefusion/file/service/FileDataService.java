@@ -90,6 +90,7 @@ public class FileDataService {
     }
 
     public String formatUserPath(String userId, String path) {
+        fileUtil.createUserFolder(userId);
         if (!StringUtils.hasLength(path)) {
             path = userId;
         } else {
@@ -238,7 +239,7 @@ public class FileDataService {
             file.setName(name);
             file.setType(FileAttribute.Type.FILE);
             file.setMimeType(type);
-            file.setSize(file.getSize());
+            file.setSize(multipartFile.getSize());
             file.setEncrypted(false);
             file.setFileLastModifiedDate(lastModifiedDate);
             file.setDeleted(false);

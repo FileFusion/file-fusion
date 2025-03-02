@@ -106,6 +106,15 @@ public class FileUtil {
         return targetPath;
     }
 
+    public void createUserFolder(String userId) {
+        Path userPath = baseDir.resolve(userId);
+        try {
+            Files.createDirectories(userPath);
+        } catch (IOException e) {
+            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("folderCreationFailed"));
+        }
+    }
+
     public void createFolder(String path) {
         Path targetPath = resolveSafePath(path);
         try {
