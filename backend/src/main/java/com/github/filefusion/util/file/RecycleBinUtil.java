@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,7 +16,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -44,16 +47,30 @@ public final class RecycleBinUtil {
         }
     }
 
-    public void setRecycleInfo(List<FileData> recycleFileList) {
+    public List<FileData> setRecycleInfo(List<FileData> fileList, Map<String, List<FileData>> childFileMap) {
         LocalDateTime deletedDate = LocalDateTime.now();
         String recycleId = ULID.randomULID();
-        recycleFileList.forEach(fileData -> {
-            fileData.setDeleted(true);
-            fileData.setDeletedDate(deletedDate);
-            Path filePath = Paths.get(fileData.getPath()).normalize();
-            fileData.setRecyclePath(Paths.get(filePath.getName(0).toString(),
-                    recycleId, filePath.getFileName().toString()).toString());
+        List<FileData> allFileList = new ArrayList<>();
+        fileList.forEach(file -> {
+            file.setDeleted(true);
+            file.setDeletedDate(deletedDate);
+            Path filePath = Paths.get(file.getPath());
+            Path fileRecyclePath = Paths.get(filePath.getName(0).toString(), recycleId, filePath.getFileName().toString());
+            file.setRecyclePath(fileRecyclePath.toString());
+            allFileList.add(file);
+            List<FileData> childFileList = childFileMap.get(file.getPath());
+            if (!CollectionUtils.isEmpty(childFileList)) {
+                childFileList.forEach(childFile -> {
+                    childFile.setDeleted(true);
+                    childFile.setDeletedDate(deletedDate);
+                    String childFileRelativePath = childFile.getPath().substring(file.getPath().length() + 1, childFile.getPath().length() - 1);
+                    Path childFileRecyclePath = Paths.get(file.getRecyclePath(), childFileRelativePath);
+                    childFile.setRecyclePath(childFileRecyclePath.toString());
+                    allFileList.add(childFile);
+                });
+            }
         });
+        return allFileList;
     }
 
     public void recycle(List<FileData> recycleFileList) {
@@ -61,7 +78,7 @@ public final class RecycleBinUtil {
         recycleFileList.forEach(fileData -> {
             try {
                 Path originalPath = fileUtil.validatePath(fileData.getPath());
-                Path targetPath = baseDir.resolve(fileData.getRecyclePath()).normalize();
+                Path targetPath = baseDir.resolve(fileData.getRecyclePath());
                 fileUtil.delete(targetPath);
                 Path targetParentDir = targetPath.getParent();
                 if (targetParentDir != null) {

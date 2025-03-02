@@ -40,6 +40,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * FileDataService
@@ -136,15 +137,19 @@ public class FileDataService {
 
     private void batchRecycle(List<String> pathList) {
         List<FileData> allFileList = fileDataRepository.findAllByPathIn(pathList);
-        Map<String, FileData> allFileMap = pathList.stream()
-                .flatMap(path -> fileDataRepository.findAllByPathOrPathLike(path, path + FileAttribute.SEPARATOR + "%").stream())
-                .collect(Collectors.toMap(FileData::getPath, Function.identity(), (existing, replacement) -> existing));
-        if (allFileMap.isEmpty()) {
+        if (allFileList.isEmpty()) {
             return;
         }
-        distributedLock.tryMultiLock(RedisAttribute.LockType.file, allFileMap.keySet(), () -> {
-            recycleBinUtil.setRecycleInfo(allFileList);
-            fileDataRepository.saveAll(allFileList);
+        Map<String, List<FileData>> allChildFileMap = pathList.stream().collect(Collectors.toMap(
+                path -> path,
+                path -> fileDataRepository.findAllByPathLike(path + FileAttribute.SEPARATOR + "%")
+        ));
+        List<String> allFilePathList = Stream.concat(
+                allFileList.stream().map(FileData::getPath),
+                allChildFileMap.values().stream().flatMap(Collection::stream).map(FileData::getPath)
+        ).toList();
+        distributedLock.tryMultiLock(RedisAttribute.LockType.file, allFilePathList, () -> {
+            fileDataRepository.saveAll(recycleBinUtil.setRecycleInfo(allFileList, allChildFileMap));
             recycleBinUtil.recycle(allFileList);
         }, fileLockTimeout);
     }
