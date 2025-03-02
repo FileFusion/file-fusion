@@ -155,27 +155,26 @@ public class FileDataService {
     }
 
     private void batchDelete(List<String> pathList) {
-        Map<String, FileData> allFileMap = pathList.stream()
+        Map<String, FileData> allMap = pathList.stream()
                 .flatMap(path -> fileDataRepository.findAllByPathOrPathLike(path, path + FileAttribute.SEPARATOR + "%").stream())
                 .collect(Collectors.toMap(FileData::getPath, Function.identity(), (existing, replacement) -> existing));
-        if (allFileMap.isEmpty()) {
+        if (allMap.isEmpty()) {
             return;
         }
-        Set<String> allPathList = allFileMap.keySet();
-        Set<String> allHashList = allFileMap.values().stream().map(FileData::getHashValue)
+        Set<String> allPathList = allMap.keySet();
+        Set<String> allHashList = allMap.values().stream().map(FileData::getHashValue)
                 .filter(StringUtils::hasLength).collect(Collectors.toSet());
         distributedLock.tryMultiLock(RedisAttribute.LockType.file, allPathList, () -> {
             fileDataRepository.deleteAllByPathIn(allPathList);
             fileUtil.deleteSafe(allPathList);
-
-            if (allHashList.isEmpty()) {
-                return;
-            }
             clearThumbnailFile(allHashList);
         }, fileLockTimeout);
     }
 
     public void clearThumbnailFile(Collection<String> needClearHashList) {
+        if (CollectionUtils.isEmpty(needClearHashList)) {
+            return;
+        }
         Map<String, FileHashUsageCount> hashUsageCountMap = fileDataRepository.countByHashValueList(needClearHashList)
                 .stream().collect(Collectors.toMap(FileHashUsageCount::getHashValue, Function.identity()));
         List<String> thumbnailImageMimeType = thumbnailUtil.getThumbnailImageMimeType();

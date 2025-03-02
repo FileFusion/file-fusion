@@ -47,30 +47,30 @@ public final class RecycleBinUtil {
         }
     }
 
-    public List<FileData> setRecycleInfo(List<FileData> fileList, Map<String, List<FileData>> childFileMap) {
+    public List<FileData> setRecycleInfo(List<FileData> parentList, Map<String, List<FileData>> childMap) {
         LocalDateTime deletedDate = LocalDateTime.now();
         String recycleId = ULID.randomULID();
-        List<FileData> allFileList = new ArrayList<>();
-        fileList.forEach(file -> {
+        List<FileData> allList = new ArrayList<>();
+        parentList.forEach(file -> {
             file.setDeleted(true);
             file.setDeletedDate(deletedDate);
             Path filePath = Paths.get(file.getPath());
             Path fileRecyclePath = Paths.get(filePath.getName(0).toString(), recycleId, filePath.getFileName().toString());
             file.setRecyclePath(fileRecyclePath.toString());
-            allFileList.add(file);
-            List<FileData> childFileList = childFileMap.get(file.getPath());
-            if (!CollectionUtils.isEmpty(childFileList)) {
-                childFileList.forEach(childFile -> {
+            allList.add(file);
+            List<FileData> childList = childMap.get(file.getPath());
+            if (!CollectionUtils.isEmpty(childList)) {
+                childList.forEach(childFile -> {
                     childFile.setDeleted(true);
                     childFile.setDeletedDate(deletedDate);
-                    String childFileRelativePath = childFile.getPath().substring(file.getPath().length() + 1);
-                    Path childFileRecyclePath = Paths.get(file.getRecyclePath(), childFileRelativePath);
+                    Path childFileRecyclePath = Paths.get(file.getRecyclePath(),
+                            childFile.getPath().substring(file.getPath().length() + 1));
                     childFile.setRecyclePath(childFileRecyclePath.toString());
-                    allFileList.add(childFile);
+                    allList.add(childFile);
                 });
             }
         });
-        return allFileList;
+        return allList;
     }
 
     public void recycle(List<FileData> recycleFileList) {
@@ -86,7 +86,7 @@ public final class RecycleBinUtil {
             }
         });
         if (!success.get()) {
-            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileMoveFailed"));
+            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileRecycleFailed"));
         }
     }
 

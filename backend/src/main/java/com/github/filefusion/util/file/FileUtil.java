@@ -127,9 +127,9 @@ public class FileUtil {
     public String upload(MultipartFile file, String path) {
         Path targetPath = resolveSafePath(path);
         delete(targetPath);
-        try (HashingInputStream hashingInputStream = new HashingInputStream(file.getInputStream())) {
-            Files.copy(hashingInputStream, targetPath);
-            return hashingInputStream.getHashString();
+        try (HashingInputStream in = new HashingInputStream(file.getInputStream())) {
+            Files.copy(in, targetPath);
+            return in.getHashString();
         } catch (IOException | NoSuchAlgorithmException e) {
             throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
         }
@@ -140,9 +140,9 @@ public class FileUtil {
         Path targetPath = resolveSafePath(target);
         delete(targetPath);
         try {
-            Path targetParentDir = targetPath.getParent();
-            if (targetParentDir != null) {
-                Files.createDirectories(targetParentDir);
+            Path targetParentPath = targetPath.getParent();
+            if (targetParentPath != null) {
+                Files.createDirectories(targetParentPath);
             }
             Files.move(originalPath, targetPath, StandardCopyOption.ATOMIC_MOVE);
         } catch (IOException e) {
@@ -159,15 +159,15 @@ public class FileUtil {
     }
 
     private <T> void deleteAll(Collection<T> items, Function<T, Path> pathResolver) {
-        boolean success = true;
-        for (T item : items) {
+        AtomicBoolean success = new AtomicBoolean(true);
+        items.forEach(item -> {
             try {
                 delete(pathResolver.apply(item));
             } catch (Exception e) {
-                success = false;
+                success.set(false);
             }
-        }
-        if (!success) {
+        });
+        if (!success.get()) {
             throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileDeletionFailed"));
         }
     }
@@ -216,16 +216,16 @@ public class FileUtil {
     }
 
     public ResponseEntity<StreamingResponseBody> download(Path path, long start, long end) {
-        long fileSize;
+        long size;
         try {
-            fileSize = Files.size(path);
+            size = Files.size(path);
         } catch (IOException e) {
             throw new HttpException(I18n.get("getFileSizeFailed"));
         }
-        long endReal = end == -1 ? fileSize - 1 : end;
+        long endReal = end == -1 ? size - 1 : end;
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.ACCEPT_RANGES, "bytes");
-        headers.add(HttpHeaders.CONTENT_RANGE, String.format("bytes %d-%d/%d", start, endReal, fileSize));
+        headers.add(HttpHeaders.CONTENT_RANGE, String.format("bytes %d-%d/%d", start, endReal, size));
         headers.add(HttpHeaders.CONTENT_LENGTH, String.valueOf(endReal - start + 1));
         return download(path.getFileName().toString(),
                 getFileMediaType(path),
@@ -256,17 +256,17 @@ public class FileUtil {
 
     private ResponseEntity<StreamingResponseBody> download(String filename,
                                                            MediaType mediaType,
-                                                           HttpStatus httpStatus,
-                                                           StreamingResponseBody streamingResponseBody,
-                                                           HttpHeaders httpHeaders) {
+                                                           HttpStatus status,
+                                                           StreamingResponseBody body,
+                                                           HttpHeaders headers) {
         String contentDisposition = ContentDisposition.attachment()
                 .filename(filename, StandardCharsets.UTF_8)
                 .build().toString();
-        return ResponseEntity.status(httpStatus)
+        return ResponseEntity.status(status)
                 .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
-                .headers(httpHeaders)
+                .headers(headers)
                 .contentType(mediaType)
-                .body(streamingResponseBody);
+                .body(body);
     }
 
 }
