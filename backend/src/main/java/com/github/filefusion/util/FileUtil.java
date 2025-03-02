@@ -40,6 +40,13 @@ public class FileUtil {
     @Autowired
     public FileUtil(@Value("${file.dir}") String fileDir) {
         this.baseDir = Paths.get(fileDir).normalize().toAbsolutePath();
+        if (!Files.exists(this.baseDir)) {
+            try {
+                Files.createDirectories(this.baseDir);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     private void addToZip(ZipOutputStream zos, Path path, String parent) throws IOException {

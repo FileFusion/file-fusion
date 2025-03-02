@@ -43,6 +43,8 @@ file:
   lock-timeout: ${FF_FILE_LOCK_TIMEOUT:60s}
   download-link-timeout: ${FF_FILE_DOWNLOAD_LINK_TIMEOUT:60s}
   dir: ${FF_FILE_DIR:/opt/file_fusion/data/file}
+recycle-bin:
+  dir: ${FF_RECYCLE_BIN_DIR:/opt/file_fusion/data/recycle_bin}
 thumbnail:
   generate-timeout: ${FF_THUMBNAIL_GENERATE_TIMEOUT:60s}
   dir: ${FF_THUMBNAIL_DIR:/opt/file_fusion/data/thumbnail}
