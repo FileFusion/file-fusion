@@ -89,6 +89,10 @@ public class FileDataService {
                 .toList();
     }
 
+    private String dismissUserPath(String path) {
+        return path.substring(path.indexOf(FileAttribute.SEPARATOR) + 1);
+    }
+
     public String formatUserPath(String userId, String path) {
         fileUtil.createUserFolder(userId);
         if (!StringUtils.hasLength(path)) {
@@ -179,12 +183,12 @@ public class FileDataService {
         List<String> sortedPathList = hierarchyPathList.stream().map(Path::toString).toList();
         distributedLock.tryMultiLock(RedisAttribute.LockType.file, sortedPathList, () -> {
             if (!allowExists && fileDataRepository.existsByPath(path)) {
-                throw new HttpException(I18n.get("fileExits", path));
+                throw new HttpException(I18n.get("fileExits", dismissUserPath(path)));
             }
             List<FileData> existsFileList = fileDataRepository.findAllByPathIn(sortedPathList);
             existsFileList.forEach(file -> {
                 if (!FileAttribute.Type.FOLDER.equals(file.getType())) {
-                    throw new HttpException(I18n.get("fileExits", file.getPath()));
+                    throw new HttpException(I18n.get("fileExits", dismissUserPath(file.getPath())));
                 }
             });
             Map<String, FileData> existsFileMap = existsFileList.stream().collect(Collectors.toMap(FileData::getPath, fileData -> fileData));
@@ -218,10 +222,10 @@ public class FileDataService {
 
         String filePath = path + FileAttribute.SEPARATOR + name;
         distributedLock.tryLock(RedisAttribute.LockType.file, filePath, () -> {
-            FileData file = fileDataRepository.findFirstByPath(filePath);
-            if (file == null) {
-                file = new FileData();
+            if (fileDataRepository.existsByPath(filePath)) {
+                throw new HttpException(I18n.get("fileExits", dismissUserPath(filePath)));
             }
+            FileData file = new FileData();
             file.setPath(filePath);
             file.setName(name);
             file.setType(FileAttribute.Type.FILE);
