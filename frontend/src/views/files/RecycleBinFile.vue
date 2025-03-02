@@ -207,7 +207,7 @@ const route = useRoute();
 const mStore = mainStore();
 
 const permission = ref({
-  personalFileDownload: hasPermission('personal_file:download'),
+  personalFilePreview: hasPermission('personal_file:preview'),
   personalFileDelete: hasPermission('personal_file:delete')
 });
 
@@ -481,7 +481,7 @@ const {
   (page, pageSize) => {
     const sorter = getFileTableSorter.value;
     return http.Get<any>(
-      '/file_data/' +
+      '/file_data/recycle_bin/' +
         page +
         '/' +
         pageSize +
@@ -598,8 +598,8 @@ function clickFile(file: any) {
     });
     return;
   }
-  if (!permission.value.personalFileDownload) {
-    window.$msg.warning(t('files.personal.noPermissionDownloadFile'));
+  if (!permission.value.personalFilePreview) {
+    window.$msg.warning(t('files.personal.noPermissionPreviewFile'));
     return;
   }
   if (supportVideoPreview(file.mimeType)) {

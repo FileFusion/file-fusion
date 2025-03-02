@@ -56,6 +56,34 @@ public class FileDataController {
                               @RequestParam(required = false) String name,
                               @RequestParam(required = false) String sorter,
                               @RequestParam(required = false) SorterOrder sorterOrder) {
+        return get(page, pageSize, path, name, sorter, sorterOrder, false);
+    }
+
+    /**
+     * get recycle bin file list - paged
+     *
+     * @param page        page
+     * @param pageSize    page size
+     * @param path        path
+     * @param name        name
+     * @param sorter      sorter
+     * @param sorterOrder sorter order
+     * @return recycle bin file list
+     */
+    @GetMapping("/recycle_bin/{page}/{pageSize}")
+    @PreAuthorize("hasAuthority('recycle_bin_file:read')")
+    public Page<FileData> getRecycleBin(@PathVariable Integer page, @PathVariable Integer pageSize,
+                                        @RequestParam(required = false) String path,
+                                        @RequestParam(required = false) String name,
+                                        @RequestParam(required = false) String sorter,
+                                        @RequestParam(required = false) SorterOrder sorterOrder) {
+        return get(page, pageSize, path, name, sorter, sorterOrder, true);
+    }
+
+    private Page<FileData> get(Integer page, Integer pageSize,
+                               String path, String name,
+                               String sorter, SorterOrder sorterOrder,
+                               boolean deleted) {
         if (!StringUtils.hasLength(sorter)) {
             sorter = FileData.Fields.name;
         }
@@ -67,7 +95,7 @@ public class FileDataController {
         } else {
             path = CurrentUser.get().getId() + FileAttribute.SEPARATOR + path + FileAttribute.SEPARATOR;
         }
-        return fileDataService.get(PageRequest.of(page - 1, pageSize, sorterOrder.order(), sorter), path, false, name);
+        return fileDataService.get(PageRequest.of(page - 1, pageSize, sorterOrder.order(), sorter), path, deleted, name);
     }
 
     /**
