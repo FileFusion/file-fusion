@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -88,5 +89,13 @@ public interface FileDataRepository extends JpaRepository<FileData, String> {
      */
     @Query("SELECT new com.github.filefusion.file.model.FileHashUsageCount(f.hashValue, f.mimeType, COUNT(f.id)) FROM file_data f WHERE f.hashValue IN :hashList GROUP BY f.hashValue, f.mimeType")
     List<FileHashUsageCount> countByHashValueList(@Param("hashList") Collection<String> hashList);
+
+    /**
+     * findAllByDeletedTrueAndDeletedDateBefore
+     *
+     * @param deletedDate deleted date before
+     * @return file list
+     */
+    List<FileData> findAllByDeletedTrueAndDeletedDateBefore(LocalDateTime deletedDate);
 
 }

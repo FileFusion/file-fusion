@@ -97,7 +97,6 @@ public class RoleService {
         if (role.getSystemRole()) {
             throw new HttpException(I18n.get("systemRoleCannotDeleted"));
         }
-        // todo Other items that prevent deletion
         rolePermissionRepository.deleteAllByRoleId(roleId);
         userRoleRepository.deleteAllByRoleId(roleId);
         roleRepository.deleteById(roleId);
