@@ -41,7 +41,7 @@ public class GlobalErrorController implements ErrorController {
         }
         try {
             return HttpStatus.valueOf(statusCode);
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
             return HttpStatus.INTERNAL_SERVER_ERROR;
         }
     }
