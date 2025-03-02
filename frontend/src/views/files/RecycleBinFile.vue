@@ -165,8 +165,8 @@
         @update:page="fileTablePageChange"
         @update:page-size="fileTablePageSizeChange" />
     </n-card>
-    <video-view v-model="showVideoFile" :file="videoFile" />
-    <image-view
+    <video-preview v-model="showVideoFile" :file="videoFile" />
+    <image-preview
       v-model:show="showImageFile"
       v-model:path="imageFilePath"
       @preview-prev="imagePreviewPrevNext(true)"
@@ -188,12 +188,17 @@ import IconDown from '~icons/icon-park-outline/down';
 import IconDelete from '~icons/icon-park-outline/delete';
 import { useRequest, usePagination } from 'alova/client';
 import { hasPermission } from '@/commons/permission';
-import { formatFileSize, renderIconMethod } from '@/commons/utils';
+import {
+  formatFileSize,
+  renderIconMethod,
+  supportImagePreview,
+  supportVideoPreview
+} from '@/commons/utils';
 import { useRouter, useRoute } from 'vue-router';
 import { mainStore } from '@/store';
 import FileThumbnail from '@/views/files/components/FileThumbnail.vue';
-import VideoView from '@/views/files/components/VideoView.vue';
-import ImageView from '@/views/files/components/ImageView.vue';
+import VideoPreview from '@/views/files/components/VideoPreview.vue';
+import ImagePreview from '@/views/files/components/ImagePreview.vue';
 
 const { t } = useI18n();
 const http = window.$http;
@@ -580,13 +585,6 @@ function deleteFiles(filePathList: string[]) {
   doDeleteFile(filePathList);
 }
 
-const supportImagePreviewType = [
-  'image/gif',
-  'image/jpeg',
-  'image/png',
-  'image/svg+xml',
-  'image/webp'
-];
 function clickFile(file: any) {
   if (file.type === 'FOLDER') {
     let path = '';
@@ -604,10 +602,10 @@ function clickFile(file: any) {
     window.$msg.warning(t('files.personal.noPermissionDownloadFile'));
     return;
   }
-  if (file.mimeType === 'video/mp4') {
+  if (supportVideoPreview(file.mimeType)) {
     showVideoFile.value = true;
     videoFile.value = file;
-  } else if (supportImagePreviewType.includes(file.mimeType)) {
+  } else if (supportImagePreview(file.mimeType)) {
     showImageFile.value = true;
     imageFilePath.value = file.path;
   } else {
@@ -617,7 +615,7 @@ function clickFile(file: any) {
 
 const supportImagePreviewFile = computed(() => {
   return fileTableData.value.filter((file: any) =>
-    supportImagePreviewType.includes(file.mimeType)
+    supportImagePreview(file.mimeType)
   );
 });
 

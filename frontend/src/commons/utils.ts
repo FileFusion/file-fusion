@@ -87,6 +87,22 @@ function formatFileSize(bytes: number) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
+const supportImagePreviewType = [
+  'image/gif',
+  'image/jpeg',
+  'image/png',
+  'image/svg+xml',
+  'image/webp'
+];
+function supportImagePreview(mimeType: string) {
+  return supportImagePreviewType.includes(mimeType);
+}
+
+const supportVideoPreviewType = ['video/mp4'];
+function supportVideoPreview(mimeType: string) {
+  return supportVideoPreviewType.includes(mimeType);
+}
+
 export {
   arrayToTree,
   arrayToTreeCustom,
@@ -94,5 +110,7 @@ export {
   treeForeachCustom,
   renderIcon,
   renderIconMethod,
-  formatFileSize
+  formatFileSize,
+  supportImagePreview,
+  supportVideoPreview
 };
