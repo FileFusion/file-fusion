@@ -67,9 +67,9 @@ public class EncryptUtil {
     private static Cipher getCipher(int cipherMode) {
         try {
             Cipher cipher = Cipher.getInstance(AES_TRANSFORMATION);
-            SecretKeySpec secretKey = new SecretKeySpec(SECRET_KEY.getBytes(StandardCharsets.UTF_8), AES);
-            IvParameterSpec ivParameter = new IvParameterSpec(SECRET_IV.getBytes(StandardCharsets.UTF_8));
-            cipher.init(cipherMode, secretKey, ivParameter);
+            cipher.init(cipherMode,
+                    new SecretKeySpec(SECRET_KEY.getBytes(StandardCharsets.UTF_8), AES),
+                    new IvParameterSpec(SECRET_IV.getBytes(StandardCharsets.UTF_8)));
             return cipher;
         } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException
                  | NoSuchPaddingException | InvalidKeyException e) {

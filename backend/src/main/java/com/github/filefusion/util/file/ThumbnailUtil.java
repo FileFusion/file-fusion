@@ -69,25 +69,24 @@ public final class ThumbnailUtil {
     }
 
     public Path generateThumbnail(String path, String mimeType, String hash) {
-        Path thumbnailFilePath = baseDir.resolve(hash + FileAttribute.THUMBNAIL_FILE_TYPE);
-        if (Files.isRegularFile(thumbnailFilePath)) {
-            return thumbnailFilePath;
+        Path targetPath = baseDir.resolve(hash + FileAttribute.THUMBNAIL_FILE_TYPE);
+        if (Files.isRegularFile(targetPath)) {
+            return targetPath;
         }
-        fileUtil.delete(thumbnailFilePath);
-        Path sourceFilePath = fileUtil.validatePath(path);
+        Path originalPath = fileUtil.validatePath(path);
         String exec;
         if (thumbnailImageMimeType.contains(mimeType)) {
-            exec = GENERATE_IMAGE_THUMBNAIL_EXEC.formatted(sourceFilePath, thumbnailFilePath);
+            exec = GENERATE_IMAGE_THUMBNAIL_EXEC.formatted(originalPath, targetPath);
         } else if (thumbnailVideoMimeType.contains(mimeType)) {
-            exec = GENERATE_VIDEO_THUMBNAIL_EXEC.formatted(sourceFilePath, thumbnailFilePath);
+            exec = GENERATE_VIDEO_THUMBNAIL_EXEC.formatted(originalPath, targetPath);
         } else {
             throw new HttpException(I18n.get("fileNotSupportThumbnail"));
         }
         boolean execResult = ExecUtil.exec(Arrays.asList(exec.split(" ")), thumbnailGenerateTimeout);
-        if (!execResult || !Files.exists(thumbnailFilePath)) {
+        if (!execResult || !Files.exists(targetPath)) {
             throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("thumbnailGenerationFailed"));
         }
-        return thumbnailFilePath;
+        return targetPath;
     }
 
     public void deleteThumbnail(List<String> hashList) {

@@ -73,12 +73,12 @@ public final class RecycleBinUtil {
         return allList;
     }
 
-    public void recycle(List<FileData> recycleFileList) {
+    public void recycle(List<FileData> recycleList) {
         AtomicBoolean success = new AtomicBoolean(true);
-        recycleFileList.forEach(fileData -> {
+        recycleList.forEach(file -> {
             try {
-                Path originalPath = fileUtil.validatePath(fileData.getPath());
-                Path targetPath = baseDir.resolve(fileData.getRecyclePath());
+                Path originalPath = fileUtil.validatePath(file.getPath());
+                Path targetPath = baseDir.resolve(file.getRecyclePath());
                 Files.createDirectories(targetPath.getParent());
                 Files.move(originalPath, targetPath, StandardCopyOption.ATOMIC_MOVE);
             } catch (Exception e) {

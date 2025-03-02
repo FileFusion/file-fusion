@@ -127,8 +127,8 @@ public class FileDataService {
 
     @Transactional(rollbackFor = HttpException.class)
     public void batchRecycleOrDelete(List<String> pathList) {
-        SysConfig sysConfig = sysConfigService.get(SysConfigKey.RECYCLE_BIN);
-        if (Boolean.parseBoolean(sysConfig.getConfigValue())) {
+        SysConfig config = sysConfigService.get(SysConfigKey.RECYCLE_BIN);
+        if (Boolean.parseBoolean(config.getConfigValue())) {
             batchRecycle(pathList);
         } else {
             batchDelete(pathList);
@@ -198,52 +198,52 @@ public class FileDataService {
             if (!allowExists && fileDataRepository.existsByPath(path)) {
                 throw new HttpException(I18n.get("folderExits"));
             }
-            List<FileData> existsFileDataList = fileDataRepository.findAllByPathIn(sortedPathList);
-            Map<String, FileData> existsFileDataMap = existsFileDataList.stream().collect(Collectors.toMap(FileData::getPath, fileData -> fileData));
-            List<FileData> fileDataList = new ArrayList<>(hierarchyPathList.size());
+            List<FileData> existsFileList = fileDataRepository.findAllByPathIn(sortedPathList);
+            Map<String, FileData> existsFileMap = existsFileList.stream().collect(Collectors.toMap(FileData::getPath, fileData -> fileData));
+            List<FileData> fileList = new ArrayList<>(hierarchyPathList.size());
             for (Path hierarchyPath : hierarchyPathList) {
                 String folderPath = hierarchyPath.toString();
                 String folderName = hierarchyPath.getFileName().toString();
-                FileData fileData = existsFileDataMap.get(folderPath);
-                if (fileData == null) {
-                    fileData = new FileData();
+                FileData file = existsFileMap.get(folderPath);
+                if (file == null) {
+                    file = new FileData();
                 }
-                fileData.setPath(folderPath);
-                fileData.setName(folderName);
-                fileData.setType(FileAttribute.Type.FOLDER);
-                fileData.setMimeType(FileAttribute.MimeType.FOLDER.value().toString());
-                fileData.setSize(0L);
-                fileData.setEncrypted(false);
-                fileData.setHashValue(EncryptUtil.sha256(folderName));
-                fileData.setFileLastModifiedDate(lastModifiedDate);
-                fileData.setDeleted(false);
-                fileDataList.add(fileData);
+                file.setPath(folderPath);
+                file.setName(folderName);
+                file.setType(FileAttribute.Type.FOLDER);
+                file.setMimeType(FileAttribute.MimeType.FOLDER.value().toString());
+                file.setSize(0L);
+                file.setEncrypted(false);
+                file.setHashValue(EncryptUtil.sha256(folderName));
+                file.setFileLastModifiedDate(lastModifiedDate);
+                file.setDeleted(false);
+                fileList.add(file);
             }
             fileUtil.createFolder(path);
-            fileDataRepository.saveAll(fileDataList);
+            fileDataRepository.saveAll(fileList);
         }, fileLockTimeout);
     }
 
-    public void upload(MultipartFile file, String name,
+    public void upload(MultipartFile multipartFile, String name,
                        String path, String type, LocalDateTime lastModifiedDate) {
         createFolder(path, lastModifiedDate, true);
 
         String filePath = path + FileAttribute.SEPARATOR + name;
         distributedLock.tryLock(RedisAttribute.LockType.file, filePath, () -> {
-            FileData fileData = fileDataRepository.findFirstByPath(filePath);
-            if (fileData == null) {
-                fileData = new FileData();
+            FileData file = fileDataRepository.findFirstByPath(filePath);
+            if (file == null) {
+                file = new FileData();
             }
-            fileData.setPath(filePath);
-            fileData.setName(name);
-            fileData.setType(FileAttribute.Type.FILE);
-            fileData.setMimeType(type);
-            fileData.setSize(file.getSize());
-            fileData.setEncrypted(false);
-            fileData.setFileLastModifiedDate(lastModifiedDate);
-            fileData.setDeleted(false);
-            fileData.setHashValue(fileUtil.upload(file, filePath));
-            fileDataRepository.save(fileData);
+            file.setPath(filePath);
+            file.setName(name);
+            file.setType(FileAttribute.Type.FILE);
+            file.setMimeType(type);
+            file.setSize(file.getSize());
+            file.setEncrypted(false);
+            file.setFileLastModifiedDate(lastModifiedDate);
+            file.setDeleted(false);
+            file.setHashValue(fileUtil.upload(multipartFile, filePath));
+            fileDataRepository.save(file);
         }, fileLockTimeout);
     }
 
@@ -276,10 +276,10 @@ public class FileDataService {
         distributedLock.tryMultiLock(RedisAttribute.LockType.file, allPathList, () -> {
             originalFile.setPath(targetPath);
             originalFile.setName(targetName);
-            for (FileData fileData : originalFileList) {
-                String filePath = fileData.getPath();
+            for (FileData file : originalFileList) {
+                String filePath = file.getPath();
                 filePath = filePath.substring(originalPathFolder.length(), filePath.length() - 1);
-                fileData.setPath(targetPathFolder + filePath);
+                file.setPath(targetPathFolder + filePath);
             }
             originalFileList.add(originalFile);
 
@@ -325,12 +325,12 @@ public class FileDataService {
     }
 
     public ResponseEntity<StreamingResponseBody> thumbnailFile(String path) {
-        FileData fileData = fileDataRepository.findFirstByPath(path);
-        if (fileData == null) {
+        FileData file = fileDataRepository.findFirstByPath(path);
+        if (file == null) {
             throw new HttpException(I18n.get("fileNotExist"));
         }
-        String mimeType = fileData.getMimeType();
-        String fileHash = fileData.getHashValue();
+        String mimeType = file.getMimeType();
+        String fileHash = file.getHashValue();
         if (!StringUtils.hasLength(fileHash) || !thumbnailUtil.hasThumbnail(mimeType)) {
             throw new HttpException(I18n.get("fileNotSupportThumbnail"));
         }
