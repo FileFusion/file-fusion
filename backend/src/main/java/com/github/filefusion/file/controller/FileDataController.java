@@ -79,7 +79,7 @@ public class FileDataController {
     @PreAuthorize("hasAuthority('personal_file:delete')")
     public void batchDelete(@RequestBody List<String> pathList) {
         fileDataService.verifyUserAuthorize(CurrentUser.get().getId(), pathList.toArray(new String[0]));
-        fileDataService.batchDelete(pathList);
+        fileDataService.batchRecycleOrDelete(pathList);
     }
 
     /**

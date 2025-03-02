@@ -140,6 +140,10 @@ public class FileUtil {
         Path targetPath = resolveSafePath(target);
         delete(targetPath);
         try {
+            Path targetParentDir = targetPath.getParent();
+            if (targetParentDir != null) {
+                Files.createDirectories(targetParentDir);
+            }
             Files.move(originalPath, targetPath, StandardCopyOption.ATOMIC_MOVE);
         } catch (IOException e) {
             throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileMoveFailed"));

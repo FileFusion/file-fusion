@@ -3,12 +3,19 @@ package com.github.filefusion.file.service;
 import com.github.filefusion.common.HttpException;
 import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.constant.RedisAttribute;
+import com.github.filefusion.constant.SysConfigKey;
 import com.github.filefusion.file.entity.FileData;
 import com.github.filefusion.file.model.FileHashUsageCount;
 import com.github.filefusion.file.model.SubmitDownloadFilesResponse;
 import com.github.filefusion.file.repository.FileDataRepository;
-import com.github.filefusion.util.*;
+import com.github.filefusion.sys_config.entity.SysConfig;
+import com.github.filefusion.sys_config.service.SysConfigService;
+import com.github.filefusion.util.DistributedLock;
+import com.github.filefusion.util.EncryptUtil;
+import com.github.filefusion.util.I18n;
+import com.github.filefusion.util.ULID;
 import com.github.filefusion.util.file.FileUtil;
+import com.github.filefusion.util.file.RecycleBinUtil;
 import com.github.filefusion.util.file.ThumbnailUtil;
 import org.redisson.api.RList;
 import org.redisson.api.RedissonClient;
@@ -48,7 +55,9 @@ public class FileDataService {
     private final RedissonClient redissonClient;
     private final FileDataRepository fileDataRepository;
     private final DistributedLock distributedLock;
+    private final SysConfigService sysConfigService;
     private final FileUtil fileUtil;
+    private final RecycleBinUtil recycleBinUtil;
     private final ThumbnailUtil thumbnailUtil;
 
     @Autowired
@@ -57,14 +66,18 @@ public class FileDataService {
                            RedissonClient redissonClient,
                            FileDataRepository fileDataRepository,
                            DistributedLock distributedLock,
+                           SysConfigService sysConfigService,
                            FileUtil fileUtil,
+                           RecycleBinUtil recycleBinUtil,
                            ThumbnailUtil thumbnailUtil) {
         this.fileLockTimeout = fileLockTimeout;
         this.fileDownloadLinkTimeout = fileDownloadLinkTimeout;
         this.redissonClient = redissonClient;
         this.fileDataRepository = fileDataRepository;
         this.distributedLock = distributedLock;
+        this.sysConfigService = sysConfigService;
         this.fileUtil = fileUtil;
+        this.recycleBinUtil = recycleBinUtil;
         this.thumbnailUtil = thumbnailUtil;
     }
 
@@ -112,7 +125,31 @@ public class FileDataService {
     }
 
     @Transactional(rollbackFor = HttpException.class)
-    public void batchDelete(List<String> pathList) {
+    public void batchRecycleOrDelete(List<String> pathList) {
+        SysConfig sysConfig = sysConfigService.get(SysConfigKey.RECYCLE_BIN);
+        if (Boolean.parseBoolean(sysConfig.getConfigValue())) {
+            batchRecycle(pathList);
+        } else {
+            batchDelete(pathList);
+        }
+    }
+
+    private void batchRecycle(List<String> pathList) {
+        List<FileData> allFileList = fileDataRepository.findAllByPathIn(pathList);
+        Map<String, FileData> allFileMap = pathList.stream()
+                .flatMap(path -> fileDataRepository.findAllByPathOrPathLike(path, path + FileAttribute.SEPARATOR + "%").stream())
+                .collect(Collectors.toMap(FileData::getPath, Function.identity(), (existing, replacement) -> existing));
+        if (allFileMap.isEmpty()) {
+            return;
+        }
+        distributedLock.tryMultiLock(RedisAttribute.LockType.file, allFileMap.keySet(), () -> {
+            recycleBinUtil.setRecycleInfo(allFileList);
+            fileDataRepository.saveAll(allFileList);
+            recycleBinUtil.recycle(allFileList);
+        }, fileLockTimeout);
+    }
+
+    private void batchDelete(List<String> pathList) {
         Map<String, FileData> allFileMap = pathList.stream()
                 .flatMap(path -> fileDataRepository.findAllByPathOrPathLike(path, path + FileAttribute.SEPARATOR + "%").stream())
                 .collect(Collectors.toMap(FileData::getPath, Function.identity(), (existing, replacement) -> existing));
