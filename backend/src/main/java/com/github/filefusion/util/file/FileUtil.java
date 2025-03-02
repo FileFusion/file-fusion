@@ -71,7 +71,7 @@ public class FileUtil {
     private MediaType getFileMediaType(Path path) {
         try {
             return MediaType.parseMediaType(Files.probeContentType(path));
-        } catch (Exception e) {
+        } catch (IllegalArgumentException | IOException e) {
             return MediaType.APPLICATION_OCTET_STREAM;
         }
     }
