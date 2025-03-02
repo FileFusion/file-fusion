@@ -79,11 +79,7 @@ public final class RecycleBinUtil {
             try {
                 Path originalPath = fileUtil.validatePath(fileData.getPath());
                 Path targetPath = baseDir.resolve(fileData.getRecyclePath());
-                fileUtil.delete(targetPath);
-                Path targetParentDir = targetPath.getParent();
-                if (targetParentDir != null) {
-                    Files.createDirectories(targetParentDir);
-                }
+                Files.createDirectories(targetPath.getParent());
                 Files.move(originalPath, targetPath, StandardCopyOption.ATOMIC_MOVE);
             } catch (Exception e) {
                 success.set(false);

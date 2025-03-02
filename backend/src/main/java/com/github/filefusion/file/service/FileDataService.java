@@ -136,21 +136,21 @@ public class FileDataService {
     }
 
     private void batchRecycle(List<String> pathList) {
-        List<FileData> allFileList = fileDataRepository.findAllByPathIn(pathList);
-        if (allFileList.isEmpty()) {
+        List<FileData> parentList = fileDataRepository.findAllByPathIn(pathList);
+        if (parentList.isEmpty()) {
             return;
         }
-        Map<String, List<FileData>> allChildFileMap = pathList.stream().collect(Collectors.toMap(
+        Map<String, List<FileData>> childMap = pathList.stream().collect(Collectors.toMap(
                 path -> path,
                 path -> fileDataRepository.findAllByPathLike(path + FileAttribute.SEPARATOR + "%")
         ));
-        List<String> allFilePathList = Stream.concat(
-                allFileList.stream().map(FileData::getPath),
-                allChildFileMap.values().stream().flatMap(Collection::stream).map(FileData::getPath)
+        List<String> allPathList = Stream.concat(
+                parentList.stream().map(FileData::getPath),
+                childMap.values().stream().flatMap(List::stream).map(FileData::getPath)
         ).toList();
-        distributedLock.tryMultiLock(RedisAttribute.LockType.file, allFilePathList, () -> {
-            fileDataRepository.saveAll(recycleBinUtil.setRecycleInfo(allFileList, allChildFileMap));
-            recycleBinUtil.recycle(allFileList);
+        distributedLock.tryMultiLock(RedisAttribute.LockType.file, allPathList, () -> {
+            fileDataRepository.saveAll(recycleBinUtil.setRecycleInfo(parentList, childMap));
+            recycleBinUtil.recycle(parentList);
         }, fileLockTimeout);
     }
 
