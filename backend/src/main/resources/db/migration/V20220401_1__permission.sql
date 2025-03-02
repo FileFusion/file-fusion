@@ -110,6 +110,9 @@ VALUES ('personal_file:upload', 'personal_file', 'Personal file upload', 'Upload
 INSERT INTO permission
 VALUES ('personal_file:download', 'personal_file', 'Personal file download', 'Download personal file', false,
         '01JJK6FQS0K3N6K4JAEAP5ZC7P', '2022-04-01 00:00:00', null, null);
+INSERT INTO permission
+VALUES ('personal_file:preview', 'personal_file', 'Personal file preview', 'Preview personal file', false,
+        '01JJK6FQS0K3N6K4JAEAP5ZC7P', '2022-04-01 00:00:00', null, null);
 
 INSERT INTO permission
 VALUES ('recycle_bin_file', 'root', 'Recycle bin file', 'Personal file', false,
@@ -122,4 +125,7 @@ VALUES ('recycle_bin_file:delete', 'recycle_bin_file', 'Recycle bin file delete'
         '01JJK6FQS0K3N6K4JAEAP5ZC7P', '2022-04-01 00:00:00', null, null);
 INSERT INTO permission
 VALUES ('recycle_bin_file:restore', 'recycle_bin_file', 'Recycle bin file restore', 'Restore recycle bin file', false,
+        '01JJK6FQS0K3N6K4JAEAP5ZC7P', '2022-04-01 00:00:00', null, null);
+INSERT INTO permission
+VALUES ('recycle_bin_file:preview', 'recycle_bin_file', 'Recycle bin file preview', 'Preview recycle bin file', false,
         '01JJK6FQS0K3N6K4JAEAP5ZC7P', '2022-04-01 00:00:00', null, null);

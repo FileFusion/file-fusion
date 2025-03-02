@@ -81,6 +81,8 @@ INSERT INTO role_permission
 VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'personal_file:upload');
 INSERT INTO role_permission
 VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'personal_file:download');
+INSERT INTO role_permission
+VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'personal_file:preview');
 
 INSERT INTO role_permission
 VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'recycle_bin_file');
@@ -90,3 +92,5 @@ INSERT INTO role_permission
 VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'recycle_bin_file:delete');
 INSERT INTO role_permission
 VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'recycle_bin_file:restore');
+INSERT INTO role_permission
+VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'recycle_bin_file:preview');

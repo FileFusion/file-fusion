@@ -46,8 +46,8 @@ public class ClearThumbnailFileTask {
     }
 
     /**
-     * Because the format of the files to be previewed can be adjusted at any time,
-     * So need to clean up expired preview images regularly.
+     * Because the format of thumbnail files can be adjusted at any time,
+     * So outdated thumbnail files need to be cleaned up regularly.
      */
     @Scheduled(cron = "${task.clear-thumbnail-file}")
     public void clearThumbnailFileTask() {

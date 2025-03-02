@@ -133,7 +133,7 @@ public class FileDataController {
      * @return download id
      */
     @PostMapping("/_submit_download")
-    @PreAuthorize("hasAuthority('personal_file:download')")
+    @PreAuthorize("hasAnyAuthority('personal_file:download','personal_file:preview','recycle_bin_file:preview')")
     public SubmitDownloadFilesResponse submitDownloadFiles(@RequestBody List<String> pathList) {
         fileDataService.verifyUserAuthorize(CurrentUser.get().getId(), pathList.toArray(new String[0]));
         return fileDataService.submitDownload(pathList);
@@ -158,7 +158,7 @@ public class FileDataController {
      * @return file chunked
      */
     @PostMapping("/_download_chunked")
-    @PreAuthorize("hasAuthority('personal_file:download')")
+    @PreAuthorize("hasAnyAuthority('personal_file:download','personal_file:preview','recycle_bin_file:preview')")
     public ResponseEntity<StreamingResponseBody> downloadChunked(@RequestBody FileData fileData,
                                                                  @RequestHeader String range) {
         fileDataService.verifyUserAuthorize(CurrentUser.get().getId(), fileData.getPath());
@@ -172,7 +172,7 @@ public class FileDataController {
      * @return file thumbnail
      */
     @PostMapping("/_thumbnail")
-    @PreAuthorize("hasAuthority('personal_file:read')")
+    @PreAuthorize("hasAnyAuthority('personal_file:read','recycle_bin_file:read')")
     public ResponseEntity<StreamingResponseBody> thumbnailFile(@RequestBody FileData fileData) {
         fileDataService.verifyUserAuthorize(CurrentUser.get().getId(), fileData.getPath());
         return fileDataService.thumbnailFile(fileData.getPath());
