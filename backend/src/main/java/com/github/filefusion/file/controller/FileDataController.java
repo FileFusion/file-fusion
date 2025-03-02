@@ -67,7 +67,7 @@ public class FileDataController {
         } else {
             path = CurrentUser.get().getId() + FileAttribute.SEPARATOR + path + FileAttribute.SEPARATOR;
         }
-        return fileDataService.get(PageRequest.of(page - 1, pageSize, sorterOrder.order(), sorter), path, name);
+        return fileDataService.get(PageRequest.of(page - 1, pageSize, sorterOrder.order(), sorter), path, false, name);
     }
 
     /**
