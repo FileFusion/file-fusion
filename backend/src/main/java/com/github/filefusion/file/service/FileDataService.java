@@ -168,28 +168,10 @@ public class FileDataService {
         distributedLock.tryMultiLock(RedisAttribute.LockType.file, allPathList, () -> {
             fileDataRepository.deleteAllByPathIn(allPathList);
             fileUtil.deleteSafe(allPathList);
-            clearThumbnailFile(allHashList);
+            if (!allHashList.isEmpty()) {
+                clearThumbnailFile(allHashList);
+            }
         }, fileLockTimeout);
-    }
-
-    public void clearThumbnailFile(Collection<String> needClearHashList) {
-        if (CollectionUtils.isEmpty(needClearHashList)) {
-            return;
-        }
-        Map<String, FileHashUsageCount> hashUsageCountMap = fileDataRepository.countByHashValueList(needClearHashList)
-                .stream().collect(Collectors.toMap(FileHashUsageCount::getHashValue, Function.identity()));
-        List<String> thumbnailImageMimeType = thumbnailUtil.getThumbnailImageMimeType();
-        List<String> thumbnailVideoMimeType = thumbnailUtil.getThumbnailVideoMimeType();
-        List<String> hashToDeleteList = needClearHashList.stream()
-                .filter(hash -> {
-                    FileHashUsageCount hashUsageCount = hashUsageCountMap.get(hash);
-                    return hashUsageCount == null
-                            || hashUsageCount.getCount() == null || hashUsageCount.getCount() == 0L
-                            || !StringUtils.hasLength(hashUsageCount.getMimeType())
-                            || (!thumbnailImageMimeType.contains(hashUsageCount.getMimeType())
-                            && !thumbnailVideoMimeType.contains(hashUsageCount.getMimeType()));
-                }).toList();
-        thumbnailUtil.deleteThumbnail(hashToDeleteList);
     }
 
     public void createFolder(String path, LocalDateTime lastModifiedDate, boolean allowExists) {
@@ -336,6 +318,23 @@ public class FileDataService {
             throw new HttpException(I18n.get("fileNotSupportThumbnail"));
         }
         return fileUtil.download(thumbnailUtil.generateThumbnail(path, mimeType, fileHash));
+    }
+
+    public void clearThumbnailFile(Collection<String> hashList) {
+        Map<String, FileHashUsageCount> hashUsageCountMap = fileDataRepository.countByHashValueList(hashList)
+                .stream().collect(Collectors.toMap(FileHashUsageCount::getHashValue, Function.identity()));
+        List<String> imageMimeType = thumbnailUtil.getThumbnailImageMimeType();
+        List<String> videoMimeType = thumbnailUtil.getThumbnailVideoMimeType();
+        List<String> hashToDeleteList = hashList.stream()
+                .filter(hash -> {
+                    FileHashUsageCount hashUsageCount = hashUsageCountMap.get(hash);
+                    return hashUsageCount == null
+                            || hashUsageCount.getCount() == null || hashUsageCount.getCount() == 0L
+                            || !StringUtils.hasLength(hashUsageCount.getMimeType())
+                            || (!imageMimeType.contains(hashUsageCount.getMimeType())
+                            && !videoMimeType.contains(hashUsageCount.getMimeType()));
+                }).toList();
+        thumbnailUtil.deleteThumbnail(hashToDeleteList);
     }
 
 }

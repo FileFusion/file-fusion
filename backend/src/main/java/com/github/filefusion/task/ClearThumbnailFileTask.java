@@ -52,37 +52,29 @@ public class ClearThumbnailFileTask {
     @Scheduled(cron = "${task.clear-thumbnail-file}")
     public void clearThumbnailFileTask() {
         distributedLock.tryLock(RedisAttribute.LockType.task, "clearThumbnailFileTask", () -> {
-            Path thumbnailBaseDir = thumbnailUtil.getBaseDir();
-            try (Stream<Path> thumbnailBaseDirStream = Files.list(thumbnailBaseDir)) {
-                List<Path> thumbnailFilePathList = new ArrayList<>(BATCH_FILE_SIZE);
-                thumbnailBaseDirStream.filter(thumbnailFilePath -> {
-                    String fileName = thumbnailFilePath.getFileName().toString();
-                    return Files.isRegularFile(thumbnailFilePath)
-                            && !fileName.equals(FileAttribute.THUMBNAIL_FILE_TYPE)
+            try (Stream<Path> baseDirStream = Files.list(thumbnailUtil.getBaseDir())) {
+                List<String> pathList = new ArrayList<>(BATCH_FILE_SIZE);
+                baseDirStream.filter(path -> {
+                    String fileName = path.getFileName().toString();
+                    return !fileName.equals(FileAttribute.THUMBNAIL_FILE_TYPE)
                             && fileName.endsWith(FileAttribute.THUMBNAIL_FILE_TYPE);
-                }).forEach(thumbnailFilePath -> {
-                    thumbnailFilePathList.add(thumbnailFilePath);
-                    if (thumbnailFilePathList.size() >= BATCH_FILE_SIZE) {
-                        clearThumbnailFile(new ArrayList<>(thumbnailFilePathList));
-                        thumbnailFilePathList.clear();
+                }).map(path -> {
+                    String fileName = path.getFileName().toString();
+                    return fileName.substring(0, fileName.length() - FileAttribute.THUMBNAIL_FILE_TYPE.length());
+                }).forEach(path -> {
+                    pathList.add(path);
+                    if (pathList.size() >= BATCH_FILE_SIZE) {
+                        fileDataService.clearThumbnailFile(new ArrayList<>(pathList));
+                        pathList.clear();
                     }
                 });
-                if (!thumbnailFilePathList.isEmpty()) {
-                    clearThumbnailFile(new ArrayList<>(thumbnailFilePathList));
+                if (!pathList.isEmpty()) {
+                    fileDataService.clearThumbnailFile(new ArrayList<>(pathList));
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }, taskLockTimeout);
-    }
-
-    private void clearThumbnailFile(List<Path> thumbnailFilePathList) {
-        List<String> thumbnailFileHashList = thumbnailFilePathList.stream()
-                .map(path -> {
-                    String fileName = path.getFileName().toString();
-                    return fileName.substring(0, fileName.length() - FileAttribute.THUMBNAIL_FILE_TYPE.length());
-                }).toList();
-        fileDataService.clearThumbnailFile(thumbnailFileHashList);
     }
 
 }
