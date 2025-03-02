@@ -111,7 +111,7 @@
               </n-dropdown>
               <div class="relative pb-2 pl-1 pr-1 pt-4 text-center">
                 <div>
-                  <file-preview
+                  <file-thumbnail
                     :path="fileData.path"
                     :thumbnail="fileData.hasThumbnail"
                     :type="fileData.mimeType" />
@@ -191,7 +191,7 @@ import { hasPermission } from '@/commons/permission';
 import { formatFileSize, renderIconMethod } from '@/commons/utils';
 import { useRouter, useRoute } from 'vue-router';
 import { mainStore } from '@/store';
-import FilePreview from '@/views/files/components/FilePreview.vue';
+import FileThumbnail from '@/views/files/components/FileThumbnail.vue';
 import VideoView from '@/views/files/components/VideoView.vue';
 import ImageView from '@/views/files/components/ImageView.vue';
 
@@ -270,7 +270,7 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
           },
           {
             icon: () =>
-              h(FilePreview, {
+              h(FileThumbnail, {
                 path: row.path,
                 thumbnail: row.hasThumbnail,
                 type: row.mimeType,
