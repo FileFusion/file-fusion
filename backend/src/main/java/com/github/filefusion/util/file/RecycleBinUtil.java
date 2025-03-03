@@ -4,6 +4,7 @@ import com.github.filefusion.common.HttpException;
 import com.github.filefusion.file.entity.FileData;
 import com.github.filefusion.util.I18n;
 import com.github.filefusion.util.ULID;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -30,6 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Component
 public final class RecycleBinUtil {
 
+    @Getter
     private final Path baseDir;
     private final FileUtil fileUtil;
 
@@ -77,8 +79,8 @@ public final class RecycleBinUtil {
         AtomicBoolean success = new AtomicBoolean(true);
         recycleList.forEach(file -> {
             try {
-                Path originalPath = fileUtil.validatePath(file.getPath());
-                Path targetPath = baseDir.resolve(file.getRecyclePath());
+                Path originalPath = PathUtil.resolvePath(fileUtil.getBaseDir(), file.getPath(), true);
+                Path targetPath = PathUtil.resolvePath(baseDir, file.getRecyclePath(), false);
                 Files.createDirectories(targetPath.getParent());
                 Files.move(originalPath, targetPath, StandardCopyOption.ATOMIC_MOVE);
             } catch (Exception e) {
