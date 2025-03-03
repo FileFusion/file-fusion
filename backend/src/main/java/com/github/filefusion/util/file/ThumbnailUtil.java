@@ -39,19 +39,16 @@ public final class ThumbnailUtil {
     private final List<String> thumbnailImageMimeType;
     @Getter
     private final List<String> thumbnailVideoMimeType;
-    private final FileUtil fileUtil;
 
     @Autowired
     public ThumbnailUtil(@Value("${thumbnail.dir}") String thumbnailDir,
                          @Value("${thumbnail.generate-timeout}") Duration thumbnailGenerateTimeout,
                          @Value("${thumbnail.image-mime-type}") List<String> thumbnailImageMimeType,
-                         @Value("${thumbnail.video-mime-type}") List<String> thumbnailVideoMimeType,
-                         FileUtil fileUtil) {
+                         @Value("${thumbnail.video-mime-type}") List<String> thumbnailVideoMimeType) {
         this.baseDir = Paths.get(thumbnailDir).normalize().toAbsolutePath();
         this.thumbnailGenerateTimeout = thumbnailGenerateTimeout;
         this.thumbnailImageMimeType = thumbnailImageMimeType;
         this.thumbnailVideoMimeType = thumbnailVideoMimeType;
-        this.fileUtil = fileUtil;
         if (!Files.exists(this.baseDir)) {
             try {
                 Files.createDirectories(this.baseDir);
@@ -68,12 +65,11 @@ public final class ThumbnailUtil {
         return thumbnailImageMimeType.contains(mimeType) || thumbnailVideoMimeType.contains(mimeType);
     }
 
-    public Path generateThumbnail(String path, String mimeType, String hash) {
-        Path targetPath = baseDir.resolve(hash + FileAttribute.THUMBNAIL_FILE_TYPE);
+    public Path generateThumbnail(Path originalPath, String mimeType, String hash) {
+        Path targetPath = PathUtil.resolvePath(baseDir, hash + FileAttribute.THUMBNAIL_FILE_TYPE, false);
         if (Files.isRegularFile(targetPath)) {
             return targetPath;
         }
-        Path originalPath = fileUtil.validatePath(path);
         String exec;
         if (thumbnailImageMimeType.contains(mimeType)) {
             exec = GENERATE_IMAGE_THUMBNAIL_EXEC.formatted(originalPath, targetPath);
@@ -93,10 +89,8 @@ public final class ThumbnailUtil {
         if (CollectionUtils.isEmpty(hashList)) {
             return;
         }
-        List<Path> pathList = hashList.stream()
-                .map(hash -> baseDir.resolve(hash + FileAttribute.THUMBNAIL_FILE_TYPE))
-                .toList();
-        fileUtil.delete(pathList);
+        hashList = hashList.stream().map(hash -> hash + FileAttribute.THUMBNAIL_FILE_TYPE).toList();
+        PathUtil.delete(PathUtil.resolvePath(baseDir, hashList, false));
     }
 
 }
