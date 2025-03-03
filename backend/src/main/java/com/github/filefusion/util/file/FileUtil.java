@@ -3,11 +3,11 @@ package com.github.filefusion.util.file;
 import com.github.filefusion.common.HttpException;
 import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.util.I18n;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
@@ -17,12 +17,9 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -33,6 +30,7 @@ import java.util.zip.ZipOutputStream;
  * @author hackyo
  * @since 2022/4/1
  */
+@Getter
 @Component
 public class FileUtil {
 
@@ -68,46 +66,8 @@ public class FileUtil {
         }
     }
 
-    private MediaType getFileMediaType(Path path) {
-        try {
-            return MediaType.parseMediaType(Files.probeContentType(path));
-        } catch (IllegalArgumentException | IOException e) {
-            return MediaType.APPLICATION_OCTET_STREAM;
-        }
-    }
-
-    private Path resolveSafePath(String path) {
-        if (!StringUtils.hasLength(path) || path.contains("..") || path.contains("//") || path.startsWith("/")) {
-            throw new HttpException(I18n.get("noOperationPermission"));
-        }
-        Path resolvedPath = baseDir.resolve(path).normalize();
-        if (!resolvedPath.startsWith(baseDir)) {
-            throw new HttpException(I18n.get("noOperationPermission"));
-        }
-        return resolvedPath;
-    }
-
-    public List<Path> validatePaths(List<String> pathList) {
-        return pathList.stream()
-                .map(this::resolveSafePath)
-                .peek(path -> {
-                    if (!Files.exists(path)) {
-                        throw new HttpException(I18n.get("noOperationPermission"));
-                    }
-                })
-                .toList();
-    }
-
-    public Path validatePath(String path) {
-        Path targetPath = resolveSafePath(path);
-        if (!Files.exists(targetPath)) {
-            throw new HttpException(I18n.get("noOperationPermission"));
-        }
-        return targetPath;
-    }
-
     public void createUserFolder(String userId) {
-        Path userPath = baseDir.resolve(userId);
+        Path userPath = PathUtil.resolvePath(baseDir, userId, false);
         try {
             Files.createDirectories(userPath);
         } catch (IOException e) {
@@ -116,7 +76,7 @@ public class FileUtil {
     }
 
     public void createFolder(String path) {
-        Path targetPath = resolveSafePath(path);
+        Path targetPath = PathUtil.resolveSafePath(baseDir, path, false);
         try {
             Files.createDirectories(targetPath);
         } catch (IOException e) {
@@ -126,7 +86,7 @@ public class FileUtil {
 
     public String upload(MultipartFile file, String path) {
         try (HashingInputStream in = new HashingInputStream(file.getInputStream())) {
-            Files.copy(in, resolveSafePath(path));
+            Files.copy(in, PathUtil.resolveSafePath(baseDir, path, false));
             return in.getHashString();
         } catch (IOException | NoSuchAlgorithmException e) {
             throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
@@ -134,8 +94,8 @@ public class FileUtil {
     }
 
     public void move(String original, String target) {
-        Path originalPath = validatePath(original);
-        Path targetPath = resolveSafePath(target);
+        Path originalPath = PathUtil.resolvePath(baseDir, original, true);
+        Path targetPath = PathUtil.resolveSafePath(baseDir, target, false);
         try {
             Files.createDirectories(targetPath.getParent());
             Files.move(originalPath, targetPath, StandardCopyOption.ATOMIC_MOVE);
@@ -144,72 +104,21 @@ public class FileUtil {
         }
     }
 
-    public void deleteSafe(Collection<String> pathList) {
-        deleteAll(pathList, this::resolveSafePath);
-    }
-
-    public void delete(Collection<Path> pathList) {
-        deleteAll(pathList, Function.identity());
-    }
-
-    private <T> void deleteAll(Collection<T> items, Function<T, Path> pathResolver) {
-        AtomicBoolean success = new AtomicBoolean(true);
-        items.forEach(item -> {
-            try {
-                delete(pathResolver.apply(item));
-            } catch (Exception e) {
-                success.set(false);
-            }
-        });
-        if (!success.get()) {
-            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileDeletionFailed"));
-        }
-    }
-
-    private void delete(Path path) {
-        if (!Files.exists(path)) {
-            return;
-        }
-        AtomicBoolean success = new AtomicBoolean(true);
-        try {
-            Files.walkFileTree(path, new SimpleFileVisitor<>() {
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-                    try {
-                        Files.deleteIfExists(file);
-                    } catch (IOException e) {
-                        success.set(false);
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
-                    try {
-                        Files.deleteIfExists(dir);
-                    } catch (IOException e) {
-                        success.set(false);
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        } catch (Exception e) {
-            success.set(false);
-        }
-        if (!success.get()) {
-            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileDeletionFailed"));
-        }
+    public void delete(Collection<String> pathList) {
+        PathUtil.delete(pathList.stream()
+                .map(path -> PathUtil.resolveSafePath(baseDir, path, true))
+                .toList());
     }
 
     public ResponseEntity<StreamingResponseBody> download(Path path) {
-        return download(path.getFileName().toString(),
-                getFileMediaType(path),
+        return downloadResponse(path.getFileName().toString(),
+                PathUtil.getFileMediaType(path),
                 HttpStatus.OK,
                 out -> Files.copy(path, out),
                 new HttpHeaders());
     }
 
-    public ResponseEntity<StreamingResponseBody> download(Path path, long start, long end) {
+    public ResponseEntity<StreamingResponseBody> downloadChunked(Path path, long start, long end) {
         long size;
         try {
             size = Files.size(path);
@@ -221,8 +130,8 @@ public class FileUtil {
         headers.add(HttpHeaders.ACCEPT_RANGES, "bytes");
         headers.add(HttpHeaders.CONTENT_RANGE, String.format("bytes %d-%d/%d", start, endReal, size));
         headers.add(HttpHeaders.CONTENT_LENGTH, String.valueOf(endReal - start + 1));
-        return download(path.getFileName().toString(),
-                getFileMediaType(path),
+        return downloadResponse(path.getFileName().toString(),
+                PathUtil.getFileMediaType(path),
                 HttpStatus.PARTIAL_CONTENT,
                 out -> {
                     try (FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.READ);
@@ -233,8 +142,8 @@ public class FileUtil {
                 headers);
     }
 
-    public ResponseEntity<StreamingResponseBody> download(List<Path> pathList) {
-        return download(FileAttribute.DOWNLOAD_ZIP_NAME,
+    public ResponseEntity<StreamingResponseBody> downloadZip(List<Path> pathList) {
+        return downloadResponse(FileAttribute.DOWNLOAD_ZIP_NAME,
                 FileAttribute.MimeType.ZIP.value(),
                 HttpStatus.OK,
                 out -> {
@@ -248,11 +157,11 @@ public class FileUtil {
                 new HttpHeaders());
     }
 
-    private ResponseEntity<StreamingResponseBody> download(String filename,
-                                                           MediaType mediaType,
-                                                           HttpStatus status,
-                                                           StreamingResponseBody body,
-                                                           HttpHeaders headers) {
+    private ResponseEntity<StreamingResponseBody> downloadResponse(String filename,
+                                                                   MediaType mediaType,
+                                                                   HttpStatus status,
+                                                                   StreamingResponseBody body,
+                                                                   HttpHeaders headers) {
         String contentDisposition = ContentDisposition.attachment()
                 .filename(filename, StandardCharsets.UTF_8)
                 .build().toString();
