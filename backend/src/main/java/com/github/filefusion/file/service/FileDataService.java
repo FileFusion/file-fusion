@@ -15,6 +15,7 @@ import com.github.filefusion.util.EncryptUtil;
 import com.github.filefusion.util.I18n;
 import com.github.filefusion.util.ULID;
 import com.github.filefusion.util.file.FileUtil;
+import com.github.filefusion.util.file.PathUtil;
 import com.github.filefusion.util.file.RecycleBinUtil;
 import com.github.filefusion.util.file.ThumbnailUtil;
 import org.redisson.api.RList;
@@ -171,7 +172,7 @@ public class FileDataService {
                 .filter(StringUtils::hasLength).collect(Collectors.toSet());
         distributedLock.tryMultiLock(RedisAttribute.LockType.file, allPathList, () -> {
             fileDataRepository.deleteAllByPathIn(allPathList);
-            fileUtil.deleteSafe(allPathList);
+            fileUtil.delete(pathList);
             if (!allHashList.isEmpty()) {
                 clearThumbnailFile(allHashList);
             }
@@ -293,17 +294,17 @@ public class FileDataService {
         if (CollectionUtils.isEmpty(pathList)) {
             throw new HttpException(I18n.get("downloadLinkExpired"));
         }
-        List<Path> safePathList = fileUtil.validatePaths(pathList);
+        List<Path> safePathList = PathUtil.resolveSafePath(fileUtil.getBaseDir(), pathList, true);
         Path pathFirst = safePathList.getFirst();
         if (safePathList.size() == 1 && Files.isRegularFile(pathFirst)) {
             return fileUtil.download(pathFirst);
         } else {
-            return fileUtil.download(safePathList);
+            return fileUtil.downloadZip(safePathList);
         }
     }
 
     public ResponseEntity<StreamingResponseBody> downloadChunked(String path, String range) {
-        Path safePath = fileUtil.validatePath(path);
+        Path safePath = PathUtil.resolveSafePath(fileUtil.getBaseDir(), path, true);
         String[] ranges = range.replace("bytes=", "").split("-");
         long start = 0;
         long end = -1;
@@ -313,7 +314,7 @@ public class FileDataService {
         if (ranges.length > 1) {
             end = Long.parseLong(ranges[1]);
         }
-        return fileUtil.download(safePath, start, end);
+        return fileUtil.downloadChunked(safePath, start, end);
     }
 
     public ResponseEntity<StreamingResponseBody> thumbnailFile(String path) {
@@ -326,7 +327,10 @@ public class FileDataService {
         if (!StringUtils.hasLength(fileHash) || !thumbnailUtil.hasThumbnail(mimeType)) {
             throw new HttpException(I18n.get("fileNotSupportThumbnail"));
         }
-        return fileUtil.download(thumbnailUtil.generateThumbnail(path, mimeType, fileHash));
+        Path originalPath = PathUtil.resolvePath(
+                file.getDeleted() ? recycleBinUtil.getBaseDir() : fileUtil.getBaseDir(),
+                file.getDeleted() ? file.getRecyclePath() : file.getPath(), true);
+        return fileUtil.download(thumbnailUtil.generateThumbnail(originalPath, mimeType, fileHash));
     }
 
     public void clearThumbnailFile(Collection<String> hashList) {
