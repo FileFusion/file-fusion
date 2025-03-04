@@ -7,12 +7,10 @@ import org.springframework.http.MediaType;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -60,6 +58,29 @@ public final class PathUtil {
         return pathList.stream()
                 .map(path -> resolveSafePath(baseDir, path, exists))
                 .toList();
+    }
+
+    public static void move(Map<Path, Path> originalTargetMap) {
+        AtomicBoolean success = new AtomicBoolean(true);
+        originalTargetMap.forEach((originalPath, targetPath) -> {
+            try {
+                move(originalPath, targetPath);
+            } catch (Exception e) {
+                success.set(false);
+            }
+        });
+        if (!success.get()) {
+            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileMoveFailed"));
+        }
+    }
+
+    public static void move(Path originalPath, Path targetPath) {
+        try {
+            Files.createDirectories(targetPath.getParent());
+            Files.move(originalPath, targetPath, StandardCopyOption.ATOMIC_MOVE);
+        } catch (IOException e) {
+            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileMoveFailed"));
+        }
     }
 
     public static void delete(List<Path> pathList) {

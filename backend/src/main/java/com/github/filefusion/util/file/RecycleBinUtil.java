@@ -1,13 +1,10 @@
 package com.github.filefusion.util.file;
 
-import com.github.filefusion.common.HttpException;
 import com.github.filefusion.file.entity.FileData;
-import com.github.filefusion.util.I18n;
 import com.github.filefusion.util.ULID;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
@@ -15,12 +12,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * RecycleBinUtil
@@ -28,18 +23,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author hackyo
  * @since 2022/4/1
  */
+@Getter
 @Component
 public final class RecycleBinUtil {
 
-    @Getter
     private final Path baseDir;
-    private final FileUtil fileUtil;
 
     @Autowired
-    public RecycleBinUtil(@Value("${recycle-bin.dir}") String recycleBinDir,
-                          FileUtil fileUtil) {
+    public RecycleBinUtil(@Value("${recycle-bin.dir}") String recycleBinDir) {
         this.baseDir = Paths.get(recycleBinDir).normalize().toAbsolutePath();
-        this.fileUtil = fileUtil;
         if (!Files.exists(this.baseDir)) {
             try {
                 Files.createDirectories(this.baseDir);
@@ -73,23 +65,6 @@ public final class RecycleBinUtil {
             }
         });
         return allList;
-    }
-
-    public void recycle(List<FileData> recycleList) {
-        AtomicBoolean success = new AtomicBoolean(true);
-        recycleList.forEach(file -> {
-            try {
-                Path originalPath = PathUtil.resolvePath(fileUtil.getBaseDir(), file.getPath(), true);
-                Path targetPath = PathUtil.resolvePath(baseDir, file.getRecyclePath(), false);
-                Files.createDirectories(targetPath.getParent());
-                Files.move(originalPath, targetPath, StandardCopyOption.ATOMIC_MOVE);
-            } catch (Exception e) {
-                success.set(false);
-            }
-        });
-        if (!success.get()) {
-            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileRecycleFailed"));
-        }
     }
 
 }

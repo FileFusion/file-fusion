@@ -93,17 +93,6 @@ public class FileUtil {
         }
     }
 
-    public void move(String original, String target) {
-        Path originalPath = PathUtil.resolvePath(baseDir, original, true);
-        Path targetPath = PathUtil.resolveSafePath(baseDir, target, false);
-        try {
-            Files.createDirectories(targetPath.getParent());
-            Files.move(originalPath, targetPath, StandardCopyOption.ATOMIC_MOVE);
-        } catch (IOException e) {
-            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileMoveFailed"));
-        }
-    }
-
     public void delete(Collection<String> pathList) {
         PathUtil.delete(pathList.stream()
                 .map(path -> PathUtil.resolveSafePath(baseDir, path, true))

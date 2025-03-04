@@ -156,7 +156,10 @@ public class FileDataService {
         ).toList();
         distributedLock.tryMultiLock(RedisAttribute.LockType.file, allPathList, () -> {
             fileDataRepository.saveAll(recycleBinUtil.setRecycleInfo(parentList, childMap));
-            recycleBinUtil.recycle(parentList);
+            PathUtil.move(parentList.stream().collect(Collectors.toMap(
+                    file -> PathUtil.resolvePath(fileUtil.getBaseDir(), file.getPath(), true),
+                    file -> PathUtil.resolvePath(recycleBinUtil.getBaseDir(), file.getRecyclePath(), false)
+            )));
         }, fileLockTimeout);
     }
 
@@ -277,7 +280,10 @@ public class FileDataService {
             originalFileList.add(originalFile);
 
             fileDataRepository.saveAll(originalFileList);
-            fileUtil.move(originalPath, targetPath);
+            PathUtil.move(
+                    PathUtil.resolvePath(fileUtil.getBaseDir(), originalPath, true),
+                    PathUtil.resolveSafePath(fileUtil.getBaseDir(), targetPath, false)
+            );
         }, fileLockTimeout);
     }
 
