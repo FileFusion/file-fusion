@@ -2,6 +2,7 @@ package com.github.filefusion.user.repository;
 
 import com.github.filefusion.user.entity.OrgUser;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -36,6 +37,7 @@ public interface OrgUserRepository extends JpaRepository<OrgUser, String> {
      *
      * @param userIds user ids
      */
+    @Modifying
     void deleteAllByUserIdIn(List<String> userIds);
 
 }
