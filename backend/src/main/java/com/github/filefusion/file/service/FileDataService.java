@@ -25,7 +25,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -251,7 +250,6 @@ public class FileDataService {
         }, fileLockTimeout);
     }
 
-    @Transactional(rollbackFor = HttpException.class)
     public void rename(String path, String originalName, String targetName) {
         if (!StringUtils.hasLength(originalName)) {
             throw new HttpException(I18n.get("renameFileSelectCheck"));
