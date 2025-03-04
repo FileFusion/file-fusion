@@ -2,7 +2,6 @@ package com.github.filefusion.task;
 
 import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.constant.RedisAttribute;
-import com.github.filefusion.file.service.FileDataService;
 import com.github.filefusion.util.DistributedLock;
 import com.github.filefusion.util.file.ThumbnailUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,17 +31,14 @@ public class ClearThumbnailFileTask {
     private final Duration taskLockTimeout;
     private final DistributedLock distributedLock;
     private final ThumbnailUtil thumbnailUtil;
-    private final FileDataService fileDataService;
 
     @Autowired
     public ClearThumbnailFileTask(@Value("${task.lock-timeout}") Duration taskLockTimeout,
                                   DistributedLock distributedLock,
-                                  ThumbnailUtil thumbnailUtil,
-                                  FileDataService fileDataService) {
+                                  ThumbnailUtil thumbnailUtil) {
         this.taskLockTimeout = taskLockTimeout;
         this.distributedLock = distributedLock;
         this.thumbnailUtil = thumbnailUtil;
-        this.fileDataService = fileDataService;
     }
 
     /**
@@ -64,12 +60,12 @@ public class ClearThumbnailFileTask {
                 }).forEach(path -> {
                     pathList.add(path);
                     if (pathList.size() >= BATCH_FILE_SIZE) {
-                        fileDataService.clearThumbnailFile(new ArrayList<>(pathList));
+                        thumbnailUtil.clearThumbnail(new ArrayList<>(pathList));
                         pathList.clear();
                     }
                 });
                 if (!pathList.isEmpty()) {
-                    fileDataService.clearThumbnailFile(new ArrayList<>(pathList));
+                    thumbnailUtil.clearThumbnail(new ArrayList<>(pathList));
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
