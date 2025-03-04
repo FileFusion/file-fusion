@@ -272,7 +272,7 @@ public class FileDataService {
         List<String> lockPathList = originalChildList.stream().map(FileData::getPath).collect(Collectors.toList());
         originalChildList.forEach(file -> {
             String filePath = file.getPath();
-            filePath = filePath.substring(originalPathFolder.length(), filePath.length() - 1);
+            filePath = filePath.substring(originalPathFolder.length());
             file.setPath(targetPathFolder + filePath);
         });
         lockPathList.addAll(originalChildList.stream().map(FileData::getPath).toList());
