@@ -18,7 +18,6 @@ import java.nio.channels.WritableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.security.NoSuchAlgorithmException;
-import java.util.Collection;
 import java.util.List;
 import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
@@ -45,6 +44,14 @@ public class FileUtil {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+        }
+    }
+
+    private MediaType getFileMediaType(Path path) {
+        try {
+            return MediaType.parseMediaType(Files.probeContentType(path));
+        } catch (IllegalArgumentException | IOException e) {
+            return MediaType.APPLICATION_OCTET_STREAM;
         }
     }
 
@@ -93,15 +100,9 @@ public class FileUtil {
         }
     }
 
-    public void delete(Collection<String> pathList) {
-        PathUtil.delete(pathList.stream()
-                .map(path -> PathUtil.resolveSafePath(baseDir, path, true))
-                .toList());
-    }
-
     public ResponseEntity<StreamingResponseBody> download(Path path) {
         return downloadResponse(path.getFileName().toString(),
-                PathUtil.getFileMediaType(path),
+                getFileMediaType(path),
                 HttpStatus.OK,
                 out -> Files.copy(path, out),
                 new HttpHeaders());
@@ -120,7 +121,7 @@ public class FileUtil {
         headers.add(HttpHeaders.CONTENT_RANGE, String.format("bytes %d-%d/%d", start, endReal, size));
         headers.add(HttpHeaders.CONTENT_LENGTH, String.valueOf(endReal - start + 1));
         return downloadResponse(path.getFileName().toString(),
-                PathUtil.getFileMediaType(path),
+                getFileMediaType(path),
                 HttpStatus.PARTIAL_CONTENT,
                 out -> {
                     try (FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.READ);

@@ -3,7 +3,6 @@ package com.github.filefusion.util.file;
 import com.github.filefusion.common.HttpException;
 import com.github.filefusion.util.I18n;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
@@ -20,14 +19,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @since 2022/4/1
  */
 public final class PathUtil {
-
-    public static MediaType getFileMediaType(Path path) {
-        try {
-            return MediaType.parseMediaType(Files.probeContentType(path));
-        } catch (IllegalArgumentException | IOException e) {
-            return MediaType.APPLICATION_OCTET_STREAM;
-        }
-    }
 
     public static Path resolvePath(Path baseDir, String path, boolean exists) {
         Path resolvedPath = baseDir.resolve(path);

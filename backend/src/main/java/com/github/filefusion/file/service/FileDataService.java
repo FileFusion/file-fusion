@@ -156,8 +156,9 @@ public class FileDataService {
                 parentList.stream().map(FileData::getPath),
                 childMap.values().stream().flatMap(List::stream).map(FileData::getPath)
         ).toList();
+        List<FileData> recycleInfoList = recycleBinUtil.setRecycleInfo(parentList, childMap);
         distributedLock.tryMultiLock(RedisAttribute.LockType.file, allPathList, () -> {
-            fileDataRepository.saveAll(recycleBinUtil.setRecycleInfo(parentList, childMap));
+            fileDataRepository.saveAll(recycleInfoList);
             PathUtil.move(parentList.stream().collect(Collectors.toMap(
                     file -> PathUtil.resolvePath(fileUtil.getBaseDir(), file.getPath(), true),
                     file -> PathUtil.resolvePath(recycleBinUtil.getBaseDir(), file.getRecyclePath(), false)
@@ -168,7 +169,7 @@ public class FileDataService {
     private void batchDelete(List<String> pathList) {
         Map<String, FileData> allMap = pathList.stream()
                 .flatMap(path -> fileDataRepository.findAllByPathOrPathLike(path, path + FileAttribute.SEPARATOR + "%").stream())
-                .collect(Collectors.toMap(FileData::getPath, Function.identity(), (existing, replacement) -> existing));
+                .collect(Collectors.toMap(FileData::getPath, Function.identity()));
         if (allMap.isEmpty()) {
             return;
         }
@@ -177,7 +178,9 @@ public class FileDataService {
                 .filter(StringUtils::hasLength).distinct().toList();
         distributedLock.tryMultiLock(RedisAttribute.LockType.file, allPathList, () -> {
             fileDataRepository.deleteAllByPathIn(allPathList);
-            fileUtil.delete(pathList);
+            PathUtil.delete(pathList.stream()
+                    .map(path -> PathUtil.resolveSafePath(fileUtil.getBaseDir(), path, true))
+                    .toList());
             if (!allHashList.isEmpty()) {
                 thumbnailUtil.clearThumbnail(allHashList);
             }
