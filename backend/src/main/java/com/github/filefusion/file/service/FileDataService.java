@@ -10,7 +10,6 @@ import com.github.filefusion.file.repository.FileDataRepository;
 import com.github.filefusion.sys_config.entity.SysConfig;
 import com.github.filefusion.sys_config.service.SysConfigService;
 import com.github.filefusion.util.DistributedLock;
-import com.github.filefusion.util.EncryptUtil;
 import com.github.filefusion.util.I18n;
 import com.github.filefusion.util.ULID;
 import com.github.filefusion.util.file.FileUtil;
@@ -23,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -133,7 +133,6 @@ public class FileDataService {
         return fileDataPage;
     }
 
-    @Transactional(rollbackFor = HttpException.class)
     public void batchRecycleOrDelete(List<String> pathList) {
         SysConfig config = sysConfigService.get(SysConfigKey.RECYCLE_BIN);
         if (Boolean.parseBoolean(config.getConfigValue())) {
@@ -215,13 +214,12 @@ public class FileDataService {
                 file.setMimeType(FileAttribute.MimeType.FOLDER.value().toString());
                 file.setSize(0L);
                 file.setEncrypted(false);
-                file.setHashValue(EncryptUtil.sha256(folderName));
                 file.setFileLastModifiedDate(lastModifiedDate);
                 file.setDeleted(false);
                 fileList.add(file);
             }
-            fileUtil.createFolder(path);
             fileDataRepository.saveAll(fileList);
+            fileUtil.createFolder(path);
         }, fileLockTimeout);
     }
 
@@ -244,7 +242,12 @@ public class FileDataService {
             file.setFileLastModifiedDate(lastModifiedDate);
             file.setDeleted(false);
             file.setHashValue(fileUtil.upload(multipartFile, filePath));
-            fileDataRepository.save(file);
+            try {
+                fileDataRepository.save(file);
+            } catch (Exception e) {
+                PathUtil.delete(PathUtil.resolveSafePath(fileUtil.getBaseDir(), filePath, false));
+                throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
+            }
         }, fileLockTimeout);
     }
 
@@ -267,24 +270,26 @@ public class FileDataService {
         String originalPathFolder = originalPath + FileAttribute.SEPARATOR;
         String targetPathFolder = targetPath + FileAttribute.SEPARATOR;
 
-        List<FileData> originalFileList = fileDataRepository.findAllByPathLikeAndDeletedFalse(originalPathFolder + "%");
-        List<String> allPathList = originalFileList.stream().map(FileData::getPath).collect(Collectors.toList());
-        allPathList.add(originalPath);
-        allPathList.add(targetPath);
-        distributedLock.tryMultiLock(RedisAttribute.LockType.file, allPathList, () -> {
+        List<FileData> originalChildList = fileDataRepository.findAllByPathLikeAndDeletedFalse(originalPathFolder + "%");
+        List<String> lockPathList = originalChildList.stream().map(FileData::getPath).collect(Collectors.toList());
+        originalChildList.forEach(file -> {
+            String filePath = file.getPath();
+            filePath = filePath.substring(originalPathFolder.length(), filePath.length() - 1);
+            file.setPath(targetPathFolder + filePath);
+        });
+        lockPathList.addAll(originalChildList.stream().map(FileData::getPath).toList());
+        lockPathList.add(originalPath);
+        lockPathList.add(targetPath);
+
+        originalFile.setPath(targetPath);
+        originalFile.setName(targetName);
+        originalChildList.add(originalFile);
+
+        distributedLock.tryMultiLock(RedisAttribute.LockType.file, lockPathList, () -> {
             if (fileDataRepository.existsByPathAndDeletedFalse(targetPath)) {
                 throw new HttpException(I18n.get("fileNameAlreadyExists"));
             }
-            originalFile.setPath(targetPath);
-            originalFile.setName(targetName);
-            for (FileData file : originalFileList) {
-                String filePath = file.getPath();
-                filePath = filePath.substring(originalPathFolder.length(), filePath.length() - 1);
-                file.setPath(targetPathFolder + filePath);
-            }
-            originalFileList.add(originalFile);
-
-            fileDataRepository.saveAll(originalFileList);
+            fileDataRepository.saveAll(originalChildList);
             PathUtil.move(
                     PathUtil.resolvePath(fileUtil.getBaseDir(), originalPath, true),
                     PathUtil.resolveSafePath(fileUtil.getBaseDir(), targetPath, false)
