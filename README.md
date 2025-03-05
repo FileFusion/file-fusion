@@ -2,16 +2,17 @@
 
 _Cherish the Beautiful Life_
 
-#### Editor plugins
-
-> - Lombok
->   > - [https://projectlombok.org/](https://projectlombok.org/)
-> - Prettier
->   > - [https://prettier.io/](https://prettier.io/)
-
 #### Editor configuration
 
 > - Lombok
+>   > - [https://projectlombok.org/](https://projectlombok.org/)
 >   > - Enable annotation processing
+> - Stylelint
+>   > - [https://stylelint.io/](https://stylelint.io/)
+>   > - `**/*.{css,vue}`
+> - ESLint
+>   > - [https://eslint.org/](https://eslint.org/)
+>   > - `**/*.{html,mjs,ts,vue}`
 > - Prettier
->   > - `**/*.{js,mjs,ts,html,vue,css,json}`
+>   > - [https://prettier.io/](https://prettier.io/)
+>   > - `**/*.{css,html,json,mjs,ts,vue,yaml}`

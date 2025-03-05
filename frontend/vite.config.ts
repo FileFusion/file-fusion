@@ -51,7 +51,7 @@ export default defineConfig({
       typescript: true,
       vueTsc: true,
       eslint: {
-        lintCommand: 'eslint "**/*.{js,mjs,ts,html,vue,json}"',
+        lintCommand: 'eslint "**/*.{html,mjs,ts,vue}"',
         useFlatConfig: true
       },
       stylelint: {
