@@ -147,6 +147,7 @@
       "folderName": "文件夹名",
       "size": "大小",
       "modifiedDate": "修改时间",
+      "deletedDate": "删除时间",
       "rename": "重命名",
       "fileDownloadSelectCheck": "请选择需要下载的文件",
       "fileDeleteSelectCheck": "请选择需要删除的文件",

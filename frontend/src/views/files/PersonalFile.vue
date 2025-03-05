@@ -338,7 +338,7 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
       title: t('files.personal.size'),
       key: 'size',
       resizable: true,
-      width: 170,
+      width: 150,
       sorter: true,
       sortOrder: fileTableSorter.value.size,
       render: (row: any) => {
@@ -352,7 +352,7 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
       title: t('files.personal.modifiedDate'),
       key: 'lastModifiedDate',
       resizable: true,
-      width: 170,
+      width: 150,
       sorter: true,
       sortOrder: fileTableSorter.value.lastModifiedDate,
       render: (row: any) => {
@@ -597,8 +597,8 @@ function fileGridIsCheck(rowKey: string) {
   return fileTableCheck.value.includes(rowKey);
 }
 
-function fileTableHandleCheck(rowKeys: string[]) {
-  fileTableCheck.value = rowKeys;
+function fileTableHandleCheck(rowKeys: Array<string | number>) {
+  fileTableCheck.value = rowKeys as Array<string>;
 }
 
 function fileTableHandleSorter(params: DataTableSortState | null) {

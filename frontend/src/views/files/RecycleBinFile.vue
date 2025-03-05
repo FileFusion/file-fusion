@@ -123,9 +123,7 @@
                 </div>
                 <div>
                   <n-text depth="3">
-                    <n-time
-                      :time="fileData.lastModifiedDate"
-                      format="PP HH:mm" />
+                    <n-time :time="fileData.deletedDate" format="PP HH:mm" />
                   </n-text>
                 </div>
               </div>
@@ -290,7 +288,7 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
       title: t('files.personal.size'),
       key: 'size',
       resizable: true,
-      width: 170,
+      width: 150,
       sorter: true,
       sortOrder: fileTableSorter.value.size,
       render: (row: any) => {
@@ -304,12 +302,26 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
       title: t('files.personal.modifiedDate'),
       key: 'lastModifiedDate',
       resizable: true,
-      width: 170,
+      width: 150,
       sorter: true,
       sortOrder: fileTableSorter.value.lastModifiedDate,
       render: (row: any) => {
         return h(NTime, {
           time: row.lastModifiedDate,
+          format: 'PP HH:mm'
+        });
+      }
+    },
+    {
+      title: t('files.personal.deletedDate'),
+      key: 'deletedDate',
+      resizable: true,
+      width: 150,
+      sorter: true,
+      sortOrder: fileTableSorter.value.deletedDate,
+      render: (row: any) => {
+        return h(NTime, {
+          time: row.deletedDate,
           format: 'PP HH:mm'
         });
       }
@@ -536,8 +548,8 @@ function fileGridIsCheck(rowKey: string) {
   return fileTableCheck.value.includes(rowKey);
 }
 
-function fileTableHandleCheck(rowKeys: string[]) {
-  fileTableCheck.value = rowKeys;
+function fileTableHandleCheck(rowKeys: Array<string | number>) {
+  fileTableCheck.value = rowKeys as Array<string>;
 }
 
 function fileTableHandleSorter(params: DataTableSortState | null) {
@@ -587,6 +599,7 @@ function deleteFiles(filePathList: string[]) {
 
 function clickFile(file: any) {
   if (file.type === 'FOLDER') {
+    console.log(file);
     let path = '';
     if (filePathPattern.value) {
       path += filePathPattern.value + '/';

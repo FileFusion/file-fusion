@@ -147,6 +147,7 @@
       "folderName": "Folder name",
       "size": "Size",
       "modifiedDate": "Modified date",
+      "deletedDate": "Deleted date",
       "rename": "Rename",
       "fileDownloadSelectCheck": "Please select the file to be download",
       "fileDeleteSelectCheck": "Please select the file to be deleted",
