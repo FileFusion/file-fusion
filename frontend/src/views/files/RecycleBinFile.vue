@@ -482,6 +482,14 @@ const filePathPattern = computed(() => {
   return path;
 });
 
+const recycleIdPattern = computed(() => {
+  const recycleId = route.query.recycleId;
+  if (!recycleId) {
+    return '';
+  }
+  return recycleId;
+});
+
 const {
   loading: fileTableLoading,
   data: fileTableData,
@@ -501,6 +509,8 @@ const {
         fileNamePattern.value +
         '&path=' +
         filePathPattern.value +
+        '&recycleId=' +
+        recycleIdPattern.value +
         (sorter ? '&' + sorter : '')
     );
   },
@@ -599,7 +609,6 @@ function deleteFiles(filePathList: string[]) {
 
 function clickFile(file: any) {
   if (file.type === 'FOLDER') {
-    console.log(file);
     let path = '';
     if (filePathPattern.value) {
       path += filePathPattern.value + '/';
@@ -607,7 +616,8 @@ function clickFile(file: any) {
     path += file.name;
     router.push({
       name: 'files-recycle-bin',
-      params: { path: path.split('/') }
+      params: { path: path.split('/') },
+      query: { recycleId: file.recyclePath.split('/')[1] }
     });
     return;
   }

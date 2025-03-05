@@ -33,6 +33,14 @@ const filePathPattern = computed(() => {
   return [path];
 });
 
+const recycleIdPattern = computed(() => {
+  const recycleId = route.query.recycleId;
+  if (!recycleId) {
+    return '';
+  }
+  return recycleId;
+});
+
 const breadcrumb = computed(() => {
   let b = [];
   for (let i = 1; i < route.matched.length; i++) {
@@ -43,16 +51,12 @@ const breadcrumb = computed(() => {
       i18n: true
     });
   }
-  if (
-    route.name === 'files-personal' ||
-    route.name === 'files-org' ||
-    route.name === 'files-recycle-bin'
-  ) {
+  if (route.name === 'files-personal' || route.name === 'files-recycle-bin') {
     const filePathList = filePathPattern.value;
     const filePathParamList = [];
     for (let i = 0; i < filePathList.length; i++) {
       filePathParamList.push(filePathList[i]);
-      b.push({
+      const routerTo: any = {
         name: route.name,
         label: filePathList[i],
         icon: IconFolderClose,
@@ -60,7 +64,14 @@ const breadcrumb = computed(() => {
         params: {
           path: [...filePathParamList]
         }
-      });
+      };
+      if (route.name === 'files-recycle-bin') {
+        const recycleId = recycleIdPattern.value;
+        routerTo.query = {
+          recycleId: recycleId
+        };
+      }
+      b.push(routerTo);
     }
   }
   return b;
@@ -72,7 +83,8 @@ function clickBreadcrumb(breadcrumb: any, index: number) {
   }
   router.push({
     name: breadcrumb.name,
-    params: breadcrumb.params
+    params: breadcrumb.params,
+    query: breadcrumb.query
   });
 }
 </script>
