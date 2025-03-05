@@ -117,15 +117,30 @@ public class FileDataService {
         }
     }
 
-    public Page<FileData> get(PageRequest page, String path, boolean deleted, String name) {
+    public Page<FileData> get(PageRequest page, String path, String name) {
         path = path + "%";
         if (StringUtils.hasLength(name)) {
             name = "%" + name + "%";
         } else {
             name = "%";
         }
-        Page<FileData> fileDataPage = fileDataRepository.findAllByPathLikeAndPathNotLikeAndDeletedAndNameLike(
-                path, path + FileAttribute.SEPARATOR + "%", deleted, name, page);
+        Page<FileData> fileDataPage = fileDataRepository.findAllByPathLikeAndPathNotLikeAndNameLikeAndDeletedFalse(
+                path, path + FileAttribute.SEPARATOR + "%", name, page);
+        fileDataPage.getContent().forEach(fileData ->
+                fileData.setHasThumbnail(thumbnailUtil.hasThumbnail(fileData.getMimeType()))
+        );
+        return fileDataPage;
+    }
+
+    public Page<FileData> getFromRecycleBin(PageRequest page, String path, String name) {
+        path = path + "%";
+        if (StringUtils.hasLength(name)) {
+            name = "%" + name + "%";
+        } else {
+            name = "%";
+        }
+        Page<FileData> fileDataPage = fileDataRepository.findAllByRecyclePathLikeAndRecyclePathNotLikeAndNameLikeAndDeletedTrue(
+                path, path + FileAttribute.SEPARATOR + "%", name, page);
         fileDataPage.getContent().forEach(fileData ->
                 fileData.setHasThumbnail(thumbnailUtil.hasThumbnail(fileData.getMimeType()))
         );

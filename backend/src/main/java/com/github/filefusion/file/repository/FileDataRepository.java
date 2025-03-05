@@ -4,7 +4,7 @@ import com.github.filefusion.common.HttpException;
 import com.github.filefusion.file.entity.FileData;
 import com.github.filefusion.file.model.FileHashUsageCount;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -26,16 +26,26 @@ import java.util.List;
 public interface FileDataRepository extends JpaRepository<FileData, String> {
 
     /**
-     * findAllByPathLikeAndPathNotLikeAndDeletedAndNameLike
+     * findAllByPathLikeAndPathNotLikeAndNameLikeAndDeletedFalse
      *
      * @param path        path
      * @param excludePath exclude path
-     * @param deleted     deleted
      * @param name        name
      * @param page        page
      * @return file list
      */
-    Page<FileData> findAllByPathLikeAndPathNotLikeAndDeletedAndNameLike(String path, String excludePath, boolean deleted, String name, PageRequest page);
+    Page<FileData> findAllByPathLikeAndPathNotLikeAndNameLikeAndDeletedFalse(String path, String excludePath, String name, Pageable page);
+
+    /**
+     * findAllByRecyclePathLikeAndRecyclePathNotLikeAndNameLikeAndDeletedTrue
+     *
+     * @param recyclePath        recycle path
+     * @param excludeRecyclePath exclude recycle path
+     * @param name               name
+     * @param page               page
+     * @return file list
+     */
+    Page<FileData> findAllByRecyclePathLikeAndRecyclePathNotLikeAndNameLikeAndDeletedTrue(String recyclePath, String excludeRecyclePath, String name, Pageable page);
 
     /**
      * findAllByPathOrPathLike

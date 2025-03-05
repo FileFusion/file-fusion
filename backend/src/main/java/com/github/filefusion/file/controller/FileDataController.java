@@ -1,5 +1,6 @@
 package com.github.filefusion.file.controller;
 
+import com.github.filefusion.common.HttpException;
 import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.constant.SorterOrder;
 import com.github.filefusion.file.entity.FileData;
@@ -7,6 +8,7 @@ import com.github.filefusion.file.model.RenameFileModel;
 import com.github.filefusion.file.model.SubmitDownloadFilesResponse;
 import com.github.filefusion.file.service.FileDataService;
 import com.github.filefusion.util.CurrentUser;
+import com.github.filefusion.util.I18n;
 import com.github.filefusion.util.TimeUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -56,7 +58,18 @@ public class FileDataController {
                               @RequestParam(required = false) String name,
                               @RequestParam(required = false) String sorter,
                               @RequestParam(required = false) SorterOrder sorterOrder) {
-        return get(page, pageSize, path, name, sorter, sorterOrder, false);
+        if (!StringUtils.hasLength(sorter)) {
+            sorter = FileData.Fields.name;
+        }
+        if (sorterOrder == null) {
+            sorterOrder = SorterOrder.ascend;
+        }
+        if (!StringUtils.hasLength(path)) {
+            path = CurrentUser.get().getId() + FileAttribute.SEPARATOR;
+        } else {
+            path = CurrentUser.get().getId() + FileAttribute.SEPARATOR + path + FileAttribute.SEPARATOR;
+        }
+        return fileDataService.get(PageRequest.of(page - 1, pageSize, sorterOrder.order(), sorter), path, name);
     }
 
     /**
@@ -75,15 +88,9 @@ public class FileDataController {
     public Page<FileData> getRecycleBin(@PathVariable Integer page, @PathVariable Integer pageSize,
                                         @RequestParam(required = false) String path,
                                         @RequestParam(required = false) String name,
+                                        @RequestParam(required = false) String recycleId,
                                         @RequestParam(required = false) String sorter,
                                         @RequestParam(required = false) SorterOrder sorterOrder) {
-        return get(page, pageSize, path, name, sorter, sorterOrder, true);
-    }
-
-    private Page<FileData> get(Integer page, Integer pageSize,
-                               String path, String name,
-                               String sorter, SorterOrder sorterOrder,
-                               boolean deleted) {
         if (!StringUtils.hasLength(sorter)) {
             sorter = FileData.Fields.name;
         }
@@ -91,11 +98,15 @@ public class FileDataController {
             sorterOrder = SorterOrder.ascend;
         }
         if (!StringUtils.hasLength(path)) {
-            path = CurrentUser.get().getId() + FileAttribute.SEPARATOR;
+            path = CurrentUser.get().getId() + FileAttribute.SEPARATOR + "%" + FileAttribute.SEPARATOR;
         } else {
-            path = CurrentUser.get().getId() + FileAttribute.SEPARATOR + path + FileAttribute.SEPARATOR;
+            if (StringUtils.hasLength(recycleId)) {
+                throw new HttpException(I18n.get("recycleIdNotExist"));
+            }
+            path = CurrentUser.get().getId() + FileAttribute.SEPARATOR + recycleId + FileAttribute.SEPARATOR + path + FileAttribute.SEPARATOR;
         }
-        return fileDataService.get(PageRequest.of(page - 1, pageSize, sorterOrder.order(), sorter), path, deleted, name);
+        return fileDataService.getFromRecycleBin(PageRequest.of(page - 1, pageSize, sorterOrder.order(), sorter), path, name);
+
     }
 
     /**
