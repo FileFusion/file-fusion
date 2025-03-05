@@ -100,7 +100,7 @@ public class FileDataController {
         if (!StringUtils.hasLength(path)) {
             path = CurrentUser.get().getId() + FileAttribute.SEPARATOR + "%" + FileAttribute.SEPARATOR;
         } else {
-            if (StringUtils.hasLength(recycleId)) {
+            if (!StringUtils.hasLength(recycleId)) {
                 throw new HttpException(I18n.get("recycleIdNotExist"));
             }
             path = CurrentUser.get().getId() + FileAttribute.SEPARATOR + recycleId + FileAttribute.SEPARATOR + path + FileAttribute.SEPARATOR;
