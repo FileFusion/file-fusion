@@ -1,6 +1,6 @@
 package com.github.filefusion.common;
 
-import com.github.filefusion.config.UlidGeneratorType;
+import com.github.filefusion.config.ULIDGeneratorType;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
@@ -29,7 +29,7 @@ public abstract class BaseEntity implements Serializable {
      * id
      */
     @Id
-    @UlidGeneratorType.UlidGenerator
+    @ULIDGeneratorType.ULIDGenerator
     private String id;
 
     /**

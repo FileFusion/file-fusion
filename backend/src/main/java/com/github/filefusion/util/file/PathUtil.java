@@ -2,6 +2,7 @@ package com.github.filefusion.util.file;
 
 import com.github.filefusion.common.HttpException;
 import com.github.filefusion.util.I18n;
+import jakarta.annotation.Nonnull;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.StringUtils;
 
@@ -96,7 +97,8 @@ public final class PathUtil {
         try {
             Files.walkFileTree(path, new SimpleFileVisitor<>() {
                 @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                @Nonnull
+                public FileVisitResult visitFile(Path file, @Nonnull BasicFileAttributes attrs) {
                     try {
                         Files.deleteIfExists(file);
                     } catch (IOException e) {
@@ -106,6 +108,7 @@ public final class PathUtil {
                 }
 
                 @Override
+                @Nonnull
                 public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
                     try {
                         Files.deleteIfExists(dir);

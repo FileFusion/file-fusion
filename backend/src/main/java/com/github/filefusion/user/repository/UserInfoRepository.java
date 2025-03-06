@@ -2,7 +2,7 @@ package com.github.filefusion.user.repository;
 
 import com.github.filefusion.user.entity.UserInfo;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -43,7 +43,7 @@ public interface UserInfoRepository extends JpaRepository<UserInfo, String> {
      * @return user list
      */
     @Query("FROM user_info u WHERE u.id IN (SELECT ou.userId FROM org_user ou WHERE ou.orgId = ?1) AND (u.username LIKE %?2% OR u.name LIKE %?2% OR u.email LIKE %?2% OR CONCAT(u.areaCode, u.phone) LIKE %?2%) ORDER BY u.username ASC")
-    Page<UserInfo> findAllByIdInOrderByUsernameAsc(String orgId, String search, PageRequest page);
+    Page<UserInfo> findAllByIdInOrderByUsernameAsc(String orgId, String search, Pageable page);
 
     /**
      * findAllOrderBySort
@@ -53,7 +53,7 @@ public interface UserInfoRepository extends JpaRepository<UserInfo, String> {
      * @return user list
      */
     @Query("FROM user_info u WHERE u.username LIKE %?1% OR u.name LIKE %?1% OR u.email LIKE %?1% OR CONCAT(u.areaCode, u.phone) LIKE %?1%")
-    Page<UserInfo> findAllOrderBySort(String search, PageRequest page);
+    Page<UserInfo> findAllOrderBySort(String search, Pageable page);
 
     /**
      * existsByUsername

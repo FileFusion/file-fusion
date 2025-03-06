@@ -17,12 +17,12 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import static org.hibernate.generator.EventTypeSets.INSERT_ONLY;
 
 /**
- * UlidGeneratorType
+ * ULIDGeneratorType
  *
  * @author hackyo
  * @since 2022/4/1
  */
-public class UlidGeneratorType implements BeforeExecutionGenerator {
+public class ULIDGeneratorType implements BeforeExecutionGenerator {
 
     @Override
     public Object generate(SharedSessionContractImplementor session, Object owner, Object currentValue, EventType eventType) {
@@ -34,11 +34,11 @@ public class UlidGeneratorType implements BeforeExecutionGenerator {
         return INSERT_ONLY;
     }
 
-    @IdGeneratorType(UlidGeneratorType.class)
-    @ValueGenerationType(generatedBy = UlidGeneratorType.class)
+    @IdGeneratorType(ULIDGeneratorType.class)
+    @ValueGenerationType(generatedBy = ULIDGeneratorType.class)
     @Retention(RUNTIME)
     @Target({FIELD, METHOD})
-    public @interface UlidGenerator {
+    public @interface ULIDGenerator {
     }
 
 }
