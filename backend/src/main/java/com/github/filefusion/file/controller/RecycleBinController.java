@@ -12,6 +12,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * RecycleBinController
  *
@@ -41,10 +43,10 @@ public class RecycleBinController {
      */
     @GetMapping("/{page}/{pageSize}")
     @PreAuthorize("hasAuthority('recycle_bin_file:read')")
-    public Page<FileData> getRecycleBin(@PathVariable Integer page, @PathVariable Integer pageSize,
-                                        @RequestParam(required = false) String name,
-                                        @RequestParam(required = false) String sorter,
-                                        @RequestParam(required = false) SorterOrder sorterOrder) {
+    public Page<FileData> get(@PathVariable Integer page, @PathVariable Integer pageSize,
+                              @RequestParam(required = false) String name,
+                              @RequestParam(required = false) String sorter,
+                              @RequestParam(required = false) SorterOrder sorterOrder) {
         if (!StringUtils.hasLength(sorter)) {
             sorter = FileData.Fields.name;
         }
@@ -53,6 +55,18 @@ public class RecycleBinController {
         }
         String path = CurrentUser.get().getId() + FileAttribute.SEPARATOR + "%" + FileAttribute.SEPARATOR;
         return fileDataService.getFromRecycleBin(PageRequest.of(page - 1, pageSize, sorterOrder.order(), sorter), path, name);
+    }
+
+    /**
+     * batch delete file
+     *
+     * @param pathList path list
+     */
+    @PostMapping("/_batch_delete")
+    @PreAuthorize("hasAuthority('recycle_bin_file:delete')")
+    public void batchDelete(@RequestBody List<String> pathList) {
+        fileDataService.verifyUserAuthorize(CurrentUser.get().getId(), pathList.toArray(new String[0]));
+        fileDataService.batchDeleteFromRecycleBin(pathList);
     }
 
 }

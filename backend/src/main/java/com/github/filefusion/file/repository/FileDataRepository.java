@@ -47,13 +47,22 @@ public interface FileDataRepository extends JpaRepository<FileData, String> {
     Page<FileData> findAllByRecyclePathLikeAndRecyclePathNotLikeAndNameLikeAndDeletedTrue(String recyclePath, String excludeRecyclePath, String name, Pageable page);
 
     /**
-     * findAllByPathOrPathLike
+     * findAllByPathOrPathLikeAndDeletedFalse
      *
      * @param path     path
      * @param pathLike path like
      * @return file list
      */
-    List<FileData> findAllByPathOrPathLike(String path, String pathLike);
+    List<FileData> findAllByPathOrPathLikeAndDeletedFalse(String path, String pathLike);
+
+    /**
+     * findAllByRecyclePathOrRecyclePathLikeAndDeletedTrue
+     *
+     * @param recyclePath     recycle path
+     * @param recyclePathLike recycle path like
+     * @return file list
+     */
+    List<FileData> findAllByRecyclePathOrRecyclePathLikeAndDeletedTrue(String recyclePath, String recyclePathLike);
 
     /**
      * findAllByPathLikeAndDeletedFalse
@@ -64,13 +73,22 @@ public interface FileDataRepository extends JpaRepository<FileData, String> {
     List<FileData> findAllByPathLikeAndDeletedFalse(String pathLike);
 
     /**
-     * deleteAllByPathIn
+     * deleteAllByPathInAndDeletedFalse
      *
      * @param pathList path list
      */
     @Modifying
     @Transactional(rollbackFor = HttpException.class)
-    void deleteAllByPathIn(List<String> pathList);
+    void deleteAllByPathInAndDeletedFalse(List<String> pathList);
+
+    /**
+     * deleteAllByRecyclePathInAndDeletedTrue
+     *
+     * @param recyclePathList recycle path list
+     */
+    @Modifying
+    @Transactional(rollbackFor = HttpException.class)
+    void deleteAllByRecyclePathInAndDeletedTrue(List<String> recyclePathList);
 
     /**
      * existsByPathAndDeletedFalse

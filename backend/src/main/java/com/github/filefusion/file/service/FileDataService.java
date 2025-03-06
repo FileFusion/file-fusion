@@ -180,17 +180,28 @@ public class FileDataService {
 
     private void batchDelete(List<String> pathList) {
         List<FileData> fileList = pathList.stream()
-                .flatMap(path -> fileDataRepository.findAllByPathOrPathLike(path, path + FileAttribute.SEPARATOR + "%").stream())
+                .flatMap(path -> fileDataRepository.findAllByPathOrPathLikeAndDeletedFalse(path, path + FileAttribute.SEPARATOR + "%").stream())
                 .toList();
-        batchDeleteFile(fileList);
+        List<String> allPathList = fileList.stream().map(FileData::getPath).sorted(Comparator.comparingInt(String::length)).toList();
+        List<String> hashList = fileList.stream().map(FileData::getHashValue).filter(StringUtils::hasLength).distinct().toList();
+        distributedLock.tryMultiLock(RedisAttribute.LockType.file, allPathList, () -> {
+            fileDataRepository.deleteAllByPathInAndDeletedFalse(allPathList);
+            PathUtil.delete(PathUtil.resolveSafePath(fileUtil.getBaseDir(), pathList, false));
+            if (!hashList.isEmpty()) {
+                thumbnailUtil.clearThumbnail(hashList);
+            }
+        }, fileLockTimeout);
     }
 
-    public void batchDeleteFile(List<FileData> fileList) {
-        List<String> pathList = fileList.stream().map(FileData::getPath).sorted(Comparator.comparingInt(String::length)).toList();
+    public void batchDeleteFromRecycleBin(List<String> recyclePathList) {
+        List<FileData> fileList = recyclePathList.stream()
+                .flatMap(path -> fileDataRepository.findAllByRecyclePathOrRecyclePathLikeAndDeletedTrue(path, path + FileAttribute.SEPARATOR + "%").stream())
+                .toList();
+        List<String> allRecyclePathList = fileList.stream().map(FileData::getRecyclePath).sorted(Comparator.comparingInt(String::length)).toList();
         List<String> hashList = fileList.stream().map(FileData::getHashValue).filter(StringUtils::hasLength).distinct().toList();
-        distributedLock.tryMultiLock(RedisAttribute.LockType.file, pathList, () -> {
-            fileDataRepository.deleteAllByPathIn(pathList);
-            PathUtil.delete(PathUtil.resolvePath(fileUtil.getBaseDir(), pathList, false));
+        distributedLock.tryMultiLock(RedisAttribute.LockType.file, allRecyclePathList, () -> {
+            fileDataRepository.deleteAllByRecyclePathInAndDeletedTrue(recyclePathList);
+            PathUtil.delete(PathUtil.resolveSafePath(recycleBinUtil.getBaseDir(), recyclePathList, false));
             if (!hashList.isEmpty()) {
                 thumbnailUtil.clearThumbnail(hashList);
             }

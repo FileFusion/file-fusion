@@ -58,7 +58,7 @@ public class ClearRecycleBinFileTask {
             LocalDateTime cutoffDate = LocalDateTime.now().minusDays(recycleBinRetentionDays)
                     .withHour(0).withMinute(0).withSecond(0).withNano(0);
             List<FileData> fileList = fileDataRepository.findAllByDeletedTrueAndDeletedDateBefore(cutoffDate);
-            fileDataService.batchDeleteFile(fileList);
+//            fileDataService.batchDeleteFromRecycleBin(fileList);
         }, taskLockTimeout);
     }
 

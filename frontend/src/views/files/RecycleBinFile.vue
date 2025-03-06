@@ -468,7 +468,7 @@ const {
 
 const { loading: deleteFileLoading, send: doDeleteFile } = useRequest(
   (filePathList: string[]) =>
-    http.Post('/file_data/_batch_delete', filePathList),
+    http.Post('/recycle_bin/_batch_delete', filePathList),
   {
     immediate: false
   }
