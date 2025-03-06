@@ -192,7 +192,7 @@ import {
   supportImagePreview,
   supportVideoPreview
 } from '@/commons/utils';
-import { useRouter, useRoute } from 'vue-router';
+import { useRoute } from 'vue-router';
 import { mainStore } from '@/store';
 import FileThumbnail from '@/views/files/components/FileThumbnail.vue';
 import VideoPreview from '@/views/files/components/VideoPreview.vue';
@@ -200,7 +200,6 @@ import ImagePreview from '@/views/files/components/ImagePreview.vue';
 
 const { t } = useI18n();
 const http = window.$http;
-const router = useRouter();
 const route = useRoute();
 const mStore = mainStore();
 
@@ -471,25 +470,6 @@ const getFileTableSorterOptions = computed(() => {
   ];
 });
 
-const filePathPattern = computed(() => {
-  const path = route.params.path;
-  if (!path) {
-    return '';
-  }
-  if (Array.isArray(path)) {
-    return path.join('/');
-  }
-  return path;
-});
-
-const recycleIdPattern = computed(() => {
-  const recycleId = route.query.recycleId;
-  if (!recycleId) {
-    return '';
-  }
-  return recycleId;
-});
-
 const {
   loading: fileTableLoading,
   data: fileTableData,
@@ -507,10 +487,6 @@ const {
         pageSize +
         '?name=' +
         fileNamePattern.value +
-        '&path=' +
-        filePathPattern.value +
-        '&recycleId=' +
-        recycleIdPattern.value +
         (sorter ? '&' + sorter : '')
     );
   },
@@ -609,16 +585,6 @@ function deleteFiles(filePathList: string[]) {
 
 function clickFile(file: any) {
   if (file.type === 'FOLDER') {
-    let path = '';
-    if (filePathPattern.value) {
-      path += filePathPattern.value + '/';
-    }
-    path += file.name;
-    router.push({
-      name: 'files-recycle-bin',
-      params: { path: path.split('/') },
-      query: { recycleId: file.recyclePath.split('/')[1] }
-    });
     return;
   }
   if (!permission.value.recycleBinFilePreview) {

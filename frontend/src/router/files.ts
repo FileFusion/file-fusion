@@ -14,7 +14,7 @@ export default [
     component: () => import('@/views/files/PersonalFile.vue')
   },
   {
-    path: 'recycle-bin/:path*',
+    path: 'recycle-bin',
     name: 'files-recycle-bin',
     meta: {
       requiresAuth: true,
