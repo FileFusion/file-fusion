@@ -40,9 +40,9 @@ const { t } = useI18n();
 
 const sideMenuCollapsed = computed(() => mStore.getSideMenuCollapsed);
 
-const activeMenu = computed(() => {
+const activeMenu = computed((): string => {
   if (route.matched.length >= 3) {
-    return route.matched[2].name;
+    return route.matched[2].name as string;
   }
   return '';
 });

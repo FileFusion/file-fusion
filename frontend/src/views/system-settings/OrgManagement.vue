@@ -541,8 +541,8 @@ function validateAddOrgUsersForm() {
   }
 }
 
-function userTableHandleCheck(rowKeys: string[]) {
-  userTableCheck.value = rowKeys;
+function userTableHandleCheck(rowKeys: Array<string | number>) {
+  userTableCheck.value = rowKeys as Array<string>;
 }
 
 function deleteOrgUsers() {

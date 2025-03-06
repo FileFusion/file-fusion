@@ -23,8 +23,8 @@ const permission = ref({
   sysConfigRecycleBinRead: hasPermission('sys_config:recycle_bin_read')
 });
 
-const routeName = computed(() => {
-  return route.name;
+const routeName = computed((): string => {
+  return route.name as string;
 });
 
 watch(

@@ -16,9 +16,9 @@ const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
 
-const activeMenu = computed(() => {
+const activeMenu = computed((): string => {
   if (route.matched.length >= 2) {
-    return route.matched[1].name;
+    return route.matched[1].name as string;
   }
   return '';
 });
@@ -41,7 +41,7 @@ const menus = computed(() => {
       }
       const roTitle = ro.meta.title;
       newMenus.push({
-        key: ro.name,
+        key: ro.name as string,
         label: () =>
           h(
             RouterLink,
@@ -62,7 +62,7 @@ const menus = computed(() => {
 watchEffect(async () => {
   if (route.matched.length === 1) {
     if (menus.value.length > 0) {
-      await router.push({ name: menus.value[0].key });
+      await router.push({ name: menus.value[0].key as string });
     } else {
       await router.push({ name: 'user-settings' });
     }

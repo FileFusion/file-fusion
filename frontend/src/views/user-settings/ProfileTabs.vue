@@ -25,8 +25,8 @@ import { computed } from 'vue';
 const router = useRouter();
 const route = useRoute();
 
-const routeName = computed(() => {
-  return route.name;
+const routeName = computed((): string => {
+  return route.name as string;
 });
 
 function switchTab(value: string) {
