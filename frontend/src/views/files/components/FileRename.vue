@@ -10,7 +10,7 @@
         ref="renameFileFormRef"
         :model="renameFileForm"
         :rules="renameFileFormRules">
-        <n-form-item path="name">
+        <n-form-item path="targetName">
           <n-input
             v-model:value="renameFileForm.targetName"
             :placeholder="$t('files.personal.fileName')"
