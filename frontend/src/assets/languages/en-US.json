@@ -123,6 +123,7 @@
         "usernameEmpty": "Please enter login name",
         "nameEmpty": "Please enter name",
         "emailError": "Email format is incorrect",
+        "phoneEmpty": "Please enter phone",
         "phoneError": "Phone format is incorrect",
         "areaCodeEmpty": "Please select an area code",
         "passwordEmpty": "Please enter password",

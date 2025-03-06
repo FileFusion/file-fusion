@@ -129,7 +129,10 @@ const profileRules = computed<FormRules>(() => {
     phone: [
       {
         validator(_rule: FormItemRule, value: string) {
-          if (value) {
+          if (profileForm.value.areaCode || value) {
+            if (!value) {
+              return new Error(t('userSettings.profile.validator.phoneEmpty'));
+            }
             const regular = new RegExp(/^\d+$/);
             if (!regular.test(value)) {
               return new Error(t('userSettings.profile.validator.phoneError'));

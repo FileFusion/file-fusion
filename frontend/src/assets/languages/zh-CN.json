@@ -123,6 +123,7 @@
         "usernameEmpty": "请输入登录名",
         "nameEmpty": "请输入姓名",
         "emailError": "邮箱格式不正确",
+        "phoneEmpty": "请输入手机号",
         "phoneError": "手机号格式不正确",
         "areaCodeEmpty": "请选择区号",
         "passwordEmpty": "请输入密码",
