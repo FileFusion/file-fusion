@@ -79,6 +79,7 @@ public class FileDataController {
      * @param pageSize    page size
      * @param path        path
      * @param name        name
+     * @param recycleId   recycle id
      * @param sorter      sorter
      * @param sorterOrder sorter order
      * @return recycle bin file list

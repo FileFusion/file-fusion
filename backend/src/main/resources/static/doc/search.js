@@ -162,88 +162,123 @@ api[0].list[3].list.push({
 api[0].list[3].list.push({
     order: '2',
     deprecated: 'false',
-    url: '/api/file_data/_batch_delete',
-    methodId: 'a806f04e3262700aac5e8e6187ac7ba5',
-    desc: 'batch delete file',
+    url: '/api/file_data/recycle_bin/{page}/{pageSize}',
+    methodId: 'e8c47e0d8671f0f9e8f048c7853b1858',
+    desc: 'get recycle bin file list - paged',
 });
 api[0].list[3].list.push({
     order: '3',
     deprecated: 'false',
-    url: '/api/file_data/_create_folder',
-    methodId: '3b9d2aaed797730efc3f3a6d7c9464d6',
-    desc: 'create folder',
+    url: '/api/file_data/_batch_delete',
+    methodId: 'd657067588c71ce903661294c163a2f6',
+    desc: 'batch delete file',
 });
 api[0].list[3].list.push({
     order: '4',
     deprecated: 'false',
-    url: '/api/file_data/_upload',
-    methodId: 'b695164f19339a94c7432b46f371c000',
-    desc: 'upload file',
+    url: '/api/file_data/_create_folder',
+    methodId: 'a215b5ff5b6439f15184fb426811c99f',
+    desc: 'create folder',
 });
 api[0].list[3].list.push({
     order: '5',
     deprecated: 'false',
-    url: '/api/file_data/_rename',
-    methodId: '123849e04f27c9801564b67164e8b5a8',
-    desc: 'rename file',
+    url: '/api/file_data/_upload',
+    methodId: 'b7a6fb1f2747c95eecf404aa82c4a461',
+    desc: 'upload file',
 });
 api[0].list[3].list.push({
     order: '6',
     deprecated: 'false',
-    url: '/api/file_data/_submit_download',
-    methodId: '179e73c99f6186cdf09d998fbb6381a6',
-    desc: 'submit download file list',
+    url: '/api/file_data/_rename',
+    methodId: '99c3ad2099c6fe6b6acc3ccfa91a22ca',
+    desc: 'rename file',
 });
 api[0].list[3].list.push({
     order: '7',
     deprecated: 'false',
-    url: '/api/file_data/_download/{downloadId}',
-    methodId: '5770e75289f7bd5374275bafae0e7ba1',
-    desc: 'download file list',
+    url: '/api/file_data/_submit_download',
+    methodId: '2b25e169f73b27385639ab852d64ca6f',
+    desc: 'submit download file list',
 });
 api[0].list[3].list.push({
     order: '8',
     deprecated: 'false',
+    url: '/api/file_data/_download/{downloadId}',
+    methodId: 'e127e5fbb4fd6c320e8e23a1f7d6bbd4',
+    desc: 'download file list',
+});
+api[0].list[3].list.push({
+    order: '9',
+    deprecated: 'false',
+    url: '/api/file_data/_download_chunked',
+    methodId: 'b500c72e332077f6114a75fa37294140',
+    desc: 'download chunked',
+});
+api[0].list[3].list.push({
+    order: '10',
+    deprecated: 'false',
     url: '/api/file_data/_thumbnail',
-    methodId: '135e2ea3713f11c82a6ea580e9c34e94',
+    methodId: 'a5d1a5fb1b49da91a4a1a48a7201623f',
     desc: 'thumbnail file',
 });
 api[0].list.push({
-    alias: 'RoleController',
+    alias: 'SysConfigController',
     order: '5',
+    link: 'sysconfigcontroller',
+    desc: 'SysConfigController',
+    list: []
+})
+api[0].list[4].list.push({
+    order: '1',
+    deprecated: 'false',
+    url: '/api/sys-config',
+    methodId: '695a0942598f329a2e0ec5d42a3610eb',
+    desc: 'get sys config',
+});
+api[0].list[4].list.push({
+    order: '2',
+    deprecated: 'false',
+    url: '/api/sys-config',
+    methodId: '14e25b01ceb601e345d2b832a2c8b00f',
+    desc: 'update sys config',
+});
+api[0].list.push({
+    alias: 'RoleController',
+    order: '6',
     link: 'rolecontroller',
     desc: 'RoleController',
     list: []
 })
-api[0].list[4].list.push({
+api[0].list[5].list.push({
     order: '1',
     deprecated: 'false',
     url: '/api/role',
     methodId: '71c60f34f1e52e1785d46a51e85dbfec',
     desc: 'get role list',
 });
-api[0].list[4].list.push({
+api[0].list[5].list.push({
     order: '2',
     deprecated: 'false',
     url: '/api/role',
     methodId: '21ef1892558ee9d6840153b19a5c4514',
     desc: 'update role',
 });
-api[0].list[4].list.push({
+api[0].list[5].list.push({
     order: '3',
     deprecated: 'false',
     url: '/api/role',
     methodId: '26778cf8e07e9fd73ad683c78cd2a7f1',
     desc: 'add role',
 });
-api[0].list[4].list.push({
+api[0].list[5].list.push({
     order: '4',
     deprecated: 'false',
     url: '/api/role/{roleId}',
     methodId: '056fe7d9a8f5221970e3b6dfc03f2b0c',
     desc: 'delete role',
 });
-api[0].list[4].list.push({
+api[0].list[5].list.push({
     order: '5',
     deprecated: 'false',
     url: '/api/role/{roleId}/permission',
@@ -252,12 +287,12 @@ api[0].list[4].list.push({
 });
 api[0].list.push({
     alias: 'PermissionController',
-    order: '6',
+    order: '7',
     link: 'permissioncontroller',
     desc: 'PermissionController',
     list: []
 })
-api[0].list[5].list.push({
+api[0].list[6].list.push({
     order: '1',
     deprecated: 'false',
     url: '/api/permission',
