@@ -54,7 +54,11 @@ public class RoleService {
         }
         Role oldRole = roleRepository.findById(role.getId()).orElseThrow();
         oldRole.setName(role.getName());
-        oldRole.setDescription(role.getDescription());
+        if (!StringUtils.hasLength(role.getDescription())) {
+            oldRole.setDescription(null);
+        } else {
+            oldRole.setDescription(role.getDescription());
+        }
         role = roleRepository.save(oldRole);
         if (!role.getSystemRole()) {
             saveRolePermission(role.getId(), permissionIds);

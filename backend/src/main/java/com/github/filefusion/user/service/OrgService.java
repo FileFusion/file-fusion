@@ -54,7 +54,11 @@ public class OrgService {
         }
         Org oldOrg = orgRepository.findById(org.getId()).orElseThrow();
         oldOrg.setName(org.getName());
-        oldOrg.setDescription(org.getDescription());
+        if (!StringUtils.hasLength(org.getDescription())) {
+            oldOrg.setDescription(null);
+        } else {
+            oldOrg.setDescription(org.getDescription());
+        }
         return orgRepository.save(oldOrg);
     }
 

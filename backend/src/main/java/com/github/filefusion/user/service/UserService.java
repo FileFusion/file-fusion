@@ -76,13 +76,17 @@ public class UserService implements UserDetailsService {
         UserInfo u = userRepository.findById(user.getId()).orElseThrow();
         u.setId(user.getId());
         u.setName(user.getName());
-        u.setEmail(user.getEmail());
-        u.setPhone(user.getPhone());
-        if (!StringUtils.hasLength(u.getPhone())) {
-            // todo
+        if (!StringUtils.hasLength(user.getEmail())) {
+            u.setEmail(null);
+        } else {
+            u.setEmail(user.getEmail());
+        }
+        if (!StringUtils.hasLength(user.getAreaCode()) || !StringUtils.hasLength(user.getPhone())) {
             u.setAreaCode(null);
+            u.setPhone(null);
         } else {
             u.setAreaCode(user.getAreaCode());
+            u.setPhone(user.getPhone());
         }
         userRepository.save(u);
     }
@@ -134,6 +138,13 @@ public class UserService implements UserDetailsService {
         }
         user.setId(null);
         user.setPassword(passwordEncoder.encode(EncryptUtil.sha256(user.getPassword())));
+        if (!StringUtils.hasLength(user.getEmail())) {
+            user.setEmail(null);
+        }
+        if (!StringUtils.hasLength(user.getAreaCode()) || !StringUtils.hasLength(user.getPhone())) {
+            user.setAreaCode(null);
+            user.setPhone(null);
+        }
         user.setEarliestCredentials(LocalDateTime.now());
         user.setSystemdUser(false);
         user.setNonExpired(true);
