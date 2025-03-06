@@ -11,6 +11,7 @@ import checker from 'vite-plugin-checker';
 
 export default defineConfig({
   server: {
+    host: '0.0.0.0',
     proxy: {
       '/api': {
         target: 'https://localhost:18881',

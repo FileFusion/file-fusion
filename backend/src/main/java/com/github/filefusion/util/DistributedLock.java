@@ -11,7 +11,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.time.Duration;
-import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -38,7 +38,7 @@ public class DistributedLock {
         tryLock(lock, task, lockTimeout);
     }
 
-    public void tryMultiLock(RedisAttribute.LockType lockType, Collection<String> keyList, Runnable task, Duration lockTimeout) {
+    public void tryMultiLock(RedisAttribute.LockType lockType, List<String> keyList, Runnable task, Duration lockTimeout) {
         if (lockType == null || CollectionUtils.isEmpty(keyList) || lockTimeout == null || lockTimeout.isNegative()) {
             return;
         }

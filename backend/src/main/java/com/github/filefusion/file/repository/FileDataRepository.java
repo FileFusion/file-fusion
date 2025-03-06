@@ -13,7 +13,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -71,7 +70,7 @@ public interface FileDataRepository extends JpaRepository<FileData, String> {
      */
     @Modifying
     @Transactional(rollbackFor = HttpException.class)
-    void deleteAllByPathIn(Collection<String> pathList);
+    void deleteAllByPathIn(List<String> pathList);
 
     /**
      * existsByPathAndDeletedFalse
@@ -112,7 +111,7 @@ public interface FileDataRepository extends JpaRepository<FileData, String> {
      * @return hash count
      */
     @Query("SELECT new com.github.filefusion.file.model.FileHashUsageCount(f.hashValue, f.mimeType, COUNT(f.id)) FROM file_data f WHERE f.hashValue IN :hashList GROUP BY f.hashValue, f.mimeType")
-    List<FileHashUsageCount> countByHashValueList(@Param("hashList") Collection<String> hashList);
+    List<FileHashUsageCount> countByHashValueList(@Param("hashList") List<String> hashList);
 
     /**
      * findAllByDeletedTrueAndDeletedDateBefore

@@ -4,6 +4,7 @@ import com.github.filefusion.constant.RedisAttribute;
 import com.github.filefusion.constant.SysConfigKey;
 import com.github.filefusion.file.entity.FileData;
 import com.github.filefusion.file.repository.FileDataRepository;
+import com.github.filefusion.file.service.FileDataService;
 import com.github.filefusion.sys_config.entity.SysConfig;
 import com.github.filefusion.sys_config.service.SysConfigService;
 import com.github.filefusion.util.DistributedLock;
@@ -29,16 +30,19 @@ public class ClearRecycleBinFileTask {
     private final DistributedLock distributedLock;
     private final SysConfigService sysConfigService;
     private final FileDataRepository fileDataRepository;
+    private final FileDataService fileDataService;
 
     @Autowired
     public ClearRecycleBinFileTask(@Value("${task.lock-timeout}") Duration taskLockTimeout,
                                    DistributedLock distributedLock,
                                    SysConfigService sysConfigService,
-                                   FileDataRepository fileDataRepository) {
+                                   FileDataRepository fileDataRepository,
+                                   FileDataService fileDataService) {
         this.taskLockTimeout = taskLockTimeout;
         this.distributedLock = distributedLock;
         this.sysConfigService = sysConfigService;
         this.fileDataRepository = fileDataRepository;
+        this.fileDataService = fileDataService;
     }
 
     @Scheduled(cron = "0 0 * * * ?")
@@ -51,11 +55,10 @@ public class ClearRecycleBinFileTask {
             if (!recycleBin || recycleBinRetentionDays <= 0) {
                 return;
             }
-            LocalDateTime cutoffDate = LocalDateTime.now()
-                    .minusDays(recycleBinRetentionDays)
+            LocalDateTime cutoffDate = LocalDateTime.now().minusDays(recycleBinRetentionDays)
                     .withHour(0).withMinute(0).withSecond(0).withNano(0);
-            List<FileData> fileDataList = fileDataRepository.findAllByDeletedTrueAndDeletedDateBefore(cutoffDate);
-            // todo clearRecycleBinFile
+            List<FileData> fileList = fileDataRepository.findAllByDeletedTrueAndDeletedDateBefore(cutoffDate);
+            fileDataService.batchDeleteFile(fileList);
         }, taskLockTimeout);
     }
 

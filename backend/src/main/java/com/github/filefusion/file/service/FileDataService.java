@@ -36,10 +36,9 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -180,22 +179,20 @@ public class FileDataService {
     }
 
     private void batchDelete(List<String> pathList) {
-        Map<String, FileData> allMap = pathList.stream()
+        List<FileData> fileList = pathList.stream()
                 .flatMap(path -> fileDataRepository.findAllByPathOrPathLike(path, path + FileAttribute.SEPARATOR + "%").stream())
-                .collect(Collectors.toMap(FileData::getPath, Function.identity()));
-        if (allMap.isEmpty()) {
-            return;
-        }
-        Set<String> allPathList = allMap.keySet();
-        List<String> allHashList = allMap.values().stream().map(FileData::getHashValue)
-                .filter(StringUtils::hasLength).distinct().toList();
-        distributedLock.tryMultiLock(RedisAttribute.LockType.file, allPathList, () -> {
-            fileDataRepository.deleteAllByPathIn(allPathList);
-            PathUtil.delete(pathList.stream()
-                    .map(path -> PathUtil.resolveSafePath(fileUtil.getBaseDir(), path, true))
-                    .toList());
-            if (!allHashList.isEmpty()) {
-                thumbnailUtil.clearThumbnail(allHashList);
+                .toList();
+        batchDeleteFile(fileList);
+    }
+
+    public void batchDeleteFile(List<FileData> fileList) {
+        List<String> pathList = fileList.stream().map(FileData::getPath).sorted(Comparator.comparingInt(String::length)).toList();
+        List<String> hashList = fileList.stream().map(FileData::getHashValue).filter(StringUtils::hasLength).distinct().toList();
+        distributedLock.tryMultiLock(RedisAttribute.LockType.file, pathList, () -> {
+            fileDataRepository.deleteAllByPathIn(pathList);
+            PathUtil.delete(PathUtil.resolvePath(fileUtil.getBaseDir(), pathList, false));
+            if (!hashList.isEmpty()) {
+                thumbnailUtil.clearThumbnail(hashList);
             }
         }, fileLockTimeout);
     }
