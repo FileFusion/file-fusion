@@ -83,7 +83,6 @@
               :bordered="false"
               class="w-32 cursor-pointer"
               content-style="position: relative;padding: 0;"
-              @click="clickFile(fileData)"
               @mouseenter="fileData.showOperate = true"
               @mouseleave="fileData.showOperate = false">
               <n-checkbox
@@ -163,12 +162,6 @@
         @update:page="fileTablePageChange"
         @update:page-size="fileTablePageSizeChange" />
     </n-card>
-    <video-preview v-model="showVideoFile" :file="videoFile" />
-    <image-preview
-      v-model:show="showImageFile"
-      v-model:path="imageFilePath"
-      @preview-prev="imagePreviewPrevNext(true)"
-      @preview-next="imagePreviewPrevNext(false)" />
   </div>
 </template>
 
@@ -179,41 +172,24 @@ import type {
   PaginationInfo
 } from 'naive-ui';
 import { NButton, NDropdown, NTime } from 'naive-ui';
-import { computed, h, ref, watch } from 'vue';
+import { computed, h, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import IconCheck from '~icons/icon-park-outline/check';
 import IconDown from '~icons/icon-park-outline/down';
 import IconDelete from '~icons/icon-park-outline/delete';
 import { useRequest, usePagination } from 'alova/client';
 import { hasPermission } from '@/commons/permission';
-import {
-  formatFileSize,
-  renderIconMethod,
-  supportImagePreview,
-  supportVideoPreview
-} from '@/commons/utils';
-import { useRoute } from 'vue-router';
+import { formatFileSize, renderIconMethod } from '@/commons/utils';
 import { mainStore } from '@/store';
 import FileThumbnail from '@/views/files/components/FileThumbnail.vue';
-import VideoPreview from '@/views/files/components/VideoPreview.vue';
-import ImagePreview from '@/views/files/components/ImagePreview.vue';
 
 const { t } = useI18n();
 const http = window.$http;
-const route = useRoute();
 const mStore = mainStore();
 
 const permission = ref({
-  recycleBinFilePreview: hasPermission('recycle_bin_file:preview'),
   recycleBinFileDelete: hasPermission('recycle_bin_file:delete')
 });
-
-watch(
-  () => route.params.path,
-  () => {
-    fileTableReload();
-  }
-);
 
 const fileShowType = computed(() => mStore.getFileShowType);
 const fileNamePattern = ref<string>('');
@@ -223,12 +199,6 @@ const fileTableSorter = ref<any>({
   size: <any>false,
   lastModifiedDate: <any>false
 });
-
-const showVideoFile = ref<boolean>(false);
-const videoFile = ref<any>({});
-
-const showImageFile = ref<boolean>(false);
-const imageFilePath = ref<string | null>(null);
 
 function switchFileShowType(value: string) {
   mStore.setFileShowType(value);
@@ -267,8 +237,7 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
           NButton,
           {
             text: true,
-            type: 'primary',
-            onClick: () => clickFile(row)
+            type: 'primary'
           },
           {
             icon: () =>
@@ -481,7 +450,7 @@ const {
   (page, pageSize) => {
     const sorter = getFileTableSorter.value;
     return http.Get<any>(
-      '/file_data/recycle_bin/' +
+      '/recycle_bin/' +
         page +
         '/' +
         pageSize +
@@ -581,45 +550,5 @@ function deleteFiles(filePathList: string[]) {
     return;
   }
   doDeleteFile(filePathList);
-}
-
-function clickFile(file: any) {
-  if (file.type === 'FOLDER') {
-    return;
-  }
-  if (!permission.value.recycleBinFilePreview) {
-    window.$msg.warning(t('files.personal.noPermissionPreviewFile'));
-    return;
-  }
-  if (supportVideoPreview(file.mimeType)) {
-    showVideoFile.value = true;
-    videoFile.value = file;
-  } else if (supportImagePreview(file.mimeType)) {
-    showImageFile.value = true;
-    imageFilePath.value = file.path;
-  } else {
-    window.$msg.info(t('files.personal.fileNotSupportPreview'));
-  }
-}
-
-const supportImagePreviewFile = computed(() => {
-  return fileTableData.value.filter((file: any) =>
-    supportImagePreview(file.mimeType)
-  );
-});
-
-function imagePreviewPrevNext(prev: boolean) {
-  const filePathIndexMap = new Map<any, number>(
-    supportImagePreviewFile.value.map((file: any, index: number) => [
-      file.path,
-      index
-    ])
-  );
-  const currentIndex = filePathIndexMap.get(imageFilePath.value) ?? -1;
-  const targetIndex = Math.max(
-    0,
-    Math.min(currentIndex + (prev ? -1 : 1), filePathIndexMap.size - 1)
-  );
-  imageFilePath.value = supportImagePreviewFile.value[targetIndex].path;
 }
 </script>

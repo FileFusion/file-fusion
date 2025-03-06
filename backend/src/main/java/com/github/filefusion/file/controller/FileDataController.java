@@ -71,33 +71,6 @@ public class FileDataController {
     }
 
     /**
-     * get recycle bin file list - paged
-     *
-     * @param page        page
-     * @param pageSize    page size
-     * @param name        name
-     * @param sorter      sorter
-     * @param sorterOrder sorter order
-     * @return recycle bin file list
-     */
-    @GetMapping("/recycle_bin/{page}/{pageSize}")
-    @PreAuthorize("hasAuthority('recycle_bin_file:read')")
-    public Page<FileData> getRecycleBin(@PathVariable Integer page, @PathVariable Integer pageSize,
-                                        @RequestParam(required = false) String name,
-                                        @RequestParam(required = false) String sorter,
-                                        @RequestParam(required = false) SorterOrder sorterOrder) {
-        if (!StringUtils.hasLength(sorter)) {
-            sorter = FileData.Fields.name;
-        }
-        if (sorterOrder == null) {
-            sorterOrder = SorterOrder.ascend;
-        }
-        String path = CurrentUser.get().getId() + FileAttribute.SEPARATOR + "%" + FileAttribute.SEPARATOR;
-        return fileDataService.getFromRecycleBin(PageRequest.of(page - 1, pageSize, sorterOrder.order(), sorter), path, name);
-
-    }
-
-    /**
      * batch delete file
      *
      * @param pathList path list
@@ -160,7 +133,7 @@ public class FileDataController {
      * @return download id
      */
     @PostMapping("/_submit_download")
-    @PreAuthorize("hasAnyAuthority('personal_file:download','personal_file:preview','recycle_bin_file:preview')")
+    @PreAuthorize("hasAnyAuthority('personal_file:download','personal_file:preview')")
     public SubmitDownloadFilesResponse submitDownloadFiles(@RequestBody List<String> pathList) {
         fileDataService.verifyUserAuthorize(CurrentUser.get().getId(), pathList.toArray(new String[0]));
         return fileDataService.submitDownload(pathList);
@@ -185,7 +158,7 @@ public class FileDataController {
      * @return file chunked
      */
     @PostMapping("/_download_chunked")
-    @PreAuthorize("hasAnyAuthority('personal_file:download','personal_file:preview','recycle_bin_file:preview')")
+    @PreAuthorize("hasAnyAuthority('personal_file:download','personal_file:preview')")
     public ResponseEntity<StreamingResponseBody> downloadChunked(@RequestBody FileData fileData,
                                                                  @RequestHeader String range) {
         fileDataService.verifyUserAuthorize(CurrentUser.get().getId(), fileData.getPath());
