@@ -93,10 +93,11 @@ function validateRenameFileForm() {
   }
 }
 
-watch(
-  () => props.name,
-  (newName) => {
-    renameFileForm.value.name = newName;
+watch(model, (newValue) => {
+  if (newValue) {
+    renameFileForm.value.name = props.name;
+  } else {
+    renameFileForm.value.name = '';
   }
-);
+});
 </script>
