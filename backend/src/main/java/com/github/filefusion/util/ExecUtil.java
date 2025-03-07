@@ -18,7 +18,7 @@ import java.util.List;
  */
 public final class ExecUtil {
 
-    public static boolean exec(List<String> commandLineList, Duration execTimeout) {
+    public static boolean exec(List<String> commandLineList, Duration execTimeout) throws IOException {
         if (CollectionUtils.isEmpty(commandLineList)) {
             return false;
         }
@@ -34,12 +34,7 @@ public final class ExecUtil {
         ExecuteWatchdog watchdog = ExecuteWatchdog.builder().setTimeout(execTimeout).get();
         Executor executor = DefaultExecutor.builder().get();
         executor.setWatchdog(watchdog);
-
-        try {
-            return executor.execute(commandLine) == 0;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return executor.execute(commandLine) == 0;
     }
 
 }

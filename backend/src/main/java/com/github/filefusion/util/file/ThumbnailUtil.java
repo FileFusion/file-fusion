@@ -86,7 +86,12 @@ public final class ThumbnailUtil {
         } else {
             throw new HttpException(I18n.get("fileNotSupportThumbnail"));
         }
-        boolean execResult = ExecUtil.exec(Arrays.asList(exec.split(" ")), thumbnailGenerateTimeout);
+        boolean execResult = false;
+        try {
+            Files.createDirectories(targetPath.getParent());
+            execResult = ExecUtil.exec(Arrays.asList(exec.split(" ")), thumbnailGenerateTimeout);
+        } catch (IOException ignored) {
+        }
         if (!execResult || !Files.exists(targetPath)) {
             throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("thumbnailGenerationFailed"));
         }
