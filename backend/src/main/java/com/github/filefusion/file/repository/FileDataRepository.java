@@ -1,16 +1,13 @@
 package com.github.filefusion.file.repository;
 
-import com.github.filefusion.common.HttpException;
 import com.github.filefusion.file.entity.FileData;
-import com.github.filefusion.file.model.FileHashUsageCount;
+import com.github.filefusion.file.model.FileMd5UsageCount;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,111 +22,69 @@ import java.util.List;
 public interface FileDataRepository extends JpaRepository<FileData, String> {
 
     /**
-     * findAllByPathLikeAndPathNotLikeAndNameLikeAndDeletedFalse
+     * findAllByUserIdAndParentIdAndDeletedFalse
      *
-     * @param path        path
-     * @param excludePath exclude path
-     * @param name        name
-     * @param page        page
+     * @param userId   user id
+     * @param parentId parent id
+     * @param page     page
      * @return file list
      */
-    Page<FileData> findAllByPathLikeAndPathNotLikeAndNameLikeAndDeletedFalse(String path, String excludePath, String name, Pageable page);
+    Page<FileData> findAllByUserIdAndParentIdAndDeletedFalse(String userId, String parentId, Pageable page);
 
     /**
-     * findAllByRecyclePathLikeAndRecyclePathNotLikeAndNameLikeAndDeletedTrue
+     * findFirstByUserIdAndId
      *
-     * @param recyclePath        recycle path
-     * @param excludeRecyclePath exclude recycle path
-     * @param name               name
-     * @param page               page
+     * @param userId user id
+     * @param id     id
+     * @return file
+     */
+    FileData findFirstByUserIdAndId(String userId, String id);
+
+    /**
+     * findAllByParentId
+     *
+     * @param parentId parent id
      * @return file list
      */
-    Page<FileData> findAllByRecyclePathLikeAndRecyclePathNotLikeAndNameLikeAndDeletedTrue(String recyclePath, String excludeRecyclePath, String name, Pageable page);
+    List<FileData> findAllByParentId(String parentId);
 
     /**
-     * findAllByPathOrPathLikeAndDeletedFalse
+     * findFirstByUserIdAndParentIdAndName
      *
-     * @param path     path
-     * @param pathLike path like
-     * @return file list
+     * @param userId   user id
+     * @param parentId parent id
+     * @param name     name
+     * @return file
      */
-    List<FileData> findAllByPathOrPathLikeAndDeletedFalse(String path, String pathLike);
+    FileData findFirstByUserIdAndParentIdAndName(String userId, String parentId, String name);
 
     /**
-     * findAllByRecyclePathOrRecyclePathLikeAndDeletedTrue
+     * existsByUserIdAndParentIdAndName
      *
-     * @param recyclePath     recycle path
-     * @param recyclePathLike recycle path like
-     * @return file list
-     */
-    List<FileData> findAllByRecyclePathOrRecyclePathLikeAndDeletedTrue(String recyclePath, String recyclePathLike);
-
-    /**
-     * findAllByPathLikeAndDeletedFalse
-     *
-     * @param pathLike path like
-     * @return file list
-     */
-    List<FileData> findAllByPathLikeAndDeletedFalse(String pathLike);
-
-    /**
-     * deleteAllByPathInAndDeletedFalse
-     *
-     * @param pathList path list
-     */
-    @Modifying
-    @Transactional(rollbackFor = HttpException.class)
-    void deleteAllByPathInAndDeletedFalse(List<String> pathList);
-
-    /**
-     * deleteAllByRecyclePathInAndDeletedTrue
-     *
-     * @param recyclePathList recycle path list
-     */
-    @Modifying
-    @Transactional(rollbackFor = HttpException.class)
-    void deleteAllByRecyclePathInAndDeletedTrue(List<String> recyclePathList);
-
-    /**
-     * existsByPathAndDeletedFalse
-     *
-     * @param path path
+     * @param userId   user id
+     * @param parentId parent id
+     * @param name     name
      * @return exists
      */
-    Boolean existsByPathAndDeletedFalse(String path);
+    boolean existsByUserIdAndParentIdAndName(String userId, String parentId, String name);
 
     /**
-     * findAllByPathInAndDeletedFalse
+     * findAllByUserIdAndIdIn
      *
-     * @param pathList path list
+     * @param userId user id
+     * @param idList id list
      * @return file list
      */
-    List<FileData> findAllByPathInAndDeletedFalse(List<String> pathList);
+    List<FileData> findAllByUserIdAndIdIn(String userId, List<String> idList);
 
     /**
-     * findFirstByPath
+     * countByMd5ValueList
      *
-     * @param path path
-     * @return file
+     * @param md5List md5 list
+     * @return md5 count list
      */
-    FileData findFirstByPath(String path);
-
-    /**
-     * findFirstByPathAndDeletedFalse
-     *
-     * @param path path
-     * @return file
-     */
-    FileData findFirstByPathAndDeletedFalse(String path);
-
-    /**
-     * countByHashValueList
-     *
-     * @param hashList hash list
-     * @return hash count
-     */
-    @Query("SELECT new com.github.filefusion.file.model.FileHashUsageCount(f.hashValue, f.mimeType, COUNT(f.id)) FROM file_data f WHERE f.hashValue IN :hashList GROUP BY f.hashValue, f.mimeType")
-    List<FileHashUsageCount> countByHashValueList(@Param("hashList") List<String> hashList);
+    @Query("SELECT new com.github.filefusion.file.model.FileMd5UsageCount(f.md5Value, f.mimeType, COUNT(f.id)) FROM file_data f WHERE f.md5Value IN :md5List GROUP BY f.md5Value, f.mimeType")
+    List<FileMd5UsageCount> countByMd5ValueList(@Param("hashList") List<String> md5List);
 
     /**
      * findAllByDeletedTrueAndDeletedDateBefore

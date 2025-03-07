@@ -4,18 +4,20 @@ import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.constant.RedisAttribute;
 import com.github.filefusion.util.DistributedLock;
 import com.github.filefusion.util.file.ThumbnailUtil;
+import jakarta.annotation.Nonnull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Stream;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * ClearThumbnailFileTask
@@ -41,33 +43,35 @@ public class ClearThumbnailFileTask {
         this.thumbnailUtil = thumbnailUtil;
     }
 
-    /**
-     * Because the format of thumbnail files can be adjusted at any time,
-     * So outdated thumbnail files need to be cleaned up regularly.
-     */
     @Scheduled(cron = "${task.clear-thumbnail-file}")
     public void clearThumbnailFileTask() {
         distributedLock.tryLock(RedisAttribute.LockType.task, "clearThumbnailFileTask", () -> {
-            try (Stream<Path> baseDirStream = Files.list(thumbnailUtil.getBaseDir())) {
-                List<String> pathList = new ArrayList<>(BATCH_FILE_SIZE);
-                baseDirStream.filter(path -> {
-                    String fileName = path.getFileName().toString();
-                    return !fileName.equals(FileAttribute.THUMBNAIL_FILE_TYPE)
-                            && fileName.endsWith(FileAttribute.THUMBNAIL_FILE_TYPE);
-                }).map(path -> {
-                    String fileName = path.getFileName().toString();
-                    return fileName.substring(0, fileName.length() - FileAttribute.THUMBNAIL_FILE_TYPE.length());
-                }).forEach(path -> {
-                    pathList.add(path);
-                    if (pathList.size() >= BATCH_FILE_SIZE) {
-                        thumbnailUtil.clearThumbnail(new ArrayList<>(pathList));
-                        pathList.clear();
+            try {
+                Map<String, Path> thumbnailMap = new HashMap<>();
+                Files.walkFileTree(thumbnailUtil.getBaseDir(), new SimpleFileVisitor<>() {
+                    @Override
+                    @Nonnull
+                    public FileVisitResult visitFile(Path file, @Nonnull BasicFileAttributes attrs) {
+                        try {
+                            String fileName = file.getFileName().toString();
+                            if (!FileAttribute.THUMBNAIL_FILE_SUFFIX.equals(fileName)
+                                    && fileName.endsWith(FileAttribute.THUMBNAIL_FILE_SUFFIX)) {
+                                String md5 = fileName.substring(0, fileName.length() - FileAttribute.THUMBNAIL_FILE_SUFFIX.length());
+                                thumbnailMap.put(md5, file);
+                                if (thumbnailMap.size() >= BATCH_FILE_SIZE) {
+                                    thumbnailUtil.clearThumbnail(new HashMap<>(thumbnailMap));
+                                    thumbnailMap.clear();
+                                }
+                            }
+                        } catch (Exception ignored) {
+                        }
+                        return FileVisitResult.CONTINUE;
                     }
                 });
-                if (!pathList.isEmpty()) {
-                    thumbnailUtil.clearThumbnail(new ArrayList<>(pathList));
+                if (!thumbnailMap.isEmpty()) {
+                    thumbnailUtil.clearThumbnail(thumbnailMap);
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         }, taskLockTimeout);

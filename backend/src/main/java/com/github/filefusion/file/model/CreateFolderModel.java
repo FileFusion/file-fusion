@@ -5,19 +5,18 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * RenameFileModel
+ * CreateFolderModel
  *
  * @author hackyo
  * @since 2022/4/1
  */
 @Data
-public class RenameFileModel implements Serializable {
+public class CreateFolderModel implements Serializable {
 
     /**
-     * id
+     * parent id
      */
-    private String id;
-
+    private String parentId;
 
     /**
      * name

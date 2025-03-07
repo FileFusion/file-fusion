@@ -10,14 +10,12 @@ import org.springframework.http.MediaType;
  */
 public final class FileAttribute {
 
+    public static final String PARENT_ROOT = "root";
     public static final String SEPARATOR = "/";
     public static final String DOWNLOAD_ZIP_NAME = "download.zip";
-    public static final String THUMBNAIL_FILE_TYPE = ".png";
-
-    public enum Type {
-        FILE,
-        FOLDER
-    }
+    public static final String DOWNLOAD_THUMBNAIL_NAME = "thumbnail.png";
+    public static final String THUMBNAIL_FILE_MIME_TYPE = MediaType.IMAGE_PNG_VALUE;
+    public static final String THUMBNAIL_FILE_SUFFIX = ".png";
 
     public enum MimeType {
         FOLDER(MediaType.parseMediaType("custom/folder")),

@@ -4,13 +4,11 @@ import com.github.filefusion.common.HttpException;
 import com.github.filefusion.util.I18n;
 import jakarta.annotation.Nonnull;
 import org.springframework.http.HttpStatus;
-import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -21,58 +19,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public final class PathUtil {
 
-    public static Path resolvePath(Path baseDir, String path, boolean exists) {
-        Path resolvedPath = baseDir.resolve(path);
-        if (exists && !Files.exists(resolvedPath)) {
-            throw new HttpException(I18n.get("noOperationPermission"));
-        }
-        return resolvedPath;
+    public static Path md5ToPath(String md5) {
+        return Paths.get(md5.substring(0, 2), md5.substring(2, 4), md5);
     }
 
-    public static List<Path> resolvePath(Path baseDir, List<String> pathList, boolean exists) {
-        return pathList.stream()
-                .map(path -> resolvePath(baseDir, path, exists))
-                .toList();
-    }
-
-    public static Path resolveSafePath(Path baseDir, String path, boolean exists) {
-        if (!StringUtils.hasLength(path) || path.contains("..") || path.contains("//") || path.startsWith("/")) {
-            throw new HttpException(I18n.get("noOperationPermission"));
-        }
-        Path resolvedPath = baseDir.resolve(path).normalize();
-        if (!resolvedPath.startsWith(baseDir) || (exists && !Files.exists(resolvedPath))) {
-            throw new HttpException(I18n.get("noOperationPermission"));
-        }
-        return resolvedPath;
-    }
-
-    public static List<Path> resolveSafePath(Path baseDir, List<String> pathList, boolean exists) {
-        return pathList.stream()
-                .map(path -> resolveSafePath(baseDir, path, exists))
-                .toList();
-    }
-
-    public static void move(Map<Path, Path> originalTargetMap) {
-        AtomicBoolean success = new AtomicBoolean(true);
-        originalTargetMap.forEach((originalPath, targetPath) -> {
-            try {
-                move(originalPath, targetPath);
-            } catch (Exception e) {
-                success.set(false);
-            }
-        });
-        if (!success.get()) {
-            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileMoveFailed"));
-        }
-    }
-
-    public static void move(Path originalPath, Path targetPath) {
-        try {
-            Files.createDirectories(targetPath.getParent());
-            Files.move(originalPath, targetPath, StandardCopyOption.ATOMIC_MOVE);
-        } catch (IOException e) {
-            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileMoveFailed"));
-        }
+    public static Path resolvePath(Path baseDir, String path) {
+        return baseDir.resolve(path);
     }
 
     public static void delete(List<Path> pathList) {

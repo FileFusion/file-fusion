@@ -1,7 +1,6 @@
 package com.github.filefusion.file.entity;
 
 import com.github.filefusion.common.BaseEntity;
-import com.github.filefusion.constant.FileAttribute;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Transient;
 import lombok.Data;
@@ -21,9 +20,14 @@ import java.time.LocalDateTime;
 public class FileData extends BaseEntity {
 
     /**
-     * path
+     * user id
      */
-    private String path;
+    private String userId;
+
+    /**
+     * parent id
+     */
+    private String parentId;
 
     /**
      * name
@@ -31,9 +35,14 @@ public class FileData extends BaseEntity {
     private String name;
 
     /**
-     * type
+     * path
      */
-    private FileAttribute.Type type;
+    private String path;
+
+    /**
+     * md5 value
+     */
+    private String md5Value;
 
     /**
      * mime type
@@ -51,11 +60,6 @@ public class FileData extends BaseEntity {
     private Boolean encrypted;
 
     /**
-     * hash value
-     */
-    private String hashValue;
-
-    /**
      * file last modified date
      */
     private LocalDateTime fileLastModifiedDate;
@@ -69,11 +73,6 @@ public class FileData extends BaseEntity {
      * deleted date
      */
     private LocalDateTime deletedDate;
-
-    /**
-     * recycle path
-     */
-    private String recyclePath;
 
     /**
      * has thumbnail

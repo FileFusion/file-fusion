@@ -1,10 +1,11 @@
 package com.github.filefusion.file.controller;
 
-import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.constant.SorterOrder;
 import com.github.filefusion.file.entity.FileData;
+import com.github.filefusion.file.model.CreateFolderModel;
 import com.github.filefusion.file.model.RenameFileModel;
 import com.github.filefusion.file.model.SubmitDownloadFilesResponse;
+import com.github.filefusion.file.model.UploadFileModel;
 import com.github.filefusion.file.service.FileDataService;
 import com.github.filefusion.util.CurrentUser;
 import com.github.filefusion.util.TimeUtil;
@@ -15,7 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.time.LocalDateTime;
@@ -43,8 +43,7 @@ public class FileDataController {
      *
      * @param page        page
      * @param pageSize    page size
-     * @param path        path
-     * @param name        name
+     * @param parentId    parent id
      * @param sorter      sorter
      * @param sorterOrder sorter order
      * @return file list
@@ -52,8 +51,7 @@ public class FileDataController {
     @GetMapping("/{page}/{pageSize}")
     @PreAuthorize("hasAuthority('personal_file:read')")
     public Page<FileData> get(@PathVariable Integer page, @PathVariable Integer pageSize,
-                              @RequestParam(required = false) String path,
-                              @RequestParam(required = false) String name,
+                              @RequestParam(required = false) String parentId,
                               @RequestParam(required = false) String sorter,
                               @RequestParam(required = false) SorterOrder sorterOrder) {
         if (!StringUtils.hasLength(sorter)) {
@@ -62,56 +60,44 @@ public class FileDataController {
         if (sorterOrder == null) {
             sorterOrder = SorterOrder.ascend;
         }
-        if (!StringUtils.hasLength(path)) {
-            path = CurrentUser.get().getId() + FileAttribute.SEPARATOR;
-        } else {
-            path = CurrentUser.get().getId() + FileAttribute.SEPARATOR + path + FileAttribute.SEPARATOR;
-        }
-        return fileDataService.get(PageRequest.of(page - 1, pageSize, sorterOrder.order(), sorter), path, name);
+        return fileDataService.get(PageRequest.of(page - 1, pageSize, sorterOrder.order(), sorter),
+                CurrentUser.get().getId(), parentId);
     }
 
     /**
-     * batch delete file
+     * delete file
      *
-     * @param pathList path list
+     * @param id id
      */
-    @PostMapping("/_batch_delete")
+    @DeleteMapping
     @PreAuthorize("hasAuthority('personal_file:delete')")
-    public void batchDelete(@RequestBody List<String> pathList) {
-        fileDataService.verifyUserAuthorize(CurrentUser.get().getId(), pathList.toArray(new String[0]));
-        fileDataService.batchRecycleOrDelete(pathList);
+    public void delete(@RequestParam String id) {
+        fileDataService.recycleOrDelete(CurrentUser.get().getId(), id);
     }
 
     /**
      * create folder
      *
-     * @param fileData path
+     * @param createFolderModel create folder info
      */
     @PostMapping("/_create_folder")
     @PreAuthorize("hasAuthority('personal_file:upload')")
-    public void createFolder(@RequestBody FileData fileData) {
-        String path = fileDataService.formatUserPath(CurrentUser.get().getId(), fileData.getPath());
-        fileDataService.createFolder(path, LocalDateTime.now(), false);
+    public void createFolder(@RequestBody CreateFolderModel createFolderModel) {
+        fileDataService.createFolder(CurrentUser.get().getId(), createFolderModel.getParentId(),
+                createFolderModel.getName(), LocalDateTime.now(), false);
     }
 
     /**
      * upload file
      *
-     * @param file         file
-     * @param name         name
-     * @param path         path
-     * @param type         mime type
-     * @param lastModified last modified
+     * @param uploadFileModel upload file info
      */
     @PostMapping("/_upload")
     @PreAuthorize("hasAuthority('personal_file:upload')")
-    public void upload(@RequestParam("file") MultipartFile file,
-                       @RequestParam("name") String name,
-                       @RequestParam("path") String path,
-                       @RequestParam("type") String type,
-                       @RequestParam("lastModified") Long lastModified) {
-        path = fileDataService.formatUserPath(CurrentUser.get().getId(), path);
-        fileDataService.upload(file, name, path, type, TimeUtil.fromMillis(lastModified));
+    public void upload(@RequestParam UploadFileModel uploadFileModel) {
+        fileDataService.upload(CurrentUser.get().getId(), uploadFileModel.getFile(), uploadFileModel.getParentId(),
+                uploadFileModel.getName(), uploadFileModel.getPath(), uploadFileModel.getMd5Value(),
+                uploadFileModel.getMimeType(), TimeUtil.fromMillis(uploadFileModel.getFileLastModifiedDate()));
     }
 
     /**
@@ -119,24 +105,22 @@ public class FileDataController {
      *
      * @param renameFileModel rename file info
      */
-    @PostMapping("/_rename")
+    @PutMapping("/_rename")
     @PreAuthorize("hasAuthority('personal_file:edit')")
     public void rename(@RequestBody RenameFileModel renameFileModel) {
-        String path = fileDataService.formatUserPath(CurrentUser.get().getId(), renameFileModel.getPath());
-        fileDataService.rename(path, renameFileModel.getOriginalName(), renameFileModel.getTargetName());
+        fileDataService.rename(CurrentUser.get().getId(), renameFileModel.getId(), renameFileModel.getName());
     }
 
     /**
      * submit download file list
      *
-     * @param pathList path list
+     * @param idList id list
      * @return download id
      */
     @PostMapping("/_submit_download")
     @PreAuthorize("hasAnyAuthority('personal_file:download','personal_file:preview')")
-    public SubmitDownloadFilesResponse submitDownloadFiles(@RequestBody List<String> pathList) {
-        fileDataService.verifyUserAuthorize(CurrentUser.get().getId(), pathList.toArray(new String[0]));
-        return fileDataService.submitDownload(pathList);
+    public SubmitDownloadFilesResponse submitDownload(@RequestBody List<String> idList) {
+        return fileDataService.submitDownload(CurrentUser.get().getId(), idList);
     }
 
     /**
@@ -145,37 +129,34 @@ public class FileDataController {
      * @param downloadId download id
      * @return file list
      */
-    @GetMapping("/_download/{downloadId}")
-    public ResponseEntity<StreamingResponseBody> downloadFiles(@PathVariable String downloadId) {
+    @GetMapping("/_download")
+    public ResponseEntity<StreamingResponseBody> download(@RequestParam String downloadId) {
         return fileDataService.download(downloadId);
     }
 
     /**
      * download chunked
      *
-     * @param fileData path
-     * @param range    chunked range
+     * @param id    id
+     * @param range chunked range
      * @return file chunked
      */
-    @PostMapping("/_download_chunked")
+    @GetMapping("/_download_chunked/{id}")
     @PreAuthorize("hasAnyAuthority('personal_file:download','personal_file:preview')")
-    public ResponseEntity<StreamingResponseBody> downloadChunked(@RequestBody FileData fileData,
-                                                                 @RequestHeader String range) {
-        fileDataService.verifyUserAuthorize(CurrentUser.get().getId(), fileData.getPath());
-        return fileDataService.downloadChunked(fileData.getPath(), range);
+    public ResponseEntity<StreamingResponseBody> downloadChunked(@PathVariable String id, @RequestHeader String range) {
+        return fileDataService.downloadChunked(CurrentUser.get().getId(), id, range);
     }
 
     /**
      * thumbnail file
      *
-     * @param fileData path
+     * @param id id
      * @return file thumbnail
      */
-    @PostMapping("/_thumbnail")
+    @GetMapping("/_thumbnail/{id}")
     @PreAuthorize("hasAnyAuthority('personal_file:read','recycle_bin_file:read')")
-    public ResponseEntity<StreamingResponseBody> thumbnailFile(@RequestBody FileData fileData) {
-        fileDataService.verifyUserAuthorize(CurrentUser.get().getId(), fileData.getPath());
-        return fileDataService.thumbnailFile(fileData.getPath());
+    public ResponseEntity<StreamingResponseBody> thumbnail(@PathVariable String id) {
+        return fileDataService.thumbnail(CurrentUser.get().getId(), id);
     }
 
 }

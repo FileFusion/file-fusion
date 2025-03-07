@@ -2,6 +2,7 @@ package com.github.filefusion.util.file;
 
 import com.github.filefusion.common.HttpException;
 import com.github.filefusion.constant.FileAttribute;
+import com.github.filefusion.file.entity.FileData;
 import com.github.filefusion.util.I18n;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,13 +13,18 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
-import java.security.NoSuchAlgorithmException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -47,68 +53,31 @@ public class FileUtil {
         }
     }
 
-    private MediaType getFileMediaType(Path path) {
-        try {
-            return MediaType.parseMediaType(Files.probeContentType(path));
-        } catch (IllegalArgumentException | IOException e) {
-            return MediaType.APPLICATION_OCTET_STREAM;
+    private String buildZipPath(FileData file, Map<String, FileData> fileMap) {
+        if (FileAttribute.PARENT_ROOT.equals(file.getParentId())) {
+            return file.getName();
         }
+        return buildZipPath(fileMap.get(file.getParentId()), fileMap) + FileAttribute.SEPARATOR + file.getName();
     }
 
-    private void addToZip(ZipOutputStream zos, Path path, String parent) throws IOException {
-        String entryName = parent + path.getFileName();
-        if (Files.isDirectory(path)) {
-            entryName += FileAttribute.SEPARATOR;
-            zos.putNextEntry(new ZipEntry(entryName));
-            zos.closeEntry();
-            try (DirectoryStream<Path> children = Files.newDirectoryStream(path)) {
-                for (Path child : children) {
-                    addToZip(zos, child, entryName);
-                }
-            }
-        } else {
-            zos.putNextEntry(new ZipEntry(entryName));
-            Files.copy(path, zos);
-            zos.closeEntry();
-        }
-    }
-
-    public void createUserFolder(String userId) {
-        Path userPath = PathUtil.resolvePath(baseDir, userId, false);
-        try {
-            Files.createDirectories(userPath);
+    public void upload(MultipartFile file, String path) {
+        try (InputStream in = file.getInputStream()) {
+            Path targetPath = baseDir.resolve(path);
+            Files.createDirectories(targetPath.getParent());
+            Files.copy(in, targetPath);
         } catch (IOException e) {
-            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("folderCreationFailed"));
-        }
-    }
-
-    public void createFolder(String path) {
-        Path targetPath = PathUtil.resolveSafePath(baseDir, path, false);
-        try {
-            Files.createDirectories(targetPath);
-        } catch (IOException e) {
-            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("folderCreationFailed"));
-        }
-    }
-
-    public String upload(MultipartFile file, String path) {
-        try (HashingInputStream in = new HashingInputStream(file.getInputStream())) {
-            Files.copy(in, PathUtil.resolveSafePath(baseDir, path, false));
-            return in.getHashString();
-        } catch (IOException | NoSuchAlgorithmException e) {
             throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
         }
     }
 
-    public ResponseEntity<StreamingResponseBody> download(Path path) {
-        return downloadResponse(path.getFileName().toString(),
-                getFileMediaType(path),
+    public ResponseEntity<StreamingResponseBody> download(String name, String mimeType, Path path) {
+        return downloadResponse(name, MediaType.valueOf(mimeType),
                 HttpStatus.OK,
                 out -> Files.copy(path, out),
                 new HttpHeaders());
     }
 
-    public ResponseEntity<StreamingResponseBody> downloadChunked(Path path, long start, long end) {
+    public ResponseEntity<StreamingResponseBody> downloadChunked(String name, String mimeType, Path path, long start, long end) {
         long size;
         try {
             size = Files.size(path);
@@ -120,8 +89,7 @@ public class FileUtil {
         headers.add(HttpHeaders.ACCEPT_RANGES, "bytes");
         headers.add(HttpHeaders.CONTENT_RANGE, String.format("bytes %d-%d/%d", start, endReal, size));
         headers.add(HttpHeaders.CONTENT_LENGTH, String.valueOf(endReal - start + 1));
-        return downloadResponse(path.getFileName().toString(),
-                getFileMediaType(path),
+        return downloadResponse(name, MediaType.valueOf(mimeType),
                 HttpStatus.PARTIAL_CONTENT,
                 out -> {
                     try (FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.READ);
@@ -132,15 +100,29 @@ public class FileUtil {
                 headers);
     }
 
-    public ResponseEntity<StreamingResponseBody> downloadZip(List<Path> pathList) {
+    public ResponseEntity<StreamingResponseBody> downloadZip(List<FileData> fileList) {
         return downloadResponse(FileAttribute.DOWNLOAD_ZIP_NAME,
                 FileAttribute.MimeType.ZIP.value(),
                 HttpStatus.OK,
                 out -> {
+                    Map<String, FileData> fileMap = new HashMap<>();
+                    Map<String, String> pathMap = new HashMap<>();
+                    fileList.forEach(file -> fileMap.put(file.getId(), file));
+                    fileList.forEach(file -> pathMap.put(file.getId(), buildZipPath(file, fileMap)));
                     try (ZipOutputStream zos = new ZipOutputStream(out, StandardCharsets.UTF_8)) {
-                        zos.setLevel(Deflater.BEST_SPEED);
-                        for (Path path : pathList) {
-                            addToZip(zos, path, "");
+                        zos.setLevel(Deflater.NO_COMPRESSION);
+                        for (FileData file : fileList) {
+                            if (FileAttribute.MimeType.FOLDER.value().toString().equals(file.getMimeType())) {
+                                zos.putNextEntry(new ZipEntry(pathMap.get(file.getId()) + FileAttribute.SEPARATOR));
+                                zos.closeEntry();
+                            }
+                        }
+                        for (FileData file : fileList) {
+                            if (!FileAttribute.MimeType.FOLDER.value().toString().equals(file.getMimeType())) {
+                                zos.putNextEntry(new ZipEntry(pathMap.get(file.getId())));
+                                Files.copy(PathUtil.resolvePath(baseDir, file.getPath()), zos);
+                                zos.closeEntry();
+                            }
                         }
                     }
                 },

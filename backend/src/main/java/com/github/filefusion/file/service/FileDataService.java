@@ -14,7 +14,6 @@ import com.github.filefusion.util.I18n;
 import com.github.filefusion.util.ULID;
 import com.github.filefusion.util.file.FileUtil;
 import com.github.filefusion.util.file.PathUtil;
-import com.github.filefusion.util.file.RecycleBinUtil;
 import com.github.filefusion.util.file.ThumbnailUtil;
 import org.redisson.api.RList;
 import org.redisson.api.RedissonClient;
@@ -22,7 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -30,18 +28,12 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 /**
  * FileDataService
@@ -59,7 +51,6 @@ public class FileDataService {
     private final DistributedLock distributedLock;
     private final SysConfigService sysConfigService;
     private final FileUtil fileUtil;
-    private final RecycleBinUtil recycleBinUtil;
     private final ThumbnailUtil thumbnailUtil;
 
     @Autowired
@@ -70,7 +61,6 @@ public class FileDataService {
                            DistributedLock distributedLock,
                            SysConfigService sysConfigService,
                            FileUtil fileUtil,
-                           RecycleBinUtil recycleBinUtil,
                            ThumbnailUtil thumbnailUtil) {
         this.fileLockTimeout = fileLockTimeout;
         this.fileDownloadLinkTimeout = fileDownloadLinkTimeout;
@@ -79,269 +69,196 @@ public class FileDataService {
         this.distributedLock = distributedLock;
         this.sysConfigService = sysConfigService;
         this.fileUtil = fileUtil;
-        this.recycleBinUtil = recycleBinUtil;
         this.thumbnailUtil = thumbnailUtil;
     }
 
-    private List<Path> getHierarchyPathList(String path) {
-        Path rootPath = Paths.get(path).normalize();
-        return IntStream.range(1, rootPath.getNameCount())
-                .mapToObj(i -> rootPath.subpath(0, i + 1))
-                .toList();
+    private List<FileData> findAllChildren(String id) {
+        List<FileData> children = new ArrayList<>();
+        findAllChildren(id, children);
+        return children;
     }
 
-    private String dismissUserPath(String path) {
-        return path.substring(path.indexOf(FileAttribute.SEPARATOR) + 1);
-    }
-
-    public String formatUserPath(String userId, String path) {
-        fileUtil.createUserFolder(userId);
-        if (!StringUtils.hasLength(path)) {
-            path = userId;
-        } else {
-            path = userId + FileAttribute.SEPARATOR + path;
-        }
-        return path;
-    }
-
-    public void verifyUserAuthorize(String userId, String... pathList) {
-        if (pathList == null || pathList.length == 0) {
-            throw new HttpException(I18n.get("operationFileSelectCheck"));
-        }
-        String userPath = userId + FileAttribute.SEPARATOR;
-        for (String path : pathList) {
-            if (!StringUtils.startsWithIgnoreCase(path, userPath)) {
-                throw new HttpException(I18n.get("noOperationPermission"));
-            }
-        }
-    }
-
-    public Page<FileData> get(PageRequest page, String path, String name) {
-        path = path + "%";
-        if (StringUtils.hasLength(name)) {
-            name = "%" + name + "%";
-        } else {
-            name = "%";
-        }
-        Page<FileData> fileDataPage = fileDataRepository.findAllByPathLikeAndPathNotLikeAndNameLikeAndDeletedFalse(
-                path, path + FileAttribute.SEPARATOR + "%", name, page);
-        fileDataPage.getContent().forEach(fileData ->
-                fileData.setHasThumbnail(thumbnailUtil.hasThumbnail(fileData.getMimeType()))
-        );
-        return fileDataPage;
-    }
-
-    public Page<FileData> getFromRecycleBin(PageRequest page, String path, String name) {
-        path = path + "%";
-        if (StringUtils.hasLength(name)) {
-            name = "%" + name + "%";
-        } else {
-            name = "%";
-        }
-        Page<FileData> fileDataPage = fileDataRepository.findAllByRecyclePathLikeAndRecyclePathNotLikeAndNameLikeAndDeletedTrue(
-                path, path + FileAttribute.SEPARATOR + "%", name, page);
-        fileDataPage.getContent().forEach(fileData ->
-                fileData.setHasThumbnail(thumbnailUtil.hasThumbnail(fileData.getMimeType()))
-        );
-        return fileDataPage;
-    }
-
-    public void batchRecycleOrDelete(List<String> pathList) {
-        SysConfig config = sysConfigService.get(SysConfigKey.RECYCLE_BIN);
-        if (Boolean.parseBoolean(config.getConfigValue())) {
-            batchRecycle(pathList);
-        } else {
-            batchDelete(pathList);
-        }
-    }
-
-    private void batchRecycle(List<String> pathList) {
-        List<FileData> parentList = fileDataRepository.findAllByPathInAndDeletedFalse(pathList);
-        if (parentList.isEmpty()) {
-            return;
-        }
-        Map<String, List<FileData>> childMap = pathList.stream().collect(Collectors.toMap(
-                path -> path,
-                path -> fileDataRepository.findAllByPathLikeAndDeletedFalse(path + FileAttribute.SEPARATOR + "%")
-        ));
-        List<String> allPathList = Stream.concat(
-                parentList.stream().map(FileData::getPath),
-                childMap.values().stream().flatMap(List::stream).map(FileData::getPath)
-        ).toList();
-        List<FileData> recycleInfoList = recycleBinUtil.setRecycleInfo(parentList, childMap);
-        distributedLock.tryMultiLock(RedisAttribute.LockType.file, allPathList, () -> {
-            fileDataRepository.saveAll(recycleInfoList);
-            PathUtil.move(parentList.stream().collect(Collectors.toMap(
-                    file -> PathUtil.resolvePath(fileUtil.getBaseDir(), file.getPath(), true),
-                    file -> PathUtil.resolvePath(recycleBinUtil.getBaseDir(), file.getRecyclePath(), false)
-            )));
-        }, fileLockTimeout);
-    }
-
-    private void batchDelete(List<String> pathList) {
-        List<FileData> fileList = pathList.stream()
-                .flatMap(path -> fileDataRepository.findAllByPathOrPathLikeAndDeletedFalse(path, path + FileAttribute.SEPARATOR + "%").stream())
-                .toList();
-        List<String> allPathList = fileList.stream().map(FileData::getPath).sorted(Comparator.comparingInt(String::length)).toList();
-        List<String> hashList = fileList.stream().map(FileData::getHashValue).filter(StringUtils::hasLength).distinct().toList();
-        distributedLock.tryMultiLock(RedisAttribute.LockType.file, allPathList, () -> {
-            fileDataRepository.deleteAllByPathInAndDeletedFalse(allPathList);
-            PathUtil.delete(PathUtil.resolveSafePath(fileUtil.getBaseDir(), pathList, false));
-            if (!hashList.isEmpty()) {
-                thumbnailUtil.clearThumbnail(hashList);
-            }
-        }, fileLockTimeout);
-    }
-
-    public void batchDeleteFromRecycleBin(List<String> recyclePathList) {
-        List<FileData> fileList = recyclePathList.stream()
-                .flatMap(path -> fileDataRepository.findAllByRecyclePathOrRecyclePathLikeAndDeletedTrue(path, path + FileAttribute.SEPARATOR + "%").stream())
-                .toList();
-        List<String> allRecyclePathList = fileList.stream().map(FileData::getRecyclePath).sorted(Comparator.comparingInt(String::length)).toList();
-        List<String> hashList = fileList.stream().map(FileData::getHashValue).filter(StringUtils::hasLength).distinct().toList();
-        distributedLock.tryMultiLock(RedisAttribute.LockType.file, allRecyclePathList, () -> {
-            fileDataRepository.deleteAllByRecyclePathInAndDeletedTrue(recyclePathList);
-            PathUtil.delete(PathUtil.resolveSafePath(recycleBinUtil.getBaseDir(), recyclePathList, false));
-            if (!hashList.isEmpty()) {
-                thumbnailUtil.clearThumbnail(hashList);
-            }
-        }, fileLockTimeout);
-    }
-
-    public void createFolder(String path, LocalDateTime lastModifiedDate, boolean allowExists) {
-        List<Path> hierarchyPathList = getHierarchyPathList(path);
-        List<String> sortedPathList = hierarchyPathList.stream().map(Path::toString).toList();
-        distributedLock.tryMultiLock(RedisAttribute.LockType.file, sortedPathList, () -> {
-            if (!allowExists && fileDataRepository.existsByPathAndDeletedFalse(path)) {
-                throw new HttpException(I18n.get("fileExits", dismissUserPath(path)));
-            }
-            List<FileData> existsFileList = fileDataRepository.findAllByPathInAndDeletedFalse(sortedPathList);
-            existsFileList.forEach(file -> {
-                if (!FileAttribute.Type.FOLDER.equals(file.getType())) {
-                    throw new HttpException(I18n.get("fileExits", dismissUserPath(file.getPath())));
+    private void findAllChildren(String parentId, List<FileData> children) {
+        List<FileData> currentChildren = fileDataRepository.findAllByParentId(parentId);
+        if (!currentChildren.isEmpty()) {
+            children.addAll(currentChildren);
+            currentChildren.forEach(child -> {
+                if (FileAttribute.MimeType.FOLDER.value().toString().equals(child.getMimeType())) {
+                    findAllChildren(child.getId(), children);
                 }
             });
-            Map<String, FileData> existsFileMap = existsFileList.stream().collect(Collectors.toMap(FileData::getPath, fileData -> fileData));
-            List<FileData> fileList = new ArrayList<>(hierarchyPathList.size());
-            for (Path hierarchyPath : hierarchyPathList) {
-                String folderPath = hierarchyPath.toString();
-                String folderName = hierarchyPath.getFileName().toString();
-                FileData file = existsFileMap.get(folderPath);
-                if (file == null) {
-                    file = new FileData();
-                }
-                file.setPath(folderPath);
-                file.setName(folderName);
-                file.setType(FileAttribute.Type.FOLDER);
-                file.setMimeType(FileAttribute.MimeType.FOLDER.value().toString());
-                file.setSize(0L);
-                file.setEncrypted(false);
-                file.setFileLastModifiedDate(lastModifiedDate);
-                file.setDeleted(false);
-                fileList.add(file);
-            }
-            fileDataRepository.saveAll(fileList);
-            fileUtil.createFolder(path);
-        }, fileLockTimeout);
+        }
     }
 
-    public void upload(MultipartFile multipartFile, String name,
-                       String path, String type, LocalDateTime lastModifiedDate) {
-        createFolder(path, lastModifiedDate, true);
+    private List<String> getHierarchyPathList(String path) {
+        Path rootPath = Paths.get(path).normalize();
+        List<String> hierarchyPathList = new ArrayList<>(rootPath.getNameCount());
+        for (int i = 0; i < rootPath.getNameCount(); i++) {
+            hierarchyPathList.add(rootPath.getName(i).toString());
+        }
+        return hierarchyPathList;
+    }
 
-        String filePath = path + FileAttribute.SEPARATOR + name;
-        distributedLock.tryLock(RedisAttribute.LockType.file, filePath, () -> {
-            if (fileDataRepository.existsByPathAndDeletedFalse(filePath)) {
-                throw new HttpException(I18n.get("fileExits", dismissUserPath(filePath)));
+    public Page<FileData> get(PageRequest page, String userId, String parentId) {
+        if (!StringUtils.hasLength(parentId)) {
+            parentId = FileAttribute.PARENT_ROOT;
+        }
+        Page<FileData> fileDataPage = fileDataRepository.findAllByUserIdAndParentIdAndDeletedFalse(
+                userId, parentId, page);
+        fileDataPage.getContent().forEach(fileData ->
+                fileData.setHasThumbnail(thumbnailUtil.hasThumbnail(fileData.getMimeType()))
+        );
+        return fileDataPage;
+    }
+
+    public void recycleOrDelete(String userId, String id) {
+        FileData file = fileDataRepository.findFirstByUserIdAndId(userId, id);
+        if (file == null) {
+            throw new HttpException(I18n.get("fileNotExist"));
+        }
+        List<FileData> allList = findAllChildren(file.getId());
+        allList.addFirst(file);
+        SysConfig config = sysConfigService.get(SysConfigKey.RECYCLE_BIN);
+        if (Boolean.parseBoolean(config.getConfigValue())) {
+            batchRecycle(allList);
+        } else {
+            batchDelete(allList);
+        }
+    }
+
+    private void batchRecycle(List<FileData> fileList) {
+        LocalDateTime deletedDate = LocalDateTime.now();
+        fileList.forEach(file -> {
+            file.setDeleted(true);
+            file.setDeletedDate(deletedDate);
+        });
+        fileDataRepository.saveAll(fileList);
+    }
+
+    private void batchDelete(List<FileData> fileList) {
+        fileDataRepository.deleteAll(fileList);
+    }
+
+    public String createFolder(String userId, String parentId, String name, LocalDateTime lastModifiedDate, boolean allowExists) {
+        String pId = !StringUtils.hasLength(parentId) ? FileAttribute.PARENT_ROOT : parentId;
+        if (!StringUtils.hasLength(name)) {
+            throw new HttpException(I18n.get("fileNameEmpty"));
+        }
+        StringBuffer id = new StringBuffer(ULID.randomULID());
+        distributedLock.tryLock(RedisAttribute.LockType.file, userId + pId + name, () -> {
+            FileData file = fileDataRepository.findFirstByUserIdAndParentIdAndName(userId, pId, name);
+            if (!allowExists && file != null) {
+                throw new HttpException(I18n.get("fileExits", name));
+            }
+            if (file != null) {
+                id.setLength(0);
+                id.append(file.getId());
+                return;
+            }
+            file = new FileData();
+            file.setId(id.toString());
+            file.setUserId(userId);
+            file.setParentId(pId);
+            file.setName(name);
+            file.setMimeType(FileAttribute.MimeType.FOLDER.value().toString());
+            file.setSize(0L);
+            file.setEncrypted(false);
+            file.setFileLastModifiedDate(lastModifiedDate);
+            file.setDeleted(false);
+            fileDataRepository.save(file);
+        }, fileLockTimeout);
+        return id.toString();
+    }
+
+    public void upload(String userId, MultipartFile multipartFile, String parentId, String name,
+                       String path, String md5Value, String mimeType, LocalDateTime lastModified) {
+        if (multipartFile == null) {
+            throw new HttpException(I18n.get("fileNotExist"));
+        }
+        String pId = !StringUtils.hasLength(parentId) ? FileAttribute.PARENT_ROOT : parentId;
+        if (!StringUtils.hasLength(name)) {
+            throw new HttpException(I18n.get("fileNameEmpty"));
+        }
+        if (!StringUtils.hasLength(md5Value)) {
+            throw new HttpException(I18n.get("fileMd5Empty"));
+        }
+        LocalDateTime lastModifiedDate = lastModified == null ? LocalDateTime.now() : lastModified;
+        if (StringUtils.hasLength(path)) {
+            List<String> hierarchyPathList = getHierarchyPathList(path);
+            for (String hierarchyPath : hierarchyPathList) {
+                pId = createFolder(userId, pId, hierarchyPath, lastModifiedDate, true);
+            }
+        }
+
+        String fileParentId = pId;
+        distributedLock.tryLock(RedisAttribute.LockType.file, userId + fileParentId + name, () -> {
+            if (fileDataRepository.existsByUserIdAndParentIdAndName(userId, fileParentId, name)) {
+                throw new HttpException(I18n.get("fileExits", name));
             }
             FileData file = new FileData();
-            file.setPath(filePath);
+            file.setUserId(userId);
+            file.setParentId(fileParentId);
             file.setName(name);
-            file.setType(FileAttribute.Type.FILE);
-            file.setMimeType(type);
+            file.setPath(PathUtil.md5ToPath(md5Value).toString());
+            file.setMd5Value(md5Value);
+            file.setMimeType(mimeType);
             file.setSize(multipartFile.getSize());
             file.setEncrypted(false);
             file.setFileLastModifiedDate(lastModifiedDate);
             file.setDeleted(false);
-            file.setHashValue(fileUtil.upload(multipartFile, filePath));
-            try {
-                fileDataRepository.save(file);
-            } catch (Exception e) {
-                PathUtil.delete(PathUtil.resolveSafePath(fileUtil.getBaseDir(), filePath, false));
-                throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
-            }
+            fileDataRepository.save(file);
+            fileUtil.upload(multipartFile, file.getPath());
         }, fileLockTimeout);
     }
 
-    public void rename(String path, String originalName, String targetName) {
-        if (!StringUtils.hasLength(originalName)) {
-            throw new HttpException(I18n.get("renameFileSelectCheck"));
-        }
-        String originalPath = path + FileAttribute.SEPARATOR + originalName;
-        FileData originalFile = fileDataRepository.findFirstByPathAndDeletedFalse(originalPath);
-        if (originalFile == null) {
-            throw new HttpException(I18n.get("fileNotExist"));
-        }
-
-        if (!StringUtils.hasLength(targetName)) {
+    public void rename(String userId, String id, String name) {
+        if (!StringUtils.hasLength(name)) {
             throw new HttpException(I18n.get("fileNameEmpty"));
         }
-        String targetPath = path + FileAttribute.SEPARATOR + targetName;
-
-        String originalPathFolder = originalPath + FileAttribute.SEPARATOR;
-        String targetPathFolder = targetPath + FileAttribute.SEPARATOR;
-
-        List<FileData> originalChildList = fileDataRepository.findAllByPathLikeAndDeletedFalse(originalPathFolder + "%");
-        List<String> lockPathList = originalChildList.stream().map(FileData::getPath).collect(Collectors.toList());
-        originalChildList.forEach(file -> {
-            String filePath = file.getPath();
-            filePath = filePath.substring(originalPathFolder.length());
-            file.setPath(targetPathFolder + filePath);
-        });
-        lockPathList.addAll(originalChildList.stream().map(FileData::getPath).toList());
-        lockPathList.add(originalPath);
-        lockPathList.add(targetPath);
-
-        originalFile.setPath(targetPath);
-        originalFile.setName(targetName);
-        originalChildList.add(originalFile);
-
-        distributedLock.tryMultiLock(RedisAttribute.LockType.file, lockPathList, () -> {
-            if (fileDataRepository.existsByPathAndDeletedFalse(targetPath)) {
-                throw new HttpException(I18n.get("fileNameAlreadyExists"));
-            }
-            fileDataRepository.saveAll(originalChildList);
-            PathUtil.move(
-                    PathUtil.resolvePath(fileUtil.getBaseDir(), originalPath, true),
-                    PathUtil.resolveSafePath(fileUtil.getBaseDir(), targetPath, false)
-            );
-        }, fileLockTimeout);
+        FileData file = fileDataRepository.findFirstByUserIdAndId(userId, id);
+        if (file == null) {
+            throw new HttpException(I18n.get("fileNotExist"));
+        }
+        file.setName(name);
+        fileDataRepository.save(file);
     }
 
-    public SubmitDownloadFilesResponse submitDownload(List<String> pathList) {
+    public SubmitDownloadFilesResponse submitDownload(String userId, List<String> idList) {
+        List<FileData> fileList = fileDataRepository.findAllByUserIdAndIdIn(userId, idList);
+        if (fileList.isEmpty() || fileList.size() != idList.size()) {
+            throw new HttpException(I18n.get("fileNotExist"));
+        }
+        List<FileData> allList = new ArrayList<>(fileList);
+        fileList.forEach(file -> allList.addAll(findAllChildren(file.getId())));
         String downloadId = ULID.randomULID();
-        RList<String> pathRList = redissonClient.getList(RedisAttribute.DOWNLOAD_ID_PREFIX + RedisAttribute.SEPARATOR + downloadId);
-        pathRList.addAll(pathList);
-        pathRList.expire(fileDownloadLinkTimeout);
+        RList<String> idRList = redissonClient.getList(RedisAttribute.DOWNLOAD_ID_PREFIX + RedisAttribute.SEPARATOR + downloadId);
+        idRList.addAll(allList.stream().map(FileData::getId).toList());
+        idRList.expire(fileDownloadLinkTimeout);
         return new SubmitDownloadFilesResponse(downloadId);
     }
 
     public ResponseEntity<StreamingResponseBody> download(String downloadId) {
-        RList<String> pathList = redissonClient.getList(RedisAttribute.DOWNLOAD_ID_PREFIX + RedisAttribute.SEPARATOR + downloadId);
-        if (CollectionUtils.isEmpty(pathList)) {
+        RList<String> idList = redissonClient.getList(RedisAttribute.DOWNLOAD_ID_PREFIX + RedisAttribute.SEPARATOR + downloadId);
+        if (CollectionUtils.isEmpty(idList)) {
             throw new HttpException(I18n.get("downloadLinkExpired"));
         }
-        List<Path> safePathList = PathUtil.resolveSafePath(fileUtil.getBaseDir(), pathList, true);
-        Path pathFirst = safePathList.getFirst();
-        if (safePathList.size() == 1 && Files.isRegularFile(pathFirst)) {
-            return fileUtil.download(pathFirst);
-        } else {
-            return fileUtil.downloadZip(safePathList);
+        List<FileData> fileList = fileDataRepository.findAllById(idList);
+        if (fileList.isEmpty()) {
+            throw new HttpException(I18n.get("fileNotExist"));
         }
+        FileData file = fileList.getFirst();
+        if (fileList.size() == 1 && !FileAttribute.MimeType.FOLDER.value().toString().equals(file.getMimeType())) {
+            return fileUtil.download(file.getName(), file.getMimeType(),
+                    PathUtil.resolvePath(fileUtil.getBaseDir(), file.getPath()));
+        }
+        return fileUtil.downloadZip(fileList);
     }
 
-    public ResponseEntity<StreamingResponseBody> downloadChunked(String path, String range) {
-        Path safePath = PathUtil.resolveSafePath(fileUtil.getBaseDir(), path, true);
+    public ResponseEntity<StreamingResponseBody> downloadChunked(String userId, String id, String range) {
+        FileData file = fileDataRepository.findFirstByUserIdAndId(userId, id);
+        if (file == null) {
+            throw new HttpException(I18n.get("fileNotExist"));
+        }
         String[] ranges = range.replace("bytes=", "").split("-");
         long start = 0;
         long end = -1;
@@ -351,23 +268,22 @@ public class FileDataService {
         if (ranges.length > 1) {
             end = Long.parseLong(ranges[1]);
         }
-        return fileUtil.downloadChunked(safePath, start, end);
+        return fileUtil.downloadChunked(file.getName(), file.getMimeType(),
+                PathUtil.resolvePath(fileUtil.getBaseDir(), file.getPath()), start, end);
     }
 
-    public ResponseEntity<StreamingResponseBody> thumbnailFile(String path) {
-        FileData file = fileDataRepository.findFirstByPath(path);
+    public ResponseEntity<StreamingResponseBody> thumbnail(String userId, String id) {
+        FileData file = fileDataRepository.findFirstByUserIdAndId(userId, id);
         if (file == null) {
             throw new HttpException(I18n.get("fileNotExist"));
         }
         String mimeType = file.getMimeType();
-        String fileHash = file.getHashValue();
-        if (!StringUtils.hasLength(fileHash) || !thumbnailUtil.hasThumbnail(mimeType)) {
+        if (!thumbnailUtil.hasThumbnail(mimeType)) {
             throw new HttpException(I18n.get("fileNotSupportThumbnail"));
         }
-        Path originalPath = PathUtil.resolvePath(
-                file.getDeleted() ? recycleBinUtil.getBaseDir() : fileUtil.getBaseDir(),
-                file.getDeleted() ? file.getRecyclePath() : file.getPath(), true);
-        return fileUtil.download(thumbnailUtil.generateThumbnail(originalPath, mimeType, fileHash));
+        return fileUtil.download(FileAttribute.DOWNLOAD_THUMBNAIL_NAME, FileAttribute.THUMBNAIL_FILE_MIME_TYPE,
+                thumbnailUtil.generateThumbnail(
+                        PathUtil.resolvePath(fileUtil.getBaseDir(), file.getPath()), file.getPath(), mimeType));
     }
 
 }
