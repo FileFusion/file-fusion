@@ -2,7 +2,7 @@
   <n-breadcrumb>
     <n-breadcrumb-item
       v-for="(b, index) in breadcrumb"
-      :key="b.name"
+      :key="index"
       @click="clickBreadcrumb(b, index)">
       <n-flex :size="4">
         <n-icon>
