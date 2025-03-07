@@ -121,12 +121,12 @@ import type {
   UploadCustomRequestOptions,
   UploadFileInfo
 } from 'naive-ui';
+import { useThemeVars } from 'naive-ui';
 import type { Progress } from 'alova';
 import { computed, nextTick, ref } from 'vue';
 import { useRequest } from 'alova/client';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
-import { useThemeVars } from 'naive-ui';
 import { getFileHash } from '@/commons/utils';
 
 const { t } = useI18n();
@@ -255,7 +255,6 @@ const uploadFileRequest = async ({
     );
   }
   const formData = new FormData();
-  formData.append('file', fileInfo);
   formData.append('parentId', fileParentIdPattern.value);
   formData.append('name', fileInfo.name);
   formData.append('path', path);
@@ -263,6 +262,42 @@ const uploadFileRequest = async ({
   formData.append('mimeType', fileInfo.type);
   formData.append('size', fileInfo.size + '');
   formData.append('fileLastModifiedDate', fileInfo.lastModified + '');
+  fastUpload(formData, fileInfo, onProgress, onFinish, onError);
+};
+
+function fastUpload(
+  formData: FormData,
+  file: File,
+  onProgress: (e: { percent: number }) => void,
+  onFinish: () => void,
+  onError: () => void
+) {
+  http
+    .Post('/file_data/_upload', formData)
+    .then((res: any) => {
+      if (res === true) {
+        onProgress({
+          percent: 100
+        });
+        onFinish();
+        emitFileChangeEvent();
+      } else {
+        normalUpload(formData, file, onProgress, onFinish, onError);
+      }
+    })
+    .catch(() => {
+      onError();
+    });
+}
+
+function normalUpload(
+  formData: FormData,
+  file: File,
+  onProgress: (e: { percent: number }) => void,
+  onFinish: () => void,
+  onError: () => void
+) {
+  formData.append('file', file);
   const uploadMethod = http.Post('/file_data/_upload', formData, {
     meta: {
       loading: false
@@ -277,14 +312,12 @@ const uploadFileRequest = async ({
   uploadMethod
     .then(() => {
       onFinish();
+      emitFileChangeEvent();
     })
     .catch(() => {
       onError();
-    })
-    .finally(() => {
-      emitFileChangeEvent();
     });
-};
+}
 </script>
 
 <style>

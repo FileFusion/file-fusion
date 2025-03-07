@@ -22,11 +22,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -169,6 +172,7 @@ public class FileDataService {
         return id.toString();
     }
 
+    @Transactional(rollbackFor = HttpException.class)
     public boolean upload(String userId, MultipartFile multipartFile, String parentId, String name, String path,
                           String hashValue, String mimeType, Long size, LocalDateTime lastModified) {
         if (!StringUtils.hasLength(name)) {
@@ -179,7 +183,7 @@ public class FileDataService {
         }
         AtomicBoolean atomicBoolean = new AtomicBoolean(false);
         LocalDateTime lastModifiedDate = lastModified == null ? LocalDateTime.now() : lastModified;
-        String filePath = PathUtil.hashToPath(hashValue).toString();
+        String fileAbsolutePath = PathUtil.hashToPath(hashValue).toString();
         String pId = !StringUtils.hasLength(parentId) ? FileAttribute.PARENT_ROOT : parentId;
         distributedLock.tryLock(RedisAttribute.LockType.file, userId + pId + path + name, () -> {
             String fileParentId = pId;
@@ -196,7 +200,7 @@ public class FileDataService {
             file.setUserId(userId);
             file.setParentId(fileParentId);
             file.setName(name);
-            file.setPath(filePath);
+            file.setPath(fileAbsolutePath);
             file.setHashValue(hashValue);
             file.setMimeType(mimeType);
             file.setSize(size);
@@ -204,9 +208,20 @@ public class FileDataService {
             file.setFileLastModifiedDate(lastModifiedDate);
             file.setDeleted(false);
             fileDataRepository.save(file);
-            fileUtil.upload(multipartFile, PathUtil.resolvePath(fileUtil.getBaseDir(), file.getPath()));
-            atomicBoolean.set(true);
+
+            Path filePath = PathUtil.resolvePath(fileUtil.getBaseDir(), file.getPath());
+            if (multipartFile == null) {
+                if (Files.isRegularFile(filePath)) {
+                    atomicBoolean.set(true);
+                }
+            } else {
+                fileUtil.upload(multipartFile, filePath);
+                atomicBoolean.set(true);
+            }
         }, fileLockTimeout);
+        if (!atomicBoolean.get()) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        }
         return atomicBoolean.get();
     }
 

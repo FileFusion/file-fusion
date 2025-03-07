@@ -99,7 +99,7 @@ public class FileDataController {
      */
     @PostMapping("/_upload")
     @PreAuthorize("hasAuthority('personal_file:upload')")
-    public boolean upload(@RequestParam MultipartFile file, @RequestParam(required = false) String parentId,
+    public boolean upload(@RequestParam(required = false) MultipartFile file, @RequestParam(required = false) String parentId,
                           @RequestParam String name, @RequestParam(required = false) String path,
                           @RequestParam String hashValue, @RequestParam(required = false) String mimeType,
                           @RequestParam Long size, @RequestParam(required = false) Long fileLastModifiedDate) {
