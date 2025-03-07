@@ -21,9 +21,7 @@ const language = computed(() => mStore.getLanguage);
 const token = computed(() => mStore.getToken);
 
 const model = defineModel<boolean>();
-const props = defineProps({
-  file: { type: Object, required: true }
-});
+const id = defineModel<string | null>('id');
 
 const playerContainer = ref<HTMLElement | null>(null);
 const playerInstance = ref<PresetPlayer | null>(null);
@@ -43,7 +41,7 @@ function initPlayer() {
   }
   playerInstance.value = new Player({
     el: playerContainer.value,
-    url: http.options.baseURL + '/file_data/_download_chunked',
+    url: http.options.baseURL + '/file_data/_download_chunked/' + id.value,
     height: '75vh',
     width: '75vw',
     videoFillMode: 'contain',
@@ -57,15 +55,12 @@ function initPlayer() {
     mp4plugin: {
       reqOptions: {
         mode: 'cors',
-        method: 'POST',
+        method: 'GET',
         headers: {
           'Accept-Language': language.value,
           Authorization: token.value,
           'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          path: props.file.path
-        })
+        }
       }
     }
   });
