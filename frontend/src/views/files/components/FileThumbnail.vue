@@ -1,6 +1,6 @@
 <template>
   <n-image
-    :key="props.path"
+    :key="props.id"
     :src="thumbnailFileUrl ? thumbnailFileUrl : fileIcon"
     :width="props.size"
     :height="props.size"
@@ -14,7 +14,7 @@ import { mainStore } from '@/store';
 import { useRequest } from 'alova/client';
 
 const props = defineProps({
-  path: {
+  id: {
     type: String,
     default: null,
     required: false
@@ -24,7 +24,7 @@ const props = defineProps({
     default: false,
     required: false
   },
-  type: {
+  mimeType: {
     type: String,
     default: 'default',
     required: false
@@ -91,12 +91,12 @@ const fileCategories = {
 const fileIcon = computed(() => {
   let iconType;
   for (const [category, types] of Object.entries(fileCategories)) {
-    if (types.includes(props.type)) {
+    if (types.includes(props.mimeType)) {
       iconType = category;
     }
   }
   if (!iconType) {
-    const category = props.type.split('/')[0];
+    const category = props.mimeType.split('/')[0];
     iconType = fileIcons.includes(category) ? category : 'default';
   }
   return new URL(
@@ -108,13 +108,9 @@ const fileIcon = computed(() => {
 const thumbnailFileUrl = ref<string>('');
 const { data: thumbnailFile, send: doGetThumbnailFile } = useRequest(
   () =>
-    http.Post<any>(
-      '/file_data/_thumbnail',
-      { path: props.path },
-      {
-        responseType: 'blob'
-      }
-    ),
+    http.Get<any>('/file_data/_thumbnail/' + props.id, {
+      responseType: 'blob'
+    }),
   {
     immediate: false
   }
