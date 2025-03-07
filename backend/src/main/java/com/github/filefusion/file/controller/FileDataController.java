@@ -96,7 +96,7 @@ public class FileDataController {
     @PreAuthorize("hasAuthority('personal_file:upload')")
     public void upload(@RequestParam UploadFileModel uploadFileModel) {
         fileDataService.upload(CurrentUser.get().getId(), uploadFileModel.getFile(), uploadFileModel.getParentId(),
-                uploadFileModel.getName(), uploadFileModel.getPath(), uploadFileModel.getMd5Value(),
+                uploadFileModel.getName(), uploadFileModel.getPath(), uploadFileModel.getHashValue(),
                 uploadFileModel.getMimeType(), TimeUtil.fromMillis(uploadFileModel.getFileLastModifiedDate()));
     }
 

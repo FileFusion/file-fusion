@@ -6,19 +6,19 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * FileMd5UsageCount
+ * FileHashUsageCount
  *
  * @author hackyo
  * @since 2022/4/1
  */
 @Data
 @AllArgsConstructor
-public class FileMd5UsageCount implements Serializable {
+public class FileHashUsageCount implements Serializable {
 
     /**
-     * md5
+     * hash
      */
-    private String md5Value;
+    private String hashValue;
 
     /**
      * mime type

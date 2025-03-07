@@ -1,7 +1,7 @@
 package com.github.filefusion.file.repository;
 
 import com.github.filefusion.file.entity.FileData;
-import com.github.filefusion.file.model.FileMd5UsageCount;
+import com.github.filefusion.file.model.FileHashUsageCount;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -78,13 +78,13 @@ public interface FileDataRepository extends JpaRepository<FileData, String> {
     List<FileData> findAllByUserIdAndIdIn(String userId, List<String> idList);
 
     /**
-     * countByMd5ValueList
+     * countByHashValueList
      *
-     * @param md5List md5 list
-     * @return md5 count list
+     * @param hashList hash list
+     * @return hash count list
      */
-    @Query("SELECT new com.github.filefusion.file.model.FileMd5UsageCount(f.md5Value, f.mimeType, COUNT(f.id)) FROM file_data f WHERE f.md5Value IN :md5List GROUP BY f.md5Value, f.mimeType")
-    List<FileMd5UsageCount> countByMd5ValueList(@Param("hashList") List<String> md5List);
+    @Query("SELECT new com.github.filefusion.file.model.FileHashUsageCount(f.hashValue, f.mimeType, COUNT(f.id)) FROM file_data f WHERE f.hashValue IN :hashList GROUP BY f.hashValue, f.mimeType")
+    List<FileHashUsageCount> countByHashValueList(@Param("hashList") List<String> hashList);
 
     /**
      * findAllByDeletedTrueAndDeletedDateBefore

@@ -40,9 +40,9 @@ public class FileData extends BaseEntity {
     private String path;
 
     /**
-     * md5 value
+     * hash value
      */
-    private String md5Value;
+    private String hashValue;
 
     /**
      * mime type

@@ -35,10 +35,9 @@ public class UploadFileModel implements Serializable {
     private String path;
 
     /**
-     * md5 value
+     * hash value
      */
-    private String md5Value;
-
+    private String hashValue;
 
     /**
      * mime type

@@ -2,7 +2,7 @@ package com.github.filefusion.util.file;
 
 import com.github.filefusion.common.HttpException;
 import com.github.filefusion.constant.FileAttribute;
-import com.github.filefusion.file.model.FileMd5UsageCount;
+import com.github.filefusion.file.model.FileHashUsageCount;
 import com.github.filefusion.file.repository.FileDataRepository;
 import com.github.filefusion.util.ExecUtil;
 import com.github.filefusion.util.I18n;
@@ -94,21 +94,21 @@ public final class ThumbnailUtil {
     }
 
     public void clearThumbnail(Map<String, Path> thumbnailMap) {
-        List<String> md5List = new ArrayList<>(thumbnailMap.keySet());
-        Map<String, FileMd5UsageCount> md5UsageCountMap = fileDataRepository.countByMd5ValueList(md5List)
-                .stream().collect(Collectors.toMap(FileMd5UsageCount::getMd5Value, Function.identity()));
-        List<String> filterMd5List = md5List.stream()
-                .filter(md5 -> {
-                    FileMd5UsageCount md5UsageCount = md5UsageCountMap.get(md5);
-                    return md5UsageCount == null
-                            || md5UsageCount.getCount() == null || md5UsageCount.getCount() == 0L
-                            || !StringUtils.hasLength(md5UsageCount.getMimeType())
-                            || (!thumbnailImageMimeType.contains(md5UsageCount.getMimeType())
-                            && !thumbnailVideoMimeType.contains(md5UsageCount.getMimeType()));
+        List<String> hashList = new ArrayList<>(thumbnailMap.keySet());
+        Map<String, FileHashUsageCount> hashUsageCountMap = fileDataRepository.countByHashValueList(hashList)
+                .stream().collect(Collectors.toMap(FileHashUsageCount::getHashValue, Function.identity()));
+        List<String> filterHashList = hashList.stream()
+                .filter(hash -> {
+                    FileHashUsageCount hashUsageCount = hashUsageCountMap.get(hash);
+                    return hashUsageCount == null
+                            || hashUsageCount.getCount() == null || hashUsageCount.getCount() == 0L
+                            || !StringUtils.hasLength(hashUsageCount.getMimeType())
+                            || (!thumbnailImageMimeType.contains(hashUsageCount.getMimeType())
+                            && !thumbnailVideoMimeType.contains(hashUsageCount.getMimeType()));
                 })
                 .toList();
         PathUtil.delete(thumbnailMap.entrySet().stream()
-                .filter(entry -> filterMd5List.contains(entry.getKey()))
+                .filter(entry -> filterHashList.contains(entry.getKey()))
                 .map(Map.Entry::getValue).toList());
     }
 

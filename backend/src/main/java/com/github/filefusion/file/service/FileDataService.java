@@ -171,7 +171,7 @@ public class FileDataService {
     }
 
     public void upload(String userId, MultipartFile multipartFile, String parentId, String name,
-                       String path, String md5Value, String mimeType, LocalDateTime lastModified) {
+                       String path, String hashValue, String mimeType, LocalDateTime lastModified) {
         if (multipartFile == null) {
             throw new HttpException(I18n.get("fileNotExist"));
         }
@@ -179,8 +179,8 @@ public class FileDataService {
         if (!StringUtils.hasLength(name)) {
             throw new HttpException(I18n.get("fileNameEmpty"));
         }
-        if (!StringUtils.hasLength(md5Value)) {
-            throw new HttpException(I18n.get("fileMd5Empty"));
+        if (!StringUtils.hasLength(hashValue)) {
+            throw new HttpException(I18n.get("fileHashEmpty"));
         }
         LocalDateTime lastModifiedDate = lastModified == null ? LocalDateTime.now() : lastModified;
         if (StringUtils.hasLength(path)) {
@@ -199,8 +199,8 @@ public class FileDataService {
             file.setUserId(userId);
             file.setParentId(fileParentId);
             file.setName(name);
-            file.setPath(PathUtil.md5ToPath(md5Value).toString());
-            file.setMd5Value(md5Value);
+            file.setPath(PathUtil.hashToPath(hashValue).toString());
+            file.setHashValue(hashValue);
             file.setMimeType(mimeType);
             file.setSize(multipartFile.getSize());
             file.setEncrypted(false);

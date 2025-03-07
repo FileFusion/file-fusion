@@ -19,8 +19,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public final class PathUtil {
 
-    public static Path md5ToPath(String md5) {
-        return Paths.get(md5.substring(0, 2), md5.substring(2, 4), md5);
+    public static Path hashToPath(String hash) {
+        return Paths.get(hash.substring(0, 2), hash.substring(2, 4), hash);
     }
 
     public static Path resolvePath(Path baseDir, String path) {

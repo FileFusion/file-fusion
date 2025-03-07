@@ -56,8 +56,8 @@ public class ClearThumbnailFileTask {
                             String fileName = file.getFileName().toString();
                             if (!FileAttribute.THUMBNAIL_FILE_SUFFIX.equals(fileName)
                                     && fileName.endsWith(FileAttribute.THUMBNAIL_FILE_SUFFIX)) {
-                                String md5 = fileName.substring(0, fileName.length() - FileAttribute.THUMBNAIL_FILE_SUFFIX.length());
-                                thumbnailMap.put(md5, file);
+                                String hash = fileName.substring(0, fileName.length() - FileAttribute.THUMBNAIL_FILE_SUFFIX.length());
+                                thumbnailMap.put(hash, file);
                                 if (thumbnailMap.size() >= BATCH_FILE_SIZE) {
                                     thumbnailUtil.clearThumbnail(new HashMap<>(thumbnailMap));
                                     thumbnailMap.clear();

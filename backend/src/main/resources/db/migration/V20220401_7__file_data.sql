@@ -5,7 +5,7 @@ CREATE TABLE file_data
     parent_id               VARCHAR(26)   NOT NULL,
     name                    VARCHAR(255)  NOT NULL,
     path                    VARCHAR(4096) NOT NULL,
-    md5_value               VARCHAR(32)  DEFAULT NULL,
+    hash_value              VARCHAR(32)  DEFAULT NULL,
     mime_type               VARCHAR(100) DEFAULT NULL,
     size                    BIGINT        NOT NULL,
     encrypted               BOOLEAN       NOT NULL,
