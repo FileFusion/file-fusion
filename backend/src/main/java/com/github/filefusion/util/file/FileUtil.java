@@ -60,11 +60,10 @@ public class FileUtil {
         return buildZipPath(fileMap.get(file.getParentId()), fileMap) + FileAttribute.SEPARATOR + file.getName();
     }
 
-    public void upload(MultipartFile file, String path) {
+    public void upload(MultipartFile file, Path path) {
         try (InputStream in = file.getInputStream()) {
-            Path targetPath = baseDir.resolve(path);
-            Files.createDirectories(targetPath.getParent());
-            Files.copy(in, targetPath);
+            Files.createDirectories(path.getParent());
+            Files.copy(in, path);
         } catch (IOException e) {
             throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
         }

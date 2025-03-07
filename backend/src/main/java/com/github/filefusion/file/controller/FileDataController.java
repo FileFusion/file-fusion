@@ -5,7 +5,6 @@ import com.github.filefusion.file.entity.FileData;
 import com.github.filefusion.file.model.CreateFolderModel;
 import com.github.filefusion.file.model.RenameFileModel;
 import com.github.filefusion.file.model.SubmitDownloadFilesResponse;
-import com.github.filefusion.file.model.UploadFileModel;
 import com.github.filefusion.file.service.FileDataService;
 import com.github.filefusion.util.CurrentUser;
 import com.github.filefusion.util.TimeUtil;
@@ -16,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.time.LocalDateTime;
@@ -90,14 +90,22 @@ public class FileDataController {
     /**
      * upload file
      *
-     * @param uploadFileModel upload file info
+     * @param file                 file
+     * @param parentId             parent id
+     * @param name                 name
+     * @param path                 path
+     * @param hashValue            hash value
+     * @param mimeType             mime type
+     * @param fileLastModifiedDate file last modified date
      */
     @PostMapping("/_upload")
     @PreAuthorize("hasAuthority('personal_file:upload')")
-    public void upload(@RequestParam UploadFileModel uploadFileModel) {
-        fileDataService.upload(CurrentUser.get().getId(), uploadFileModel.getFile(), uploadFileModel.getParentId(),
-                uploadFileModel.getName(), uploadFileModel.getPath(), uploadFileModel.getHashValue(),
-                uploadFileModel.getMimeType(), TimeUtil.fromMillis(uploadFileModel.getFileLastModifiedDate()));
+    public void upload(@RequestParam MultipartFile file, @RequestParam(required = false) String parentId,
+                       @RequestParam String name, @RequestParam(required = false) String path,
+                       @RequestParam String hashValue, @RequestParam(required = false) String mimeType,
+                       @RequestParam(required = false) Long fileLastModifiedDate) {
+        fileDataService.upload(CurrentUser.get().getId(), file, parentId, name, path, hashValue,
+                mimeType, TimeUtil.fromMillis(fileLastModifiedDate));
     }
 
     /**

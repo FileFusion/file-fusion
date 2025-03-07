@@ -144,19 +144,17 @@ public class FileDataService {
         if (!StringUtils.hasLength(name)) {
             throw new HttpException(I18n.get("fileNameEmpty"));
         }
-        StringBuffer id = new StringBuffer(ULID.randomULID());
+        StringBuffer id = new StringBuffer();
         distributedLock.tryLock(RedisAttribute.LockType.file, userId + pId + name, () -> {
             FileData file = fileDataRepository.findFirstByUserIdAndParentIdAndName(userId, pId, name);
             if (!allowExists && file != null) {
                 throw new HttpException(I18n.get("fileExits", name));
             }
             if (file != null) {
-                id.setLength(0);
                 id.append(file.getId());
                 return;
             }
             file = new FileData();
-            file.setId(id.toString());
             file.setUserId(userId);
             file.setParentId(pId);
             file.setName(name);
@@ -165,16 +163,13 @@ public class FileDataService {
             file.setEncrypted(false);
             file.setFileLastModifiedDate(lastModifiedDate);
             file.setDeleted(false);
-            fileDataRepository.save(file);
+            id.append(fileDataRepository.save(file));
         }, fileLockTimeout);
         return id.toString();
     }
 
     public void upload(String userId, MultipartFile multipartFile, String parentId, String name,
                        String path, String hashValue, String mimeType, LocalDateTime lastModified) {
-        if (multipartFile == null) {
-            throw new HttpException(I18n.get("fileNotExist"));
-        }
         String pId = !StringUtils.hasLength(parentId) ? FileAttribute.PARENT_ROOT : parentId;
         if (!StringUtils.hasLength(name)) {
             throw new HttpException(I18n.get("fileNameEmpty"));
@@ -207,7 +202,7 @@ public class FileDataService {
             file.setFileLastModifiedDate(lastModifiedDate);
             file.setDeleted(false);
             fileDataRepository.save(file);
-            fileUtil.upload(multipartFile, file.getPath());
+            fileUtil.upload(multipartFile, PathUtil.resolvePath(fileUtil.getBaseDir(), file.getPath()));
         }, fileLockTimeout);
     }
 
