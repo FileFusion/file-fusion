@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onBeforeUnmount } from 'vue';
+import { computed, ref, onBeforeUnmount, watch } from 'vue';
 import { mainStore } from '@/store';
 import { useRequest } from 'alova/client';
 
@@ -124,7 +124,26 @@ onBeforeUnmount(() => {
   }
 });
 
-if (props.thumbnail) {
-  doGetThumbnailFile();
+watch(
+  props,
+  (newProps) => {
+    if (newProps.thumbnail) {
+      doGetThumbnailFile();
+    } else {
+      revokeThumbnailFile();
+    }
+  },
+  { immediate: true }
+);
+
+onBeforeUnmount(() => {
+  revokeThumbnailFile();
+});
+
+function revokeThumbnailFile() {
+  if (thumbnailFileUrl.value) {
+    URL.revokeObjectURL(thumbnailFileUrl.value);
+    thumbnailFileUrl.value = '';
+  }
 }
 </script>
