@@ -94,9 +94,9 @@
               @mouseenter="fileData.showOperate = true"
               @mouseleave="fileData.showOperate = false">
               <n-checkbox
-                v-if="fileData.showOperate || fileGridIsCheck(fileData.path)"
+                v-if="fileData.showOperate || fileGridIsCheck(fileData.id)"
                 class="absolute left-2 top-2 z-1"
-                :value="fileData.path"
+                :value="fileData.id"
                 @click.stop="" />
               <n-dropdown
                 v-if="fileData.showOperate || fileData.showOperateMenu"
@@ -119,9 +119,9 @@
               <div class="relative pb-2 pl-1 pr-1 pt-4 text-center">
                 <div>
                   <file-thumbnail
-                    :path="fileData.path"
+                    :id="fileData.id"
                     :thumbnail="fileData.hasThumbnail"
-                    :type="fileData.mimeType" />
+                    :mime-type="fileData.mimeType" />
                 </div>
                 <div class="mt-3">
                   <n-ellipsis :line-clamp="2">
@@ -151,7 +151,7 @@
         :columns="fileTableColumns"
         :data="fileTableData"
         :loading="fileTableLoading"
-        :row-key="(row: any) => row.path"
+        :row-key="(row: any) => row.id"
         remote
         class="mt-3"
         @update:sorter="fileTableHandleSorter"
@@ -173,14 +173,14 @@
         @update:page-size="fileTablePageSizeChange" />
     </n-card>
     <file-rename
+      :id="renameFileId"
       v-model="showRenameFile"
-      :path="filePathPattern"
       :name="renameFileName"
       @submit="fileTableReload" />
-    <video-preview v-model="showVideoFile" :file="videoFile" />
+    <video-preview v-model="showVideoFile" v-model:id="videoFileId" />
     <image-preview
       v-model:show="showImageFile"
-      v-model:path="imageFilePath"
+      v-model:id="imageFileId"
       @preview-prev="imagePreviewPrevNext(true)"
       @preview-next="imagePreviewPrevNext(false)" />
   </div>
@@ -229,7 +229,7 @@ const permission = ref({
 });
 
 watch(
-  () => route.params.path,
+  () => route.params.parentId,
   () => {
     fileTableReload();
   }
@@ -249,13 +249,14 @@ const fileTableSorter = ref<any>({
 });
 
 const showRenameFile = ref<boolean>(false);
+const renameFileId = ref<string>('');
 const renameFileName = ref<string>('');
 
 const showVideoFile = ref<boolean>(false);
-const videoFile = ref<any>({});
+const videoFileId = ref<string | null>(null);
 
 const showImageFile = ref<boolean>(false);
-const imageFilePath = ref<string | null>(null);
+const imageFileId = ref<string | null>(null);
 
 function switchFileShowType(value: string) {
   mStore.setFileShowType(value);
@@ -270,7 +271,7 @@ function getFileDropdownOptions(file: any) {
       props: {
         onClick: () => {
           file.showOperateMenu = false;
-          downloadFiles([file.path]);
+          downloadFiles([file.id]);
         }
       },
       show: permission.value.personalFileDownload
@@ -324,9 +325,9 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
           {
             icon: () =>
               h(FileThumbnail, {
-                path: row.path,
+                id: row.id,
                 thumbnail: row.hasThumbnail,
-                type: row.mimeType,
+                mimeType: row.mimeType,
                 size: 18
               }),
             default: () => row.name
@@ -511,15 +512,12 @@ const getFileTableSorterOptions = computed(() => {
   ];
 });
 
-const filePathPattern = computed(() => {
-  const path = route.params.path;
-  if (!path) {
+const fileParentIdPattern = computed((): string => {
+  const parentId = route.params.parentId;
+  if (!parentId) {
     return '';
   }
-  if (Array.isArray(path)) {
-    return path.join('/');
-  }
-  return path;
+  return <string>parentId;
 });
 
 const {
@@ -537,10 +535,8 @@ const {
         page +
         '/' +
         pageSize +
-        '?name=' +
-        fileNamePattern.value +
-        '&path=' +
-        filePathPattern.value +
+        '?parentId=' +
+        fileParentIdPattern.value +
         (sorter ? '&' + sorter : '')
     );
   },
@@ -552,8 +548,8 @@ const {
 );
 
 const { loading: downloadFileLoading, send: doDownloadFile } = useRequest(
-  (filePathList: string[]) =>
-    http.Post('/file_data/_submit_download', filePathList),
+  (fileIdList: string[]) =>
+    http.Post('/file_data/_submit_download', fileIdList),
   { immediate: false }
 ).onSuccess((response: any) => {
   window.location.href =
@@ -561,8 +557,7 @@ const { loading: downloadFileLoading, send: doDownloadFile } = useRequest(
 });
 
 const { loading: deleteFileLoading, send: doDeleteFile } = useRequest(
-  (filePathList: string[]) =>
-    http.Post('/file_data/_batch_delete', filePathList),
+  (id: string) => http.Delete('/file_data/' + id),
   {
     immediate: false
   }
@@ -589,7 +584,7 @@ function fileGridHandleCheck(allIsCheck: boolean) {
   if (!allIsCheck) {
     fileTableCheck.value = [];
   } else {
-    fileTableCheck.value = fileTableData.value.map((f: any) => f.path);
+    fileTableCheck.value = fileTableData.value.map((f: any) => f.id);
   }
 }
 
@@ -628,15 +623,16 @@ function fileTableReload() {
 
 function renameFile(file: any) {
   showRenameFile.value = true;
+  renameFileId.value = file.id;
   renameFileName.value = file.name;
 }
 
-function downloadFiles(filePathList: string[]) {
-  if (!filePathList || filePathList.length === 0) {
+function downloadFiles(fileIdList: string[]) {
+  if (!fileIdList || fileIdList.length === 0) {
     window.$msg.warning(t('files.personal.fileDownloadSelectCheck'));
     return;
   }
-  doDownloadFile(filePathList);
+  doDownloadFile(fileIdList);
 }
 
 function deleteFile(file: any) {
@@ -646,29 +642,26 @@ function deleteFile(file: any) {
     positiveText: t('common.confirm'),
     negativeText: t('common.cancel'),
     onPositiveClick: () => {
-      deleteFiles([file.path]);
+      deleteFiles([file.id]);
     }
   });
 }
 
-function deleteFiles(filePathList: string[]) {
-  if (!filePathList || filePathList.length === 0) {
+function deleteFiles(fileIdList: string[]) {
+  if (!fileIdList || fileIdList.length === 0) {
     window.$msg.warning(t('files.personal.fileDeleteSelectCheck'));
     return;
   }
-  doDeleteFile(filePathList);
+  for (const fileId of fileIdList) {
+    doDeleteFile(fileId);
+  }
 }
 
 function clickFile(file: any) {
-  if (file.type === 'FOLDER') {
-    let path = '';
-    if (filePathPattern.value) {
-      path += filePathPattern.value + '/';
-    }
-    path += file.name;
+  if (file.mimeType === 'custom/folder') {
     router.push({
       name: 'files-personal',
-      params: { path: path.split('/') }
+      params: { parentId: file.id }
     });
     return;
   }
@@ -678,10 +671,10 @@ function clickFile(file: any) {
   }
   if (supportVideoPreview(file.mimeType)) {
     showVideoFile.value = true;
-    videoFile.value = file;
+    videoFileId.value = file.id;
   } else if (supportImagePreview(file.mimeType)) {
     showImageFile.value = true;
-    imageFilePath.value = file.path;
+    imageFileId.value = file.id;
   } else {
     window.$msg.info(t('files.personal.fileNotSupportPreview'));
   }
@@ -694,17 +687,17 @@ const supportImagePreviewFile = computed(() => {
 });
 
 function imagePreviewPrevNext(prev: boolean) {
-  const filePathIndexMap = new Map<any, number>(
+  const fileIdIndexMap = new Map<any, number>(
     supportImagePreviewFile.value.map((file: any, index: number) => [
-      file.path,
+      file.id,
       index
     ])
   );
-  const currentIndex = filePathIndexMap.get(imageFilePath.value) ?? -1;
+  const currentIndex = fileIdIndexMap.get(imageFileId.value) ?? -1;
   const targetIndex = Math.max(
     0,
-    Math.min(currentIndex + (prev ? -1 : 1), filePathIndexMap.size - 1)
+    Math.min(currentIndex + (prev ? -1 : 1), fileIdIndexMap.size - 1)
   );
-  imageFilePath.value = supportImagePreviewFile.value[targetIndex].path;
+  imageFileId.value = supportImagePreviewFile.value[targetIndex].id;
 }
 </script>
