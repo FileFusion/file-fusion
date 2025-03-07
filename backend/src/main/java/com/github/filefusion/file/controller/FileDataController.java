@@ -69,9 +69,9 @@ public class FileDataController {
      *
      * @param id id
      */
-    @DeleteMapping
+    @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('personal_file:delete')")
-    public void delete(@RequestParam String id) {
+    public void delete(@PathVariable String id) {
         fileDataService.recycleOrDelete(CurrentUser.get().getId(), id);
     }
 
@@ -137,8 +137,8 @@ public class FileDataController {
      * @param downloadId download id
      * @return file list
      */
-    @GetMapping("/_download")
-    public ResponseEntity<StreamingResponseBody> download(@RequestParam String downloadId) {
+    @GetMapping("/_download/{downloadId}")
+    public ResponseEntity<StreamingResponseBody> download(@PathVariable String downloadId) {
         return fileDataService.download(downloadId);
     }
 
