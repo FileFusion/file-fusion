@@ -68,7 +68,7 @@ public final class AuthenticationTokenFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(@Nonnull HttpServletRequest request) {
         String path = PATH_HELPER.getLookupPathForRequest(request);
-        return !PATH_MATCHER.match(ApiPrefixConfig.CONTEXT_PATH + "/**", path);
+        return !PATH_MATCHER.match(WebConfig.CONTEXT_PATH + "/**", path);
     }
 
 }

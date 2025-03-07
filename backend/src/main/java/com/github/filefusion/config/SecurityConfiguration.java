@@ -43,7 +43,7 @@ public class SecurityConfiguration {
     }
 
     private static String buildFullPath(String path) {
-        return UriComponentsBuilder.fromPath(ApiPrefixConfig.CONTEXT_PATH).path(path).build().toUriString();
+        return UriComponentsBuilder.fromPath(WebConfig.CONTEXT_PATH).path(path).build().toUriString();
     }
 
     @Bean

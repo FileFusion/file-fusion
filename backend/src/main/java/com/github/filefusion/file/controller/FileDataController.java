@@ -82,8 +82,8 @@ public class FileDataController {
      */
     @PostMapping("/_create_folder")
     @PreAuthorize("hasAuthority('personal_file:upload')")
-    public void createFolder(@RequestBody CreateFolderModel createFolderModel) {
-        fileDataService.createFolder(CurrentUser.get().getId(), createFolderModel.getParentId(),
+    public String createFolder(@RequestBody CreateFolderModel createFolderModel) {
+        return fileDataService.createFolder(CurrentUser.get().getId(), createFolderModel.getParentId(),
                 createFolderModel.getName(), LocalDateTime.now(), false);
     }
 

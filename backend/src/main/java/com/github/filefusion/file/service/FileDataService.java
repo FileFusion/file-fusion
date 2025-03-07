@@ -140,11 +140,11 @@ public class FileDataService {
     }
 
     public String createFolder(String userId, String parentId, String name, LocalDateTime lastModifiedDate, boolean allowExists) {
-        String pId = !StringUtils.hasLength(parentId) ? FileAttribute.PARENT_ROOT : parentId;
         if (!StringUtils.hasLength(name)) {
             throw new HttpException(I18n.get("fileNameEmpty"));
         }
         StringBuffer id = new StringBuffer();
+        String pId = !StringUtils.hasLength(parentId) ? FileAttribute.PARENT_ROOT : parentId;
         distributedLock.tryLock(RedisAttribute.LockType.file, userId + pId + name, () -> {
             FileData file = fileDataRepository.findFirstByUserIdAndParentIdAndName(userId, pId, name);
             if (!allowExists && file != null) {
@@ -163,14 +163,14 @@ public class FileDataService {
             file.setEncrypted(false);
             file.setFileLastModifiedDate(lastModifiedDate);
             file.setDeleted(false);
-            id.append(fileDataRepository.save(file));
+            fileDataRepository.save(file);
+            id.append(file.getId());
         }, fileLockTimeout);
         return id.toString();
     }
 
     public void upload(String userId, MultipartFile multipartFile, String parentId, String name, String path,
                        String hashValue, String mimeType, Long size, LocalDateTime lastModified) {
-        String pId = !StringUtils.hasLength(parentId) ? FileAttribute.PARENT_ROOT : parentId;
         if (!StringUtils.hasLength(name)) {
             throw new HttpException(I18n.get("fileNameEmpty"));
         }
@@ -178,15 +178,16 @@ public class FileDataService {
             throw new HttpException(I18n.get("fileHashEmpty"));
         }
         LocalDateTime lastModifiedDate = lastModified == null ? LocalDateTime.now() : lastModified;
-        if (StringUtils.hasLength(path)) {
-            List<String> hierarchyPathList = getHierarchyPathList(path);
-            for (String hierarchyPath : hierarchyPathList) {
-                pId = createFolder(userId, pId, hierarchyPath, lastModifiedDate, true);
+        String filePath = PathUtil.hashToPath(hashValue).toString();
+        String pId = !StringUtils.hasLength(parentId) ? FileAttribute.PARENT_ROOT : parentId;
+        distributedLock.tryLock(RedisAttribute.LockType.file, userId + pId + path + name, () -> {
+            String fileParentId = pId;
+            if (StringUtils.hasLength(path)) {
+                List<String> hierarchyPathList = getHierarchyPathList(path);
+                for (String hierarchyPath : hierarchyPathList) {
+                    fileParentId = createFolder(userId, fileParentId, hierarchyPath, lastModifiedDate, true);
+                }
             }
-        }
-
-        String fileParentId = pId;
-        distributedLock.tryLock(RedisAttribute.LockType.file, userId + fileParentId + name, () -> {
             if (fileDataRepository.existsByUserIdAndParentIdAndName(userId, fileParentId, name)) {
                 throw new HttpException(I18n.get("fileExits", name));
             }
@@ -194,7 +195,7 @@ public class FileDataService {
             file.setUserId(userId);
             file.setParentId(fileParentId);
             file.setName(name);
-            file.setPath(PathUtil.hashToPath(hashValue).toString());
+            file.setPath(filePath);
             file.setHashValue(hashValue);
             file.setMimeType(mimeType);
             file.setSize(size);
