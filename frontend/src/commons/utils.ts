@@ -1,5 +1,6 @@
 import { NIcon } from 'naive-ui';
 import { Component, h } from 'vue';
+import SparkMD5 from 'spark-md5';
 
 function arrayToTree(items: any[], parentId: string): any[] {
   return arrayToTreeCustom(items, parentId, 'id', 'parentId');
@@ -87,6 +88,19 @@ function formatFileSize(bytes: number) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
+async function getFileHash(file: File): Promise<string> {
+  const spark = new SparkMD5.ArrayBuffer();
+  const reader = file.stream().getReader();
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
+    }
+    spark.append(value);
+  }
+  return spark.end();
+}
+
 const supportImagePreviewType = [
   'image/gif',
   'image/jpeg',
@@ -111,6 +125,7 @@ export {
   renderIcon,
   renderIconMethod,
   formatFileSize,
+  getFileHash,
   supportImagePreview,
   supportVideoPreview
 };

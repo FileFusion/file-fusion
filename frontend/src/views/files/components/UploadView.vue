@@ -127,6 +127,7 @@ import { useRequest } from 'alova/client';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { useThemeVars } from 'naive-ui';
+import { getFileHash } from '@/commons/utils';
 
 const { t } = useI18n();
 const http = window.$http;
@@ -235,7 +236,7 @@ function uploadFileChange(options: { fileList: UploadFileInfo[] }) {
   fileList.value = options.fileList;
 }
 
-const uploadFileRequest = ({
+const uploadFileRequest = async ({
   file,
   onProgress,
   onFinish,
@@ -258,7 +259,7 @@ const uploadFileRequest = ({
   formData.append('parentId', fileParentIdPattern.value);
   formData.append('name', fileInfo.name);
   formData.append('path', path);
-  formData.append('hashValue', '121212121212121212');
+  formData.append('hashValue', await getFileHash(fileInfo));
   formData.append('mimeType', fileInfo.type);
   formData.append('fileLastModifiedDate', fileInfo.lastModified + '');
   const uploadMethod = http.Post('/file_data/_upload', formData, {
