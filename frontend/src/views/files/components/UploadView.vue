@@ -261,6 +261,7 @@ const uploadFileRequest = async ({
   formData.append('path', path);
   formData.append('hashValue', await getFileHash(fileInfo));
   formData.append('mimeType', fileInfo.type);
+  formData.append('size', fileInfo.size);
   formData.append('fileLastModifiedDate', fileInfo.lastModified + '');
   const uploadMethod = http.Post('/file_data/_upload', formData, {
     meta: {

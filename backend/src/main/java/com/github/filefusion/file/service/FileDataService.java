@@ -168,8 +168,8 @@ public class FileDataService {
         return id.toString();
     }
 
-    public void upload(String userId, MultipartFile multipartFile, String parentId, String name,
-                       String path, String hashValue, String mimeType, LocalDateTime lastModified) {
+    public void upload(String userId, MultipartFile multipartFile, String parentId, String name, String path,
+                       String hashValue, String mimeType, Long size, LocalDateTime lastModified) {
         String pId = !StringUtils.hasLength(parentId) ? FileAttribute.PARENT_ROOT : parentId;
         if (!StringUtils.hasLength(name)) {
             throw new HttpException(I18n.get("fileNameEmpty"));
@@ -197,7 +197,7 @@ public class FileDataService {
             file.setPath(PathUtil.hashToPath(hashValue).toString());
             file.setHashValue(hashValue);
             file.setMimeType(mimeType);
-            file.setSize(multipartFile.getSize());
+            file.setSize(size);
             file.setEncrypted(false);
             file.setFileLastModifiedDate(lastModifiedDate);
             file.setDeleted(false);

@@ -103,9 +103,9 @@ public class FileDataController {
     public void upload(@RequestParam MultipartFile file, @RequestParam(required = false) String parentId,
                        @RequestParam String name, @RequestParam(required = false) String path,
                        @RequestParam String hashValue, @RequestParam(required = false) String mimeType,
-                       @RequestParam(required = false) Long fileLastModifiedDate) {
+                       @RequestParam Long size, @RequestParam(required = false) Long fileLastModifiedDate) {
         fileDataService.upload(CurrentUser.get().getId(), file, parentId, name, path, hashValue,
-                mimeType, TimeUtil.fromMillis(fileLastModifiedDate));
+                mimeType, size, TimeUtil.fromMillis(fileLastModifiedDate));
     }
 
     /**
