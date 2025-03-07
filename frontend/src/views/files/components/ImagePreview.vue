@@ -19,12 +19,12 @@ const http = window.$http;
 
 const emit = defineEmits(['preview-prev', 'preview-next']);
 const show = defineModel<boolean>('show');
-const path = defineModel<string | null>('path');
+const id = defineModel<string | null>('id');
 
 const imagePreview = ref<any>(null);
 
 const downloadMethod = () =>
-  http.Post<any>('/file_data/_submit_download', [path.value]);
+  http.Post<any>('/file_data/_submit_download', [id.value]);
 
 const {
   loading: imagePreviewFileLoading,
@@ -98,10 +98,10 @@ const renderToolbar = computed(() => ({ nodes }: ImageRenderToolbarProps) => [
 
 function destroyImage() {
   show.value = false;
-  path.value = null;
+  id.value = null;
 }
 
-watch([show, path], async ([newShow, newPath], [oldShow, oldPath]) => {
+watch([show, id], async ([newShow, newId], [oldShow, oldId]) => {
   if (!newShow) {
     return;
   }
@@ -113,7 +113,7 @@ watch([show, path], async ([newShow, newPath], [oldShow, oldPath]) => {
       document.getElementsByClassName('n-image-preview-overlay')[0]
     )).onclick = destroyImage;
   }
-  if (newPath != oldPath) {
+  if (newId != oldId) {
     await doGetImagePreviewFile();
     (<any>(
       document.getElementsByClassName('n-image-preview-wrapper')[0].firstChild
