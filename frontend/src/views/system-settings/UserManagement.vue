@@ -741,7 +741,7 @@ function addOrUpdateUserSuccess() {
 }
 
 function userTableHandleCheck(rowKeys: Array<string | number>) {
-  userTableCheck.value = rowKeys as Array<string>;
+  userTableCheck.value = <string[]>rowKeys;
 }
 
 function userTableHandleSorter(params: DataTableSortState | null) {

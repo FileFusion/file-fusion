@@ -24,7 +24,7 @@ const permission = ref({
 });
 
 const routeName = computed((): string => {
-  return route.name as string;
+  return <string>route.name;
 });
 
 watch(

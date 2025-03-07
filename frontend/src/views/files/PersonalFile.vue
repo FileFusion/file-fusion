@@ -593,7 +593,7 @@ function fileGridIsCheck(rowKey: string) {
 }
 
 function fileTableHandleCheck(rowKeys: Array<string | number>) {
-  fileTableCheck.value = rowKeys as Array<string>;
+  fileTableCheck.value = <string[]>rowKeys;
 }
 
 function fileTableHandleSorter(params: DataTableSortState | null) {

@@ -18,7 +18,7 @@ const { t } = useI18n();
 
 const activeMenu = computed((): string => {
   if (route.matched.length >= 2) {
-    return route.matched[1].name as string;
+    return <string>route.matched[1].name;
   }
   return '';
 });
@@ -41,7 +41,7 @@ const menus = computed(() => {
       }
       const roTitle = ro.meta.title;
       newMenus.push({
-        key: ro.name as string,
+        key: <string>ro.name,
         label: () =>
           h(
             RouterLink,
@@ -62,7 +62,7 @@ const menus = computed(() => {
 watchEffect(async () => {
   if (route.matched.length === 1) {
     if (menus.value.length > 0) {
-      await router.push({ name: menus.value[0].key as string });
+      await router.push({ name: <string>menus.value[0].key });
     } else {
       await router.push({ name: 'user-settings' });
     }
