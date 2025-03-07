@@ -3,7 +3,7 @@ import IconDeleteThemes from '~icons/icon-park-outline/delete-themes';
 
 export default [
   {
-    path: 'personal/:path*',
+    path: 'personal/:parentId?',
     name: 'files-personal',
     meta: {
       requiresAuth: true,
