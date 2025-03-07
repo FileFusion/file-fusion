@@ -10,9 +10,9 @@
         ref="renameFileFormRef"
         :model="renameFileForm"
         :rules="renameFileFormRules">
-        <n-form-item path="targetName">
+        <n-form-item path="name">
           <n-input
-            v-model:value="renameFileForm.targetName"
+            v-model:value="renameFileForm.name"
             :placeholder="$t('files.personal.fileName')"
             clearable
             maxlength="255"
@@ -40,18 +40,17 @@ const http = window.$http;
 const emit = defineEmits(['submit']);
 const model = defineModel<boolean>();
 const props = defineProps({
-  path: { type: String, required: true },
+  id: { type: String, required: true },
   name: { type: String, required: true }
 });
 
 const renameFileFormRef = ref<HTMLFormElement>();
 const renameFileForm = ref({
-  originalName: '',
-  targetName: ''
+  name: ''
 });
 const renameFileFormRules = computed<FormRules>(() => {
   return {
-    targetName: [
+    name: [
       {
         required: true,
         validator(_rule: FormItemRule, value: string) {
@@ -71,10 +70,9 @@ const renameFileFormRules = computed<FormRules>(() => {
 
 const { loading: renameFileLoading, send: doRenameFile } = useRequest(
   () =>
-    http.Post('/file_data/_rename', {
-      path: props.path,
-      originalName: renameFileForm.value.originalName,
-      targetName: renameFileForm.value.targetName
+    http.Put('/file_data/_rename', {
+      id: props.id,
+      name: renameFileForm.value.name
     }),
   {
     immediate: false
@@ -98,8 +96,7 @@ function validateRenameFileForm() {
 watch(
   () => props.name,
   (newName) => {
-    renameFileForm.value.originalName = newName;
-    renameFileForm.value.targetName = newName;
+    renameFileForm.value.name = newName;
   }
 );
 </script>
