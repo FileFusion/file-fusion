@@ -4,7 +4,6 @@ import com.github.filefusion.constant.SorterOrder;
 import com.github.filefusion.user.entity.UserInfo;
 import com.github.filefusion.user.model.UpdateUserModel;
 import com.github.filefusion.user.model.UpdateUserPasswordModel;
-import com.github.filefusion.user.model.UserTokenResponse;
 import com.github.filefusion.user.service.UserService;
 import com.github.filefusion.util.CurrentUser;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +39,7 @@ public class UserController {
      * @return authentication key
      */
     @PostMapping("/_login")
-    public UserTokenResponse login(@RequestBody UserInfo user) {
+    public String login(@RequestBody UserInfo user) {
         return userService.login(user);
     }
 

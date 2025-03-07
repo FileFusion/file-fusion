@@ -143,7 +143,7 @@ const {
 } = useRequest(() => http.Post<any>('/user/_login', loginForm.value), {
   immediate: false
 }).onSuccess(() => {
-  mStore.setToken(loginRes.value.token, loginForm.value.remember);
+  mStore.setToken(loginRes.value, loginForm.value.remember);
   window.$msg.success(t('login.success'), t('login.welcomeBack'));
   const redirect = <string>route.query['redirect'];
   if (redirect && !redirect.startsWith('/login')) {

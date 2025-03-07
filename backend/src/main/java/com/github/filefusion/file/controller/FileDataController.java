@@ -4,7 +4,6 @@ import com.github.filefusion.constant.SorterOrder;
 import com.github.filefusion.file.entity.FileData;
 import com.github.filefusion.file.model.CreateFolderModel;
 import com.github.filefusion.file.model.RenameFileModel;
-import com.github.filefusion.file.model.SubmitDownloadFilesResponse;
 import com.github.filefusion.file.service.FileDataService;
 import com.github.filefusion.util.CurrentUser;
 import com.github.filefusion.util.TimeUtil;
@@ -100,11 +99,11 @@ public class FileDataController {
      */
     @PostMapping("/_upload")
     @PreAuthorize("hasAuthority('personal_file:upload')")
-    public void upload(@RequestParam MultipartFile file, @RequestParam(required = false) String parentId,
-                       @RequestParam String name, @RequestParam(required = false) String path,
-                       @RequestParam String hashValue, @RequestParam(required = false) String mimeType,
-                       @RequestParam Long size, @RequestParam(required = false) Long fileLastModifiedDate) {
-        fileDataService.upload(CurrentUser.get().getId(), file, parentId, name, path, hashValue,
+    public boolean upload(@RequestParam MultipartFile file, @RequestParam(required = false) String parentId,
+                          @RequestParam String name, @RequestParam(required = false) String path,
+                          @RequestParam String hashValue, @RequestParam(required = false) String mimeType,
+                          @RequestParam Long size, @RequestParam(required = false) Long fileLastModifiedDate) {
+        return fileDataService.upload(CurrentUser.get().getId(), file, parentId, name, path, hashValue,
                 mimeType, size, TimeUtil.fromMillis(fileLastModifiedDate));
     }
 
@@ -127,7 +126,7 @@ public class FileDataController {
      */
     @PostMapping("/_submit_download")
     @PreAuthorize("hasAnyAuthority('personal_file:download','personal_file:preview')")
-    public SubmitDownloadFilesResponse submitDownload(@RequestBody List<String> idList) {
+    public String submitDownload(@RequestBody List<String> idList) {
         return fileDataService.submitDownload(CurrentUser.get().getId(), idList);
     }
 

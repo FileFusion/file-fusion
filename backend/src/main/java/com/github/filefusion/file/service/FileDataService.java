@@ -5,7 +5,6 @@ import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.constant.RedisAttribute;
 import com.github.filefusion.constant.SysConfigKey;
 import com.github.filefusion.file.entity.FileData;
-import com.github.filefusion.file.model.SubmitDownloadFilesResponse;
 import com.github.filefusion.file.repository.FileDataRepository;
 import com.github.filefusion.sys_config.entity.SysConfig;
 import com.github.filefusion.sys_config.service.SysConfigService;
@@ -34,6 +33,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * FileDataService
@@ -169,14 +169,15 @@ public class FileDataService {
         return id.toString();
     }
 
-    public void upload(String userId, MultipartFile multipartFile, String parentId, String name, String path,
-                       String hashValue, String mimeType, Long size, LocalDateTime lastModified) {
+    public boolean upload(String userId, MultipartFile multipartFile, String parentId, String name, String path,
+                          String hashValue, String mimeType, Long size, LocalDateTime lastModified) {
         if (!StringUtils.hasLength(name)) {
             throw new HttpException(I18n.get("fileNameEmpty"));
         }
         if (!StringUtils.hasLength(hashValue)) {
             throw new HttpException(I18n.get("fileHashEmpty"));
         }
+        AtomicBoolean atomicBoolean = new AtomicBoolean(false);
         LocalDateTime lastModifiedDate = lastModified == null ? LocalDateTime.now() : lastModified;
         String filePath = PathUtil.hashToPath(hashValue).toString();
         String pId = !StringUtils.hasLength(parentId) ? FileAttribute.PARENT_ROOT : parentId;
@@ -204,7 +205,9 @@ public class FileDataService {
             file.setDeleted(false);
             fileDataRepository.save(file);
             fileUtil.upload(multipartFile, PathUtil.resolvePath(fileUtil.getBaseDir(), file.getPath()));
+            atomicBoolean.set(true);
         }, fileLockTimeout);
+        return atomicBoolean.get();
     }
 
     public void rename(String userId, String id, String name) {
@@ -219,7 +222,7 @@ public class FileDataService {
         fileDataRepository.save(file);
     }
 
-    public SubmitDownloadFilesResponse submitDownload(String userId, List<String> idList) {
+    public String submitDownload(String userId, List<String> idList) {
         List<FileData> fileList = fileDataRepository.findAllByUserIdAndIdIn(userId, idList);
         if (fileList.isEmpty() || fileList.size() != idList.size()) {
             throw new HttpException(I18n.get("fileNotExist"));
@@ -230,7 +233,7 @@ public class FileDataService {
         RList<String> idRList = redissonClient.getList(RedisAttribute.DOWNLOAD_ID_PREFIX + RedisAttribute.SEPARATOR + downloadId);
         idRList.addAll(allList.stream().map(FileData::getId).toList());
         idRList.expire(fileDownloadLinkTimeout);
-        return new SubmitDownloadFilesResponse(downloadId);
+        return downloadId;
     }
 
     public ResponseEntity<StreamingResponseBody> download(String downloadId) {

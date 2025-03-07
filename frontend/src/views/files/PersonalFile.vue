@@ -547,13 +547,17 @@ const {
   }
 );
 
-const { loading: downloadFileLoading, send: doDownloadFile } = useRequest(
+const {
+  loading: downloadFileLoading,
+  data: submitDownloadRes,
+  send: doDownloadFile
+} = useRequest(
   (fileIdList: string[]) =>
     http.Post('/file_data/_submit_download', fileIdList),
   { immediate: false }
-).onSuccess((response: any) => {
+).onSuccess(() => {
   window.location.href =
-    http.options.baseURL + '/file_data/_download/' + response.data.downloadId;
+    http.options.baseURL + '/file_data/_download/' + submitDownloadRes.value;
 });
 
 const { loading: deleteFileLoading, send: doDeleteFile } = useRequest(

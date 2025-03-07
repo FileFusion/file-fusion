@@ -32,12 +32,13 @@ const {
   send: doGetImagePreviewFile
 } = useRequest(downloadMethod, { immediate: false });
 
-const { send: doDownloadImagePreviewFile } = useRequest(downloadMethod, {
-  immediate: false
-}).onSuccess((response: any) => {
-  window.location.href =
-    http.options.baseURL + '/file_data/_download/' + response.data.downloadId;
-});
+const { data: submitDownloadRes, send: doDownloadImagePreviewFile } =
+  useRequest(downloadMethod, {
+    immediate: false
+  }).onSuccess(() => {
+    window.location.href =
+      http.options.baseURL + '/file_data/_download/' + submitDownloadRes.value;
+  });
 
 const renderToolbar = computed(() => ({ nodes }: ImageRenderToolbarProps) => [
   h(
@@ -118,9 +119,7 @@ watch([show, id], async ([newShow, newId], [oldShow, oldId]) => {
     (<any>(
       document.getElementsByClassName('n-image-preview-wrapper')[0].firstChild
     )).src =
-      http.options.baseURL +
-      '/file_data/_download/' +
-      imagePreviewUrl.value.downloadId;
+      http.options.baseURL + '/file_data/_download/' + imagePreviewUrl.value;
   }
 });
 </script>

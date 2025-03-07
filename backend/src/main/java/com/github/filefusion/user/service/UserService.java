@@ -6,7 +6,6 @@ import com.github.filefusion.user.entity.UserInfo;
 import com.github.filefusion.user.entity.UserRole;
 import com.github.filefusion.user.model.UpdateUserModel;
 import com.github.filefusion.user.model.UserToken;
-import com.github.filefusion.user.model.UserTokenResponse;
 import com.github.filefusion.user.repository.*;
 import com.github.filefusion.util.EncryptUtil;
 import com.github.filefusion.util.I18n;
@@ -58,7 +57,7 @@ public class UserService implements UserDetailsService {
         this.permissionRepository = permissionRepository;
     }
 
-    public UserTokenResponse login(UserInfo user) throws AuthenticationException {
+    public String login(UserInfo user) throws AuthenticationException {
         String username = user.getUsername();
         String password = EncryptUtil.sha256(user.getPassword());
         user = userRepository.findByUsername(username);
@@ -69,7 +68,7 @@ public class UserService implements UserDetailsService {
             throw new BadCredentialsException(I18n.get("passwordError"));
         }
         user.verifyUser();
-        return new UserTokenResponse(UserToken.encoder(user.getId()));
+        return UserToken.encoder(user.getId());
     }
 
     public void updateCurrentUser(UpdateUserModel user) {
