@@ -162,15 +162,12 @@ const createFolderFormRules = computed<FormRules>(() => {
   };
 });
 
-const filePathPattern = computed(() => {
-  const path = route.params.path;
-  if (!path) {
+const fileParentIdPattern = computed((): string => {
+  const parentId = route.params.parentId;
+  if (!parentId) {
     return '';
   }
-  if (Array.isArray(path)) {
-    return path.join('/');
-  }
-  return path;
+  return <string>parentId;
 });
 
 const uploadPercentage = computed<number>(() => {
@@ -213,9 +210,8 @@ function validateCreateFolderForm() {
 const { loading: createFolderLoading, send: doCreateFolder } = useRequest(
   () =>
     http.Post('/file_data/_create_folder', {
-      path: filePathPattern.value
-        ? filePathPattern.value + '/' + createFolderForm.value.name
-        : createFolderForm.value.name
+      parentId: fileParentIdPattern.value,
+      name: createFolderForm.value.name
     }),
   {
     immediate: false
@@ -247,25 +243,24 @@ const uploadFileRequest = ({
 }: UploadCustomRequestOptions) => {
   lastFileBatchId.value = file.batchId;
   const fileInfo: File = <File>file.file;
-  let path;
-  if (filePathPattern.value) {
-    if (fileInfo.webkitRelativePath) {
-      path = filePathPattern.value + '/' + fileInfo.webkitRelativePath;
-    } else {
-      path = filePathPattern.value;
-    }
-  } else {
-    path = fileInfo.webkitRelativePath;
-  }
-  if (isUploadDirectory.value) {
-    path = path.substring(0, path.lastIndexOf('/'));
+  let path = '';
+  if (
+    fileInfo.webkitRelativePath &&
+    fileInfo.webkitRelativePath.includes('/')
+  ) {
+    path = fileInfo.webkitRelativePath.substring(
+      0,
+      fileInfo.webkitRelativePath.lastIndexOf('/')
+    );
   }
   const formData = new FormData();
   formData.append('file', fileInfo);
+  formData.append('parentId', fileParentIdPattern.value);
   formData.append('name', fileInfo.name);
   formData.append('path', path);
-  formData.append('type', fileInfo.type);
-  formData.append('lastModified', fileInfo.lastModified + '');
+  formData.append('hashValue', '121212121212121212');
+  formData.append('mimeType', fileInfo.type);
+  formData.append('fileLastModifiedDate', fileInfo.lastModified + '');
   const uploadMethod = http.Post('/file_data/_upload', formData, {
     meta: {
       loading: false
