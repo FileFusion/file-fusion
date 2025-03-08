@@ -42,34 +42,32 @@ task:
 file:
   lock-timeout: ${FF_FILE_LOCK_TIMEOUT:60s}
   download-link-timeout: ${FF_FILE_DOWNLOAD_LINK_TIMEOUT:60s}
+  thumbnail-generate-timeout: ${FF_FILE_THUMBNAIL_GENERATE_TIMEOUT:60s}
   dir: ${FF_FILE_DIR:/opt/file_fusion/data/file}
   tmp-dir: ${FF_FILE_TMP_DIR:/opt/file_fusion/data/tmp}
-recycle-bin:
-  dir: ${FF_RECYCLE_BIN_DIR:/opt/file_fusion/data/recycle_bin}
-thumbnail:
-  generate-timeout: ${FF_THUMBNAIL_GENERATE_TIMEOUT:60s}
-  dir: ${FF_THUMBNAIL_DIR:/opt/file_fusion/data/thumbnail}
-  image-mime-type: "${FF_THUMBNAIL_IMAGE_MIME_TYPE:application/pdf,\
-  application/postscript,\
-  image/bmp,\
-  image/gif,\
-  image/heic,\
-  image/jpeg,\
-  image/png,\
-  image/sgi,\
-  image/svg+xml,\
-  image/tiff,\
-  image/vnd.adobe.photoshop,\
-  image/webp,\
-  image/x-xbitmap}"
-  video-mime-type: "${FF_THUMBNAIL_VIDEO_MIME_TYPE:application/vnd.rn-realmedia,\
-  video/x-ms-wmv,\
-  video/mp4,\
-  video/mpeg,\
-  video/3gpp,\
-  video/x-flv,\
-  video/quicktime,\
-  video/mp4,\
-  video/x-flv,\
-  video/webm,\
-  video/avi}"
+  recycle-bin-dir: ${FF_FILE_RECYCLE_BIN_DIR:/opt/file_fusion/data/recycle_bin}
+  thumbnail-dir: ${FF_FILE_THUMBNAIL_DIR:/opt/file_fusion/data/thumbnail}
+  thumbnail-image-mime-type: "${FF_FILE_THUMBNAIL_IMAGE_MIME_TYPE:application/pdf,\
+    application/postscript,\
+    image/bmp,\
+    image/gif,\
+    image/heic,\
+    image/jpeg,\
+    image/png,\
+    image/sgi,\
+    image/svg+xml,\
+    image/tiff,\
+    image/vnd.adobe.photoshop,\
+    image/webp,\
+    image/x-xbitmap}"
+  thumbnail-video-mime-type: "${FF_FILE_THUMBNAIL_VIDEO_MIME_TYPE:application/vnd.rn-realmedia,\
+    video/x-ms-wmv,\
+    video/mp4,\
+    video/mpeg,\
+    video/3gpp,\
+    video/x-flv,\
+    video/quicktime,\
+    video/mp4,\
+    video/x-flv,\
+    video/webm,\
+    video/avi}"
