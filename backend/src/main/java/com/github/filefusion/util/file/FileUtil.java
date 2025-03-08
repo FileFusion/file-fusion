@@ -58,7 +58,7 @@ public final class FileUtil {
         }
     }
 
-    public static void merge(Path chunkDirPath, Path targetPath) {
+    public static void chunkMerge(Path chunkDirPath, Path targetPath) {
         try (FileChannel outputChannel = FileChannel.open(targetPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
             for (int i = 0; ; i++) {
                 Path chunk = chunkDirPath.resolve(String.valueOf(i));

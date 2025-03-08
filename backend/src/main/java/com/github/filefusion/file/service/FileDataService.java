@@ -207,7 +207,7 @@ public class FileDataService {
                     FileUtil.delete(filePath);
                 }
             }
-            FileUtil.merge(chunkDirPath, filePath);
+            FileUtil.chunkMerge(chunkDirPath, filePath);
             if (!hashValue.equals(FileUtil.calculateMd5(filePath))) {
                 FileUtil.delete(filePath);
                 throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
