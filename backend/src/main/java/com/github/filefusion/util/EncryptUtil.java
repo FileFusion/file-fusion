@@ -30,8 +30,9 @@ import java.util.Arrays;
 public class EncryptUtil {
 
     public static final String AES = "AES";
-    public static final String SHA_256 = "SHA-256";
     public static final String AES_TRANSFORMATION = "AES/CBC/PKCS5Padding";
+    public static final String SHA_256 = "SHA-256";
+    public static final String MD5 = "MD5";
 
     private static final byte[] HEX_LOOKUP = new byte[128];
     private static final char[] HEX_TABLE = new char[256 * 2];
@@ -105,6 +106,15 @@ public class EncryptUtil {
     public static String sha256(String original) {
         try {
             MessageDigest messageDigest = MessageDigest.getInstance(SHA_256);
+            return bytesToHex(messageDigest.digest(original.getBytes(StandardCharsets.UTF_8)));
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static String md5(String original) {
+        try {
+            MessageDigest messageDigest = MessageDigest.getInstance(MD5);
             return bytesToHex(messageDigest.digest(original.getBytes(StandardCharsets.UTF_8)));
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
