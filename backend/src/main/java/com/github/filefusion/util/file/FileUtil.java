@@ -26,12 +26,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public final class FileUtil {
 
-    public static void hashFormatCheck(String hash) {
-        if (!StringUtils.hasLength(hash) || hash.length() != 32 || !hash.matches("^[a-zA-Z0-9]+$")) {
-            throw new HttpException(I18n.get("noOperationPermission"));
-        }
-    }
-
     public static void pathFormatCheck(String path) {
         if (!StringUtils.hasLength(path) || path.contains("..") || path.contains("//") || path.startsWith("/")) {
             throw new HttpException(I18n.get("noOperationPermission"));
@@ -39,13 +33,10 @@ public final class FileUtil {
     }
 
     public static String getHashPath(String hash) {
-        hashFormatCheck(hash);
+        if (!StringUtils.hasLength(hash) || hash.length() != 32 || !hash.matches("^[a-zA-Z0-9]+$")) {
+            throw new HttpException(I18n.get("noOperationPermission"));
+        }
         return Paths.get(hash.substring(0, 2), hash.substring(2, 4), hash).toString();
-    }
-
-    public static Path getChunkPath(Path tmpDir, String fileHash, String chunkHash) {
-        FileUtil.hashFormatCheck(chunkHash);
-        return tmpDir.resolve(FileUtil.getHashPath(fileHash)).resolve(chunkHash);
     }
 
     public static String calculateMd5(Path path) {

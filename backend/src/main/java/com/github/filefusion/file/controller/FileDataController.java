@@ -89,14 +89,37 @@ public class FileDataController {
     /**
      * upload file chunk
      *
-     * @param file      file chunk
-     * @param chunkHash chunk hash
-     * @param fileHash  file hash
+     * @param file           file chunk
+     * @param chunkIndex     chunk index
+     * @param chunkHashValue chunk hash value
+     * @param hashValue      hash value
      */
     @PostMapping("/_upload_chunk")
     @PreAuthorize("hasAuthority('personal_file:upload')")
-    public void uploadChunk(@RequestParam MultipartFile file, @RequestParam String chunkHash, @RequestParam String fileHash) {
-        fileDataService.uploadChunk(file, chunkHash, fileHash);
+    public void uploadChunk(@RequestParam MultipartFile file, @RequestParam Integer chunkIndex,
+                            @RequestParam String chunkHashValue, @RequestParam String hashValue) {
+        fileDataService.uploadChunk(file, chunkIndex, chunkHashValue, hashValue);
+    }
+
+    /**
+     * upload chunk merge
+     *
+     * @param parentId             parent id
+     * @param name                 name
+     * @param path                 path
+     * @param hashValue            hash value
+     * @param mimeType             mime type
+     * @param size                 size
+     * @param fileLastModifiedDate file last modified date
+     */
+    @PostMapping("/_upload_chunk_merge")
+    @PreAuthorize("hasAuthority('personal_file:upload')")
+    public void uploadChunkMerge(@RequestParam(required = false) String parentId,
+                                 @RequestParam String name, @RequestParam(required = false) String path,
+                                 @RequestParam String hashValue, @RequestParam(required = false) String mimeType,
+                                 @RequestParam Long size, @RequestParam(required = false) Long fileLastModifiedDate) {
+        fileDataService.uploadChunkMerge(CurrentUser.get().getId(), parentId, name, path, hashValue,
+                mimeType, size, TimeUtil.fromMillis(fileLastModifiedDate));
     }
 
 
@@ -109,6 +132,7 @@ public class FileDataController {
      * @param path                 path
      * @param hashValue            hash value
      * @param mimeType             mime type
+     * @param size                 size
      * @param fileLastModifiedDate file last modified date
      */
     @PostMapping("/_upload")

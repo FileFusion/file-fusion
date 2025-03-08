@@ -30,9 +30,12 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -85,7 +88,6 @@ public class FileDataService {
     }
 
     private List<String> getHierarchyPathList(String path) {
-        FileUtil.pathFormatCheck(path);
         Path rootPath = Paths.get(path).normalize();
         List<String> hierarchyPathList = new ArrayList<>(rootPath.getNameCount());
         for (int i = 0; i < rootPath.getNameCount(); i++) {
@@ -167,20 +169,43 @@ public class FileDataService {
         return id.toString();
     }
 
-    public void uploadChunk(MultipartFile file, String chunkHash, String fileHash) {
-        Path chunkPath = FileUtil.getChunkPath(fileProperties.getTmpDir(), fileHash, chunkHash);
+    public void uploadChunk(MultipartFile file, Integer chunkIndex, String chunkHashValue, String hashValue) {
+        Path chunkDirPath = fileProperties.getTmpDir().resolve(FileUtil.getHashPath(hashValue));
+        Path chunkPath = chunkDirPath.resolve(String.valueOf(chunkIndex));
         if (Files.exists(chunkPath)) {
-            if (chunkHash.equals(FileUtil.calculateMd5(chunkPath))) {
+            if (chunkHashValue.equals(FileUtil.calculateMd5(chunkPath))) {
                 return;
             } else {
                 FileUtil.delete(chunkPath);
             }
         }
         FileUtil.upload(file, chunkPath);
-        if (!chunkHash.equals(FileUtil.calculateMd5(chunkPath))) {
+        if (!chunkHashValue.equals(FileUtil.calculateMd5(chunkPath))) {
             FileUtil.delete(chunkPath);
             throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
         }
+    }
+
+    @Transactional(rollbackFor = HttpException.class)
+    public void uploadChunkMerge(String userId, String parentId, String name, String path,
+                                 String hashValue, String mimeType, Long size, LocalDateTime lastModified) {
+        String hashPath = FileUtil.getHashPath(hashValue);
+        Path chunkDirPath = fileProperties.getTmpDir().resolve(hashPath);
+        Path filePath = fileProperties.getDir().resolve(hashPath);
+        try (FileChannel outputChannel = FileChannel.open(filePath, StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
+            for (int i = 0; ; i++) {
+                Path chunk = chunkDirPath.resolve(String.valueOf(i));
+                if (!Files.isRegularFile(chunk)) {
+                    break;
+                }
+                try (FileChannel inputChannel = FileChannel.open(chunk, StandardOpenOption.READ)) {
+                    inputChannel.transferTo(outputChannel.size(), inputChannel.size(), outputChannel);
+                }
+            }
+        } catch (IOException e) {
+            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
+        }
+        upload(userId, null, parentId, name, path, hashValue, mimeType, size, lastModified);
     }
 
     @Transactional(rollbackFor = HttpException.class)
@@ -199,6 +224,7 @@ public class FileDataService {
         distributedLock.tryLock(RedisAttribute.LockType.file, userId + pId + path + name, () -> {
             String fileParentId = pId;
             if (StringUtils.hasLength(path)) {
+                FileUtil.pathFormatCheck(path);
                 List<String> hierarchyPathList = getHierarchyPathList(path);
                 for (String hierarchyPath : hierarchyPathList) {
                     fileParentId = createFolder(userId, fileParentId, hierarchyPath, lastModifiedDate, true);
