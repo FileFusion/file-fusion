@@ -1,33 +1,22 @@
 package com.github.filefusion.util.file;
 
 import com.github.filefusion.common.HttpException;
-import com.github.filefusion.constant.FileAttribute;
-import com.github.filefusion.file.entity.FileData;
+import com.github.filefusion.util.EncryptUtil;
 import com.github.filefusion.util.I18n;
-import lombok.Getter;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
-import org.springframework.stereotype.Component;
+import jakarta.annotation.Nonnull;
+import org.springframework.http.HttpStatus;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
-import java.nio.channels.WritableByteChannel;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.util.HashMap;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
-import java.util.Map;
-import java.util.zip.Deflater;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * FileUtil
@@ -35,32 +24,47 @@ import java.util.zip.ZipOutputStream;
  * @author hackyo
  * @since 2022/4/1
  */
-@Getter
-@Component
-public class FileUtil {
+public final class FileUtil {
 
-    private final Path baseDir;
+    public static void hashFormatCheck(String hash) {
+        if (!StringUtils.hasLength(hash) || hash.length() != 32 || !hash.matches("^[a-zA-Z0-9]+$")) {
+            throw new HttpException(I18n.get("noOperationPermission"));
+        }
+    }
 
-    @Autowired
-    public FileUtil(@Value("${file.dir}") String fileDir) {
-        this.baseDir = Paths.get(fileDir).normalize().toAbsolutePath();
-        if (!Files.exists(this.baseDir)) {
-            try {
-                Files.createDirectories(this.baseDir);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+    public static void pathFormatCheck(String path) {
+        if (!StringUtils.hasLength(path) || path.contains("..") || path.contains("//") || path.startsWith("/")) {
+            throw new HttpException(I18n.get("noOperationPermission"));
+        }
+    }
+
+    public static String getHashPath(String hash) {
+        hashFormatCheck(hash);
+        return Paths.get(hash.substring(0, 2), hash.substring(2, 4), hash).toString();
+    }
+
+    public static Path getChunkPath(Path tmpDir, String fileHash, String chunkHash) {
+        FileUtil.hashFormatCheck(chunkHash);
+        return tmpDir.resolve(FileUtil.getHashPath(fileHash)).resolve(chunkHash);
+    }
+
+    public static String calculateMd5(Path path) {
+        try (FileChannel channel = FileChannel.open(path, StandardOpenOption.READ)) {
+            MessageDigest md = MessageDigest.getInstance(EncryptUtil.MD5);
+            long fileSize = channel.size();
+            long position = 0;
+            while (position < fileSize) {
+                long chunkSize = Math.min(fileSize - position, Integer.MAX_VALUE);
+                md.update(channel.map(FileChannel.MapMode.READ_ONLY, position, chunkSize));
+                position += chunkSize;
             }
+            return EncryptUtil.bytesToHex(md.digest());
+        } catch (NoSuchAlgorithmException | IOException e) {
+            throw new HttpException(I18n.get("getFileHashFailed"));
         }
     }
 
-    private String buildZipPath(FileData file, Map<String, FileData> fileMap) {
-        if (FileAttribute.PARENT_ROOT.equals(file.getParentId())) {
-            return file.getName();
-        }
-        return buildZipPath(fileMap.get(file.getParentId()), fileMap) + FileAttribute.SEPARATOR + file.getName();
-    }
-
-    public void upload(MultipartFile file, Path path) {
+    public static void upload(MultipartFile file, Path path) {
         try (InputStream in = file.getInputStream()) {
             Files.createDirectories(path.getParent());
             Files.copy(in, path);
@@ -69,78 +73,55 @@ public class FileUtil {
         }
     }
 
-    public ResponseEntity<StreamingResponseBody> download(String name, String mimeType, Path path) {
-        return downloadResponse(name, MediaType.valueOf(mimeType),
-                HttpStatus.OK,
-                out -> Files.copy(path, out),
-                new HttpHeaders());
-    }
-
-    public ResponseEntity<StreamingResponseBody> downloadChunked(String name, String mimeType, Path path, long start, long end) {
-        long size;
-        try {
-            size = Files.size(path);
-        } catch (IOException e) {
-            throw new HttpException(I18n.get("getFileSizeFailed"));
+    public static void delete(List<Path> pathList) {
+        AtomicBoolean success = new AtomicBoolean(true);
+        pathList.forEach(path -> {
+            try {
+                delete(path);
+            } catch (Exception e) {
+                success.set(false);
+            }
+        });
+        if (!success.get()) {
+            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileDeletionFailed"));
         }
-        long endReal = end == -1 ? size - 1 : end;
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.ACCEPT_RANGES, "bytes");
-        headers.add(HttpHeaders.CONTENT_RANGE, String.format("bytes %d-%d/%d", start, endReal, size));
-        headers.add(HttpHeaders.CONTENT_LENGTH, String.valueOf(endReal - start + 1));
-        return downloadResponse(name, MediaType.valueOf(mimeType),
-                HttpStatus.PARTIAL_CONTENT,
-                out -> {
-                    try (FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.READ);
-                         WritableByteChannel outChannel = Channels.newChannel(out)) {
-                        fileChannel.transferTo(start, endReal - start + 1, outChannel);
-                    }
-                },
-                headers);
     }
 
-    public ResponseEntity<StreamingResponseBody> downloadZip(List<FileData> fileList) {
-        return downloadResponse(FileAttribute.DOWNLOAD_ZIP_NAME,
-                FileAttribute.MimeType.ZIP.value(),
-                HttpStatus.OK,
-                out -> {
-                    Map<String, FileData> fileMap = new HashMap<>();
-                    Map<String, String> pathMap = new HashMap<>();
-                    fileList.forEach(file -> fileMap.put(file.getId(), file));
-                    fileList.forEach(file -> pathMap.put(file.getId(), buildZipPath(file, fileMap)));
-                    try (ZipOutputStream zos = new ZipOutputStream(out, StandardCharsets.UTF_8)) {
-                        zos.setLevel(Deflater.NO_COMPRESSION);
-                        for (FileData file : fileList) {
-                            if (FileAttribute.MimeType.FOLDER.value().toString().equals(file.getMimeType())) {
-                                zos.putNextEntry(new ZipEntry(pathMap.get(file.getId()) + FileAttribute.SEPARATOR));
-                                zos.closeEntry();
-                            }
-                        }
-                        for (FileData file : fileList) {
-                            if (!FileAttribute.MimeType.FOLDER.value().toString().equals(file.getMimeType())) {
-                                zos.putNextEntry(new ZipEntry(pathMap.get(file.getId())));
-                                Files.copy(baseDir.resolve(file.getPath()), zos);
-                                zos.closeEntry();
-                            }
-                        }
+    public static void delete(Path path) {
+        if (!Files.exists(path)) {
+            return;
+        }
+        AtomicBoolean success = new AtomicBoolean(true);
+        try {
+            Files.walkFileTree(path, new SimpleFileVisitor<>() {
+                @Override
+                @Nonnull
+                public FileVisitResult visitFile(Path file, @Nonnull BasicFileAttributes attrs) {
+                    try {
+                        Files.deleteIfExists(file);
+                    } catch (IOException e) {
+                        success.set(false);
                     }
-                },
-                new HttpHeaders());
-    }
+                    return FileVisitResult.CONTINUE;
+                }
 
-    private ResponseEntity<StreamingResponseBody> downloadResponse(String filename,
-                                                                   MediaType mediaType,
-                                                                   HttpStatus status,
-                                                                   StreamingResponseBody body,
-                                                                   HttpHeaders headers) {
-        String contentDisposition = ContentDisposition.attachment()
-                .filename(filename, StandardCharsets.UTF_8)
-                .build().toString();
-        return ResponseEntity.status(status)
-                .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
-                .headers(headers)
-                .contentType(mediaType)
-                .body(body);
+                @Override
+                @Nonnull
+                public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
+                    try {
+                        Files.deleteIfExists(dir);
+                    } catch (IOException e) {
+                        success.set(false);
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (Exception e) {
+            success.set(false);
+        }
+        if (!success.get()) {
+            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileDeletionFailed"));
+        }
     }
 
 }

@@ -87,6 +87,20 @@ public class FileDataController {
     }
 
     /**
+     * upload file chunk
+     *
+     * @param file      file chunk
+     * @param chunkHash chunk hash
+     * @param fileHash  file hash
+     */
+    @PostMapping("/_upload_chunk")
+    @PreAuthorize("hasAuthority('personal_file:upload')")
+    public void uploadChunk(@RequestParam MultipartFile file, @RequestParam String chunkHash, @RequestParam String fileHash) {
+        fileDataService.uploadChunk(file, chunkHash, fileHash);
+    }
+
+
+    /**
      * upload file
      *
      * @param file                 file

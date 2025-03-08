@@ -1,5 +1,6 @@
 package com.github.filefusion.file.service;
 
+import com.github.filefusion.common.FileProperties;
 import com.github.filefusion.common.HttpException;
 import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.constant.RedisAttribute;
@@ -11,15 +12,15 @@ import com.github.filefusion.sys_config.service.SysConfigService;
 import com.github.filefusion.util.DistributedLock;
 import com.github.filefusion.util.I18n;
 import com.github.filefusion.util.ULID;
+import com.github.filefusion.util.file.DownloadUtil;
 import com.github.filefusion.util.file.FileUtil;
-import com.github.filefusion.util.file.PathUtil;
 import com.github.filefusion.util.file.ThumbnailUtil;
 import org.redisson.api.RList;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +33,6 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,32 +47,23 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Service
 public class FileDataService {
 
-    private final Duration fileLockTimeout;
-    private final Duration fileDownloadLinkTimeout;
     private final RedissonClient redissonClient;
-    private final FileDataRepository fileDataRepository;
     private final DistributedLock distributedLock;
+    private final FileProperties fileProperties;
+    private final FileDataRepository fileDataRepository;
     private final SysConfigService sysConfigService;
-    private final FileUtil fileUtil;
-    private final ThumbnailUtil thumbnailUtil;
 
     @Autowired
-    public FileDataService(@Value("${file.lock-timeout}") Duration fileLockTimeout,
-                           @Value("${file.download-link-timeout}") Duration fileDownloadLinkTimeout,
-                           RedissonClient redissonClient,
-                           FileDataRepository fileDataRepository,
+    public FileDataService(RedissonClient redissonClient,
                            DistributedLock distributedLock,
-                           SysConfigService sysConfigService,
-                           FileUtil fileUtil,
-                           ThumbnailUtil thumbnailUtil) {
-        this.fileLockTimeout = fileLockTimeout;
-        this.fileDownloadLinkTimeout = fileDownloadLinkTimeout;
+                           FileProperties fileProperties,
+                           FileDataRepository fileDataRepository,
+                           SysConfigService sysConfigService) {
         this.redissonClient = redissonClient;
-        this.fileDataRepository = fileDataRepository;
         this.distributedLock = distributedLock;
+        this.fileProperties = fileProperties;
+        this.fileDataRepository = fileDataRepository;
         this.sysConfigService = sysConfigService;
-        this.fileUtil = fileUtil;
-        this.thumbnailUtil = thumbnailUtil;
     }
 
     private List<FileData> findAllChildren(String id) {
@@ -94,6 +85,7 @@ public class FileDataService {
     }
 
     private List<String> getHierarchyPathList(String path) {
+        FileUtil.pathFormatCheck(path);
         Path rootPath = Paths.get(path).normalize();
         List<String> hierarchyPathList = new ArrayList<>(rootPath.getNameCount());
         for (int i = 0; i < rootPath.getNameCount(); i++) {
@@ -109,7 +101,10 @@ public class FileDataService {
         Page<FileData> fileDataPage = fileDataRepository.findAllByUserIdAndParentIdAndDeletedFalse(
                 userId, parentId, page);
         fileDataPage.getContent().forEach(fileData ->
-                fileData.setHasThumbnail(thumbnailUtil.hasThumbnail(fileData.getMimeType()))
+                fileData.setHasThumbnail(ThumbnailUtil.hasThumbnail(fileData.getMimeType(),
+                        fileProperties.getThumbnailImageMimeType(),
+                        fileProperties.getThumbnailVideoMimeType())
+                )
         );
         return fileDataPage;
     }
@@ -168,8 +163,24 @@ public class FileDataService {
             file.setDeleted(false);
             fileDataRepository.save(file);
             id.append(file.getId());
-        }, fileLockTimeout);
+        }, fileProperties.getLockTimeout());
         return id.toString();
+    }
+
+    public void uploadChunk(MultipartFile file, String chunkHash, String fileHash) {
+        Path chunkPath = FileUtil.getChunkPath(fileProperties.getTmpDir(), fileHash, chunkHash);
+        if (Files.exists(chunkPath)) {
+            if (chunkHash.equals(FileUtil.calculateMd5(chunkPath))) {
+                return;
+            } else {
+                FileUtil.delete(chunkPath);
+            }
+        }
+        FileUtil.upload(file, chunkPath);
+        if (!chunkHash.equals(FileUtil.calculateMd5(chunkPath))) {
+            FileUtil.delete(chunkPath);
+            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
+        }
     }
 
     @Transactional(rollbackFor = HttpException.class)
@@ -183,7 +194,7 @@ public class FileDataService {
         }
         AtomicBoolean atomicBoolean = new AtomicBoolean(false);
         LocalDateTime lastModifiedDate = lastModified == null ? LocalDateTime.now() : lastModified;
-        String fileAbsolutePath = PathUtil.hashToPath(hashValue).toString();
+        String fileAbsolutePath = FileUtil.getHashPath(hashValue);
         String pId = !StringUtils.hasLength(parentId) ? FileAttribute.PARENT_ROOT : parentId;
         distributedLock.tryLock(RedisAttribute.LockType.file, userId + pId + path + name, () -> {
             String fileParentId = pId;
@@ -209,16 +220,16 @@ public class FileDataService {
             file.setDeleted(false);
             fileDataRepository.save(file);
 
-            Path filePath = PathUtil.resolvePath(fileUtil.getBaseDir(), file.getPath());
+            Path filePath = fileProperties.getDir().resolve(file.getPath());
             if (multipartFile == null) {
                 if (Files.isRegularFile(filePath)) {
                     atomicBoolean.set(true);
                 }
             } else {
-                fileUtil.upload(multipartFile, filePath);
+                FileUtil.upload(multipartFile, filePath);
                 atomicBoolean.set(true);
             }
-        }, fileLockTimeout);
+        }, fileProperties.getLockTimeout());
         if (!atomicBoolean.get()) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
         }
@@ -247,7 +258,7 @@ public class FileDataService {
         String downloadId = ULID.randomULID();
         RList<String> idRList = redissonClient.getList(RedisAttribute.DOWNLOAD_ID_PREFIX + RedisAttribute.SEPARATOR + downloadId);
         idRList.addAll(allList.stream().map(FileData::getId).toList());
-        idRList.expire(fileDownloadLinkTimeout);
+        idRList.expire(fileProperties.getDownloadLinkTimeout());
         return downloadId;
     }
 
@@ -262,10 +273,9 @@ public class FileDataService {
         }
         FileData file = fileList.getFirst();
         if (fileList.size() == 1 && !FileAttribute.MimeType.FOLDER.value().toString().equals(file.getMimeType())) {
-            return fileUtil.download(file.getName(), file.getMimeType(),
-                    PathUtil.resolvePath(fileUtil.getBaseDir(), file.getPath()));
+            return DownloadUtil.download(file.getName(), file.getMimeType(), fileProperties.getDir().resolve(file.getPath()));
         }
-        return fileUtil.downloadZip(fileList);
+        return DownloadUtil.downloadZip(fileProperties.getDir(), fileList);
     }
 
     public ResponseEntity<StreamingResponseBody> downloadChunked(String userId, String id, String range) {
@@ -282,8 +292,8 @@ public class FileDataService {
         if (ranges.length > 1) {
             end = Long.parseLong(ranges[1]);
         }
-        return fileUtil.downloadChunked(file.getName(), file.getMimeType(),
-                PathUtil.resolvePath(fileUtil.getBaseDir(), file.getPath()), start, end);
+        return DownloadUtil.downloadChunked(file.getName(), file.getMimeType(),
+                fileProperties.getDir().resolve(file.getPath()), start, end);
     }
 
     public ResponseEntity<StreamingResponseBody> thumbnail(String userId, String id) {
@@ -292,12 +302,15 @@ public class FileDataService {
             throw new HttpException(I18n.get("fileNotExist"));
         }
         String mimeType = file.getMimeType();
-        if (!thumbnailUtil.hasThumbnail(mimeType)) {
+        if (!ThumbnailUtil.hasThumbnail(mimeType, fileProperties.getThumbnailImageMimeType(),
+                fileProperties.getThumbnailVideoMimeType())) {
             throw new HttpException(I18n.get("fileNotSupportThumbnail"));
         }
-        return fileUtil.download(FileAttribute.DOWNLOAD_THUMBNAIL_NAME, FileAttribute.THUMBNAIL_FILE_MIME_TYPE,
-                thumbnailUtil.generateThumbnail(
-                        PathUtil.resolvePath(fileUtil.getBaseDir(), file.getPath()), file.getPath(), mimeType));
+        return DownloadUtil.download(FileAttribute.DOWNLOAD_THUMBNAIL_NAME, FileAttribute.THUMBNAIL_FILE_MIME_TYPE,
+                ThumbnailUtil.generateThumbnail(fileProperties.getThumbnailDir(),
+                        fileProperties.getDir().resolve(file.getPath()), file.getPath(), mimeType,
+                        fileProperties.getThumbnailImageMimeType(), fileProperties.getThumbnailVideoMimeType(),
+                        fileProperties.getThumbnailGenerateTimeout()));
     }
 
 }
