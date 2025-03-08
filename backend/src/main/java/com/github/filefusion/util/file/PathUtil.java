@@ -4,6 +4,7 @@ import com.github.filefusion.common.HttpException;
 import com.github.filefusion.util.I18n;
 import jakarta.annotation.Nonnull;
 import org.springframework.http.HttpStatus;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -19,8 +20,18 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public final class PathUtil {
 
-    public static Path hashToPath(String hash) {
-        return Paths.get(hash.substring(0, 2), hash.substring(2, 4), hash);
+    public static String hashToPath(String hash) {
+        if (!StringUtils.hasLength(hash) || hash.length() != 32 || !hash.matches("^[a-zA-Z0-9]+$")) {
+            throw new HttpException(I18n.get("noOperationPermission"));
+        }
+        return Paths.get(hash.substring(0, 2), hash.substring(2, 4), hash).toString();
+    }
+
+    public static Path resolveSafePath(String path) {
+        if (!StringUtils.hasLength(path) || path.contains("..") || path.contains("//") || path.startsWith("/")) {
+            throw new HttpException(I18n.get("noOperationPermission"));
+        }
+        return Paths.get(path).normalize();
     }
 
     public static Path resolvePath(Path baseDir, String path) {
