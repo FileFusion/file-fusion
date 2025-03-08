@@ -79,7 +79,7 @@ public class FileDataController {
      *
      * @param createFolderModel create folder info
      */
-    @PostMapping("/_create_folder")
+    @PostMapping("/folder")
     @PreAuthorize("hasAuthority('personal_file:upload')")
     public String createFolder(@RequestBody CreateFolderModel createFolderModel) {
         return fileDataService.createFolder(CurrentUser.get().getId(), createFolderModel.getParentId(),
@@ -176,7 +176,7 @@ public class FileDataController {
      * @param id id
      * @return file thumbnail
      */
-    @GetMapping("/_thumbnail/{id}")
+    @GetMapping("/thumbnail/{id}")
     @PreAuthorize("hasAnyAuthority('personal_file:read','recycle_bin_file:read')")
     public ResponseEntity<StreamingResponseBody> thumbnail(@PathVariable String id) {
         return fileDataService.thumbnail(CurrentUser.get().getId(), id);

@@ -107,7 +107,7 @@ const fileIcon = computed(() => {
 const thumbnailFileUrl = ref<string>('');
 const { data: thumbnailFile, send: doGetThumbnailFile } = useRequest(
   () =>
-    http.Get<any>('/file_data/_thumbnail/' + props.id, {
+    http.Get<any>('/file_data/thumbnail/' + props.id, {
       responseType: 'blob'
     }),
   {

@@ -210,7 +210,7 @@ function validateCreateFolderForm() {
 
 const { loading: createFolderLoading, send: doCreateFolder } = useRequest(
   () =>
-    http.Post('/file_data/_create_folder', {
+    http.Post('/file_data/folder', {
       parentId: fileParentIdPattern.value,
       name: createFolderForm.value.name
     }),
