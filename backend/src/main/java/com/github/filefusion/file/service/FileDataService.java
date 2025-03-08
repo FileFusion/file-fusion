@@ -185,8 +185,8 @@ public class FileDataService {
     }
 
     @Transactional(rollbackFor = HttpException.class)
-    public void uploadChunkMerge(String userId, String parentId, String name, String path, String hashValue,
-                                 String mimeType, Long size, LocalDateTime lastModified) {
+    public void uploadChunkMerge(String userId, String parentId, String name, String path,
+                                 String hashValue, String mimeType, Long size, LocalDateTime lastModified) {
         if (!StringUtils.hasLength(name)) {
             throw new HttpException(I18n.get("fileNameEmpty"));
         }
@@ -197,27 +197,6 @@ public class FileDataService {
             throw new HttpException(I18n.get("fileHashFormatError"));
         }
         String hashPath = FileUtil.getHashPath(hashValue);
-        Path chunkDirPath = fileProperties.getTmpDir().resolve(hashPath);
-        Path filePath = fileProperties.getDir().resolve(hashPath);
-        distributedLock.tryLock(RedisAttribute.LockType.file, hashValue, () -> {
-            if (Files.exists(filePath)) {
-                if (hashValue.equals(FileUtil.calculateMd5(filePath))) {
-                    return;
-                } else {
-                    FileUtil.delete(filePath);
-                }
-            }
-            FileUtil.chunkMerge(chunkDirPath, filePath);
-            if (!hashValue.equals(FileUtil.calculateMd5(filePath))) {
-                FileUtil.delete(filePath);
-                throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
-            }
-        }, fileProperties.getLockTimeout());
-        saveFileData(userId, parentId, name, path, hashPath, hashValue, mimeType, size, lastModified);
-    }
-
-    private void saveFileData(String userId, String parentId, String name, String path, String hashPath,
-                              String hashValue, String mimeType, Long size, LocalDateTime lastModified) {
         LocalDateTime lastModifiedDate = lastModified == null ? LocalDateTime.now() : lastModified;
         String pId = !StringUtils.hasLength(parentId) ? FileAttribute.PARENT_ROOT : parentId;
         distributedLock.tryLock(RedisAttribute.LockType.file, userId + pId + path + name, () -> {
@@ -243,6 +222,27 @@ public class FileDataService {
             file.setFileLastModifiedDate(lastModifiedDate);
             file.setDeleted(false);
             fileDataRepository.save(file);
+        }, fileProperties.getLockTimeout());
+
+        chunkMerge(hashPath, hashValue);
+    }
+
+    private void chunkMerge(String hashPath, String hashValue) {
+        Path chunkDirPath = fileProperties.getTmpDir().resolve(hashPath);
+        Path filePath = fileProperties.getDir().resolve(hashPath);
+        distributedLock.tryLock(RedisAttribute.LockType.file, hashValue, () -> {
+            if (Files.exists(filePath)) {
+                if (hashValue.equals(FileUtil.calculateMd5(filePath))) {
+                    return;
+                } else {
+                    FileUtil.delete(filePath);
+                }
+            }
+            FileUtil.chunkMerge(chunkDirPath, filePath);
+            if (!hashValue.equals(FileUtil.calculateMd5(filePath))) {
+                FileUtil.delete(filePath);
+                throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
+            }
         }, fileProperties.getLockTimeout());
     }
 
