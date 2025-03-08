@@ -119,7 +119,7 @@ public class FileUtil {
                         for (FileData file : fileList) {
                             if (!FileAttribute.MimeType.FOLDER.value().toString().equals(file.getMimeType())) {
                                 zos.putNextEntry(new ZipEntry(pathMap.get(file.getId())));
-                                Files.copy(PathUtil.resolvePath(baseDir, file.getPath()), zos);
+                                Files.copy(baseDir.resolve(file.getPath()), zos);
                                 zos.closeEntry();
                             }
                         }
