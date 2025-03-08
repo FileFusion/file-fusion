@@ -262,18 +262,20 @@ const uploadFileRequest = async ({
   formData.append('mimeType', fileInfo.type);
   formData.append('size', fileInfo.size + '');
   formData.append('fileLastModifiedDate', fileInfo.lastModified + '');
-  fastUpload(formData, fileInfo, onProgress, onFinish, onError);
+  fastUpload(formData, fileInfo, true, onProgress, onFinish, onError);
 };
 
 function fastUpload(
   formData: FormData,
   file: File,
+  fastUpload: boolean,
   onProgress: (e: { percent: number }) => void,
   onFinish: () => void,
   onError: () => void
 ) {
+  formData.set('fastUpload', fastUpload + '');
   http
-    .Post('/file_data/_upload', formData)
+    .Post('/file_data/_upload_chunk_merge', formData)
     .then((res: any) => {
       if (res === true) {
         onProgress({
@@ -290,15 +292,19 @@ function fastUpload(
     });
 }
 
-function normalUpload(
+async function normalUpload(
   formData: FormData,
   file: File,
   onProgress: (e: { percent: number }) => void,
   onFinish: () => void,
   onError: () => void
 ) {
-  formData.append('file', file);
-  const uploadMethod = http.Post('/file_data/_upload', formData, {
+  const chunkFormData = new FormData();
+  chunkFormData.append('file', file);
+  chunkFormData.append('chunkIndex', '0');
+  chunkFormData.append('chunkHashValue', await getFileHash(file));
+  chunkFormData.append('hashValue', <string>formData.get('hashValue'));
+  const uploadMethod = http.Post('/file_data/_upload_chunk', chunkFormData, {
     meta: {
       loading: false
     }
@@ -312,7 +318,7 @@ function normalUpload(
   uploadMethod
     .then(() => {
       onFinish();
-      emitFileChangeEvent();
+      fastUpload(formData, file, false, onProgress, onFinish, onError);
     })
     .catch(() => {
       onError();
