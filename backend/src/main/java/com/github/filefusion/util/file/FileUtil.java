@@ -26,15 +26,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public final class FileUtil {
 
-    public static void pathFormatCheck(String path) {
-        if (!StringUtils.hasLength(path) || path.contains("..") || path.contains("//") || path.startsWith("/")) {
-            throw new HttpException(I18n.get("noOperationPermission"));
-        }
-    }
-
     public static String getHashPath(String hash) {
         if (!StringUtils.hasLength(hash) || hash.length() != 32 || !hash.matches("^[a-zA-Z0-9]+$")) {
-            throw new HttpException(I18n.get("noOperationPermission"));
+            throw new HttpException(I18n.get("filePathFormatError"));
         }
         return Paths.get(hash.substring(0, 2), hash.substring(2, 4), hash).toString();
     }
@@ -51,7 +45,7 @@ public final class FileUtil {
             }
             return EncryptUtil.bytesToHex(md.digest());
         } catch (NoSuchAlgorithmException | IOException e) {
-            throw new HttpException(I18n.get("getFileHashFailed"));
+            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("getFileHashFailed"));
         }
     }
 

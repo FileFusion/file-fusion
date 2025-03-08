@@ -111,6 +111,7 @@ public class FileDataService {
         return fileDataPage;
     }
 
+    @Transactional(rollbackFor = HttpException.class)
     public void recycleOrDelete(String userId, String id) {
         FileData file = fileDataRepository.findFirstByUserIdAndId(userId, id);
         if (file == null) {
@@ -172,18 +173,20 @@ public class FileDataService {
     public void uploadChunk(MultipartFile file, Integer chunkIndex, String chunkHashValue, String hashValue) {
         Path chunkDirPath = fileProperties.getTmpDir().resolve(FileUtil.getHashPath(hashValue));
         Path chunkPath = chunkDirPath.resolve(String.valueOf(chunkIndex));
-        if (Files.exists(chunkPath)) {
-            if (chunkHashValue.equals(FileUtil.calculateMd5(chunkPath))) {
-                return;
-            } else {
-                FileUtil.delete(chunkPath);
+        distributedLock.tryLock(RedisAttribute.LockType.file, hashValue + chunkIndex, () -> {
+            if (Files.exists(chunkPath)) {
+                if (chunkHashValue.equals(FileUtil.calculateMd5(chunkPath))) {
+                    return;
+                } else {
+                    FileUtil.delete(chunkPath);
+                }
             }
-        }
-        FileUtil.upload(file, chunkPath);
-        if (!chunkHashValue.equals(FileUtil.calculateMd5(chunkPath))) {
-            FileUtil.delete(chunkPath);
-            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
-        }
+            FileUtil.upload(file, chunkPath);
+            if (!chunkHashValue.equals(FileUtil.calculateMd5(chunkPath))) {
+                FileUtil.delete(chunkPath);
+                throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
+            }
+        }, fileProperties.getLockTimeout());
     }
 
     @Transactional(rollbackFor = HttpException.class)
@@ -217,6 +220,9 @@ public class FileDataService {
         if (!StringUtils.hasLength(hashValue)) {
             throw new HttpException(I18n.get("fileHashEmpty"));
         }
+        if (StringUtils.hasLength(path) && (path.contains("..") || path.contains("//") || path.startsWith("/"))) {
+            throw new HttpException(I18n.get("fileHashFormatError"));
+        }
         AtomicBoolean atomicBoolean = new AtomicBoolean(false);
         LocalDateTime lastModifiedDate = lastModified == null ? LocalDateTime.now() : lastModified;
         String fileAbsolutePath = FileUtil.getHashPath(hashValue);
@@ -224,7 +230,6 @@ public class FileDataService {
         distributedLock.tryLock(RedisAttribute.LockType.file, userId + pId + path + name, () -> {
             String fileParentId = pId;
             if (StringUtils.hasLength(path)) {
-                FileUtil.pathFormatCheck(path);
                 List<String> hierarchyPathList = getHierarchyPathList(path);
                 for (String hierarchyPath : hierarchyPathList) {
                     fileParentId = createFolder(userId, fileParentId, hierarchyPath, lastModifiedDate, true);

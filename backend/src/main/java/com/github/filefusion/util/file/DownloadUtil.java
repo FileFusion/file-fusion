@@ -49,7 +49,7 @@ public final class DownloadUtil {
         try {
             size = Files.size(path);
         } catch (IOException e) {
-            throw new HttpException(I18n.get("getFileSizeFailed"));
+            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("getFileSizeFailed"));
         }
         long endReal = end == -1 ? size - 1 : end;
         HttpHeaders headers = new HttpHeaders();
