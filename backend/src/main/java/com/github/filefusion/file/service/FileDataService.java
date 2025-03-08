@@ -213,10 +213,10 @@ public class FileDataService {
                 throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
             }
         }, fileProperties.getLockTimeout());
-        saveFileInfo(userId, parentId, name, path, hashPath, hashValue, mimeType, size, lastModified);
+        saveFileData(userId, parentId, name, path, hashPath, hashValue, mimeType, size, lastModified);
     }
 
-    private void saveFileInfo(String userId, String parentId, String name, String path, String hashPath,
+    private void saveFileData(String userId, String parentId, String name, String path, String hashPath,
                               String hashValue, String mimeType, Long size, LocalDateTime lastModified) {
         LocalDateTime lastModifiedDate = lastModified == null ? LocalDateTime.now() : lastModified;
         String pId = !StringUtils.hasLength(parentId) ? FileAttribute.PARENT_ROOT : parentId;
