@@ -1,14 +1,18 @@
 package com.github.filefusion.util.file;
 
 import com.github.filefusion.common.HttpException;
+import com.github.filefusion.util.EncryptUtil;
 import com.github.filefusion.util.I18n;
 import jakarta.annotation.Nonnull;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -20,10 +24,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public final class PathUtil {
 
-    public static String hashToPath(String hash) {
+    public static void hashFormatCheck(String hash) {
         if (!StringUtils.hasLength(hash) || hash.length() != 32 || !hash.matches("^[a-zA-Z0-9]+$")) {
             throw new HttpException(I18n.get("noOperationPermission"));
         }
+    }
+
+    public static String hashToPath(String hash) {
+        hashFormatCheck(hash);
         return Paths.get(hash.substring(0, 2), hash.substring(2, 4), hash).toString();
     }
 
@@ -34,8 +42,20 @@ public final class PathUtil {
         return Paths.get(path).normalize();
     }
 
-    public static Path resolvePath(Path baseDir, String path) {
-        return baseDir.resolve(path);
+    public static String calculateMd5(Path path) {
+        try (FileChannel channel = FileChannel.open(path, StandardOpenOption.READ)) {
+            MessageDigest md = MessageDigest.getInstance(EncryptUtil.MD5);
+            long fileSize = channel.size();
+            long position = 0;
+            while (position < fileSize) {
+                long chunkSize = Math.min(fileSize - position, Integer.MAX_VALUE);
+                md.update(channel.map(FileChannel.MapMode.READ_ONLY, position, chunkSize));
+                position += chunkSize;
+            }
+            return EncryptUtil.bytesToHex(md.digest());
+        } catch (NoSuchAlgorithmException | IOException e) {
+            throw new HttpException(I18n.get("getFileHashFailed"));
+        }
     }
 
     public static void delete(List<Path> pathList) {
