@@ -58,6 +58,22 @@ public final class FileUtil {
         }
     }
 
+    public static void merge(Path chunkDirPath, Path targetPath) {
+        try (FileChannel outputChannel = FileChannel.open(targetPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
+            for (int i = 0; ; i++) {
+                Path chunk = chunkDirPath.resolve(String.valueOf(i));
+                if (!Files.isRegularFile(chunk)) {
+                    break;
+                }
+                try (FileChannel inputChannel = FileChannel.open(chunk, StandardOpenOption.READ)) {
+                    inputChannel.transferTo(outputChannel.size(), inputChannel.size(), outputChannel);
+                }
+            }
+        } catch (IOException e) {
+            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
+        }
+    }
+
     public static void delete(List<Path> pathList) {
         AtomicBoolean success = new AtomicBoolean(true);
         pathList.forEach(path -> {

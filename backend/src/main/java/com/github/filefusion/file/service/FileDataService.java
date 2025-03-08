@@ -24,22 +24,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import java.io.IOException;
-import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * FileDataService
@@ -190,30 +185,8 @@ public class FileDataService {
     }
 
     @Transactional(rollbackFor = HttpException.class)
-    public void uploadChunkMerge(String userId, String parentId, String name, String path,
-                                 String hashValue, String mimeType, Long size, LocalDateTime lastModified) {
-        String hashPath = FileUtil.getHashPath(hashValue);
-        Path chunkDirPath = fileProperties.getTmpDir().resolve(hashPath);
-        Path filePath = fileProperties.getDir().resolve(hashPath);
-        try (FileChannel outputChannel = FileChannel.open(filePath, StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
-            for (int i = 0; ; i++) {
-                Path chunk = chunkDirPath.resolve(String.valueOf(i));
-                if (!Files.isRegularFile(chunk)) {
-                    break;
-                }
-                try (FileChannel inputChannel = FileChannel.open(chunk, StandardOpenOption.READ)) {
-                    inputChannel.transferTo(outputChannel.size(), inputChannel.size(), outputChannel);
-                }
-            }
-        } catch (IOException e) {
-            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
-        }
-        upload(userId, null, parentId, name, path, hashValue, mimeType, size, lastModified);
-    }
-
-    @Transactional(rollbackFor = HttpException.class)
-    public boolean upload(String userId, MultipartFile multipartFile, String parentId, String name, String path,
-                          String hashValue, String mimeType, Long size, LocalDateTime lastModified) {
+    public void uploadChunkMerge(String userId, String parentId, String name, String path, String hashValue,
+                                 String mimeType, Long size, LocalDateTime lastModified) {
         if (!StringUtils.hasLength(name)) {
             throw new HttpException(I18n.get("fileNameEmpty"));
         }
@@ -223,9 +196,29 @@ public class FileDataService {
         if (StringUtils.hasLength(path) && (path.contains("..") || path.contains("//") || path.startsWith("/"))) {
             throw new HttpException(I18n.get("fileHashFormatError"));
         }
-        AtomicBoolean atomicBoolean = new AtomicBoolean(false);
+        String hashPath = FileUtil.getHashPath(hashValue);
+        Path chunkDirPath = fileProperties.getTmpDir().resolve(hashPath);
+        Path filePath = fileProperties.getDir().resolve(hashPath);
+        distributedLock.tryLock(RedisAttribute.LockType.file, hashValue, () -> {
+            if (Files.exists(filePath)) {
+                if (hashValue.equals(FileUtil.calculateMd5(filePath))) {
+                    return;
+                } else {
+                    FileUtil.delete(filePath);
+                }
+            }
+            FileUtil.merge(chunkDirPath, filePath);
+            if (!hashValue.equals(FileUtil.calculateMd5(filePath))) {
+                FileUtil.delete(filePath);
+                throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
+            }
+        }, fileProperties.getLockTimeout());
+        saveFileInfo(userId, parentId, name, path, hashPath, hashValue, mimeType, size, lastModified);
+    }
+
+    private void saveFileInfo(String userId, String parentId, String name, String path, String hashPath,
+                              String hashValue, String mimeType, Long size, LocalDateTime lastModified) {
         LocalDateTime lastModifiedDate = lastModified == null ? LocalDateTime.now() : lastModified;
-        String fileAbsolutePath = FileUtil.getHashPath(hashValue);
         String pId = !StringUtils.hasLength(parentId) ? FileAttribute.PARENT_ROOT : parentId;
         distributedLock.tryLock(RedisAttribute.LockType.file, userId + pId + path + name, () -> {
             String fileParentId = pId;
@@ -242,7 +235,7 @@ public class FileDataService {
             file.setUserId(userId);
             file.setParentId(fileParentId);
             file.setName(name);
-            file.setPath(fileAbsolutePath);
+            file.setPath(hashPath);
             file.setHashValue(hashValue);
             file.setMimeType(mimeType);
             file.setSize(size);
@@ -250,21 +243,7 @@ public class FileDataService {
             file.setFileLastModifiedDate(lastModifiedDate);
             file.setDeleted(false);
             fileDataRepository.save(file);
-
-            Path filePath = fileProperties.getDir().resolve(file.getPath());
-            if (multipartFile == null) {
-                if (Files.isRegularFile(filePath)) {
-                    atomicBoolean.set(true);
-                }
-            } else {
-                FileUtil.upload(multipartFile, filePath);
-                atomicBoolean.set(true);
-            }
         }, fileProperties.getLockTimeout());
-        if (!atomicBoolean.get()) {
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-        }
-        return atomicBoolean.get();
     }
 
     public void rename(String userId, String id, String name) {

@@ -122,29 +122,6 @@ public class FileDataController {
                 mimeType, size, TimeUtil.fromMillis(fileLastModifiedDate));
     }
 
-
-    /**
-     * upload file
-     *
-     * @param file                 file
-     * @param parentId             parent id
-     * @param name                 name
-     * @param path                 path
-     * @param hashValue            hash value
-     * @param mimeType             mime type
-     * @param size                 size
-     * @param fileLastModifiedDate file last modified date
-     */
-    @PostMapping("/_upload")
-    @PreAuthorize("hasAuthority('personal_file:upload')")
-    public boolean upload(@RequestParam(required = false) MultipartFile file, @RequestParam(required = false) String parentId,
-                          @RequestParam String name, @RequestParam(required = false) String path,
-                          @RequestParam String hashValue, @RequestParam(required = false) String mimeType,
-                          @RequestParam Long size, @RequestParam(required = false) Long fileLastModifiedDate) {
-        return fileDataService.upload(CurrentUser.get().getId(), file, parentId, name, path, hashValue,
-                mimeType, size, TimeUtil.fromMillis(fileLastModifiedDate));
-    }
-
     /**
      * rename file
      *
