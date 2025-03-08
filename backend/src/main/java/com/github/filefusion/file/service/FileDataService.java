@@ -232,11 +232,11 @@ public class FileDataService {
     private boolean chunkMerge(String hashPath, String hashValue, boolean fastUpload) {
         Path chunkDirPath = fileProperties.getTmpDir().resolve(hashPath);
         Path filePath = fileProperties.getDir().resolve(hashPath);
-        AtomicBoolean fastUploadStatus = new AtomicBoolean(false);
+        AtomicBoolean uploadStatus = new AtomicBoolean(false);
         distributedLock.tryLock(RedisAttribute.LockType.file, hashValue, () -> {
             if (Files.exists(filePath)) {
                 if (hashValue.equals(FileUtil.calculateMd5(filePath))) {
-                    fastUploadStatus.set(true);
+                    uploadStatus.set(true);
                     return;
                 } else {
                     FileUtil.delete(filePath);
@@ -250,11 +250,12 @@ public class FileDataService {
                 FileUtil.delete(filePath);
                 throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
             }
+            uploadStatus.set(true);
         }, fileProperties.getLockTimeout());
-        if (!fastUploadStatus.get()) {
+        if (!uploadStatus.get()) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
         }
-        return fastUploadStatus.get();
+        return uploadStatus.get();
     }
 
     public void rename(String userId, String id, String name) {
