@@ -114,12 +114,13 @@ public class FileDataController {
      */
     @PostMapping("/_upload_chunk_merge")
     @PreAuthorize("hasAuthority('personal_file:upload')")
-    public void uploadChunkMerge(@RequestParam(required = false) String parentId,
-                                 @RequestParam String name, @RequestParam(required = false) String path,
-                                 @RequestParam String hashValue, @RequestParam(required = false) String mimeType,
-                                 @RequestParam Long size, @RequestParam(required = false) Long fileLastModifiedDate) {
-        fileDataService.uploadChunkMerge(CurrentUser.get().getId(), parentId, name, path, hashValue,
-                mimeType, size, TimeUtil.fromMillis(fileLastModifiedDate));
+    public boolean uploadChunkMerge(@RequestParam(required = false) String parentId,
+                                    @RequestParam String name, @RequestParam(required = false) String path,
+                                    @RequestParam String hashValue, @RequestParam(required = false) String mimeType,
+                                    @RequestParam Long size, @RequestParam(required = false) Long fileLastModifiedDate,
+                                    @RequestParam(required = false) Boolean fastUpload) {
+        return fileDataService.uploadChunkMerge(CurrentUser.get().getId(), parentId, name, path, hashValue,
+                mimeType, size, TimeUtil.fromMillis(fileLastModifiedDate), Boolean.TRUE.equals(fastUpload));
     }
 
     /**

@@ -24,6 +24,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -35,6 +36,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * FileDataService
@@ -185,8 +187,8 @@ public class FileDataService {
     }
 
     @Transactional(rollbackFor = HttpException.class)
-    public void uploadChunkMerge(String userId, String parentId, String name, String path,
-                                 String hashValue, String mimeType, Long size, LocalDateTime lastModified) {
+    public boolean uploadChunkMerge(String userId, String parentId, String name, String path, String hashValue,
+                                    String mimeType, Long size, LocalDateTime lastModified, boolean fastUpload) {
         if (!StringUtils.hasLength(name)) {
             throw new HttpException(I18n.get("fileNameEmpty"));
         }
@@ -224,19 +226,24 @@ public class FileDataService {
             fileDataRepository.save(file);
         }, fileProperties.getLockTimeout());
 
-        chunkMerge(hashPath, hashValue);
+        return chunkMerge(hashPath, hashValue, fastUpload);
     }
 
-    private void chunkMerge(String hashPath, String hashValue) {
+    private boolean chunkMerge(String hashPath, String hashValue, boolean fastUpload) {
         Path chunkDirPath = fileProperties.getTmpDir().resolve(hashPath);
         Path filePath = fileProperties.getDir().resolve(hashPath);
+        AtomicBoolean fastUploadStatus = new AtomicBoolean(false);
         distributedLock.tryLock(RedisAttribute.LockType.file, hashValue, () -> {
             if (Files.exists(filePath)) {
                 if (hashValue.equals(FileUtil.calculateMd5(filePath))) {
+                    fastUploadStatus.set(true);
                     return;
                 } else {
                     FileUtil.delete(filePath);
                 }
+            }
+            if (fastUpload) {
+                return;
             }
             FileUtil.chunkMerge(chunkDirPath, filePath);
             if (!hashValue.equals(FileUtil.calculateMd5(filePath))) {
@@ -244,6 +251,10 @@ public class FileDataService {
                 throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
             }
         }, fileProperties.getLockTimeout());
+        if (!fastUploadStatus.get()) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        }
+        return fastUploadStatus.get();
     }
 
     public void rename(String userId, String id, String name) {
