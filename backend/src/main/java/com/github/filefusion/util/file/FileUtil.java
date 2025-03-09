@@ -9,7 +9,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.channels.FileChannel;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -50,9 +49,9 @@ public final class FileUtil {
     }
 
     public static void upload(MultipartFile file, Path path) {
-        try (InputStream in = file.getInputStream()) {
+        try {
             Files.createDirectories(path.getParent());
-            Files.copy(in, path);
+            file.transferTo(path);
         } catch (IOException e) {
             throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
         }
