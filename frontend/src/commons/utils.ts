@@ -1,6 +1,6 @@
 import { NIcon } from 'naive-ui';
 import { Component, h } from 'vue';
-import SparkMD5 from 'spark-md5';
+import { createBLAKE3 } from 'hash-wasm';
 
 function arrayToTree(items: any[], parentId: string): any[] {
   return arrayToTreeCustom(items, parentId, 'id', 'parentId');
@@ -89,16 +89,17 @@ function formatFileSize(bytes: number) {
 }
 
 async function getFileHash(file: File): Promise<string> {
-  const spark = new SparkMD5.ArrayBuffer();
+  const hashInstance = await createBLAKE3();
+  hashInstance.init();
   const reader = file.stream().getReader();
   while (true) {
     const { done, value } = await reader.read();
     if (done) {
       break;
     }
-    spark.append(value);
+    hashInstance.update(value);
   }
-  return spark.end();
+  return hashInstance.digest('hex');
 }
 
 const supportImagePreviewType = [
