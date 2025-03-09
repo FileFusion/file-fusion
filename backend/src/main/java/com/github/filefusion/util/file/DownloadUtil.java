@@ -8,14 +8,11 @@ import org.springframework.http.*;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
@@ -46,44 +43,10 @@ public final class DownloadUtil {
         return String.join(FileAttribute.SEPARATOR, pathSegments);
     }
 
-    private static void transferTo(Path path, OutputStream out) throws IOException {
-        transferTo(path, out, true);
-    }
-
-    private static void transferTo(Path path, OutputStream out, boolean closeOut) throws IOException {
-        transferTo(path, out, closeOut, 0, Long.MAX_VALUE);
-    }
-
-    private static void transferTo(Path path, OutputStream out, boolean closeOut, long start, long end) throws IOException {
-        WritableByteChannel outChannel = Channels.newChannel(out);
-        try (FileChannel inChannel = FileChannel.open(path, StandardOpenOption.READ);
-             AutoCloseable ignored = closeOut ? outChannel : null) {
-            long total = inChannel.size();
-            start = Math.min(Math.max(start, 0), total);
-            end = Math.min(end, total);
-            if (start >= end) {
-                return;
-            }
-            while (start < end) {
-                long transferred = inChannel.transferTo(start, end - start, outChannel);
-                if (transferred == 0) {
-                    long currentPosition = inChannel.position();
-                    if (currentPosition >= total) {
-                        break;
-                    }
-                    throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileDownloadFailed"));
-                }
-                start += transferred;
-            }
-        } catch (Exception e) {
-            throw new IOException(e);
-        }
-    }
-
     public static ResponseEntity<StreamingResponseBody> download(String name, String mimeType, Path path) {
         return downloadResponse(name, MediaType.valueOf(mimeType),
                 HttpStatus.OK,
-                out -> transferTo(path, out),
+                out -> FileUtil.transferTo(path, Channels.newChannel(out)),
                 new HttpHeaders());
     }
 
@@ -101,7 +64,7 @@ public final class DownloadUtil {
         headers.add(HttpHeaders.CONTENT_LENGTH, String.valueOf(endReal - start + 1));
         return downloadResponse(name, MediaType.valueOf(mimeType),
                 HttpStatus.PARTIAL_CONTENT,
-                out -> transferTo(path, out, true, start, endReal + 1),
+                out -> FileUtil.transferTo(path, Channels.newChannel(out), true, start, endReal + 1),
                 headers);
     }
 
@@ -114,7 +77,8 @@ public final class DownloadUtil {
                             .collect(Collectors.toMap(FileData::getId, Function.identity()));
                     Map<String, String> idToZipPath = fileList.stream()
                             .collect(Collectors.toMap(FileData::getId, file -> buildZipPath(file, idToFileMap)));
-                    try (ZipOutputStream zos = new ZipOutputStream(out, StandardCharsets.UTF_8)) {
+                    try (ZipOutputStream zos = new ZipOutputStream(out, StandardCharsets.UTF_8);
+                         WritableByteChannel outChannel = Channels.newChannel(zos)) {
                         zos.setLevel(Deflater.NO_COMPRESSION);
                         for (FileData file : fileList) {
                             if (FileAttribute.MimeType.FOLDER.value().toString().equals(file.getMimeType())) {
@@ -125,7 +89,7 @@ public final class DownloadUtil {
                         for (FileData file : fileList) {
                             if (!FileAttribute.MimeType.FOLDER.value().toString().equals(file.getMimeType())) {
                                 zos.putNextEntry(new ZipEntry(idToZipPath.get(file.getId())));
-                                transferTo(dir.resolve(file.getPath()), zos, false);
+                                FileUtil.transferTo(dir.resolve(file.getPath()), outChannel, false);
                                 zos.closeEntry();
                             }
                         }
