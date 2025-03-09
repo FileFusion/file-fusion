@@ -68,7 +68,7 @@ public final class FileUtil {
         return Paths.get(hash.substring(0, 2), hash.substring(2, 4), hash).toString();
     }
 
-    public static String calculateMd5(Path path) {
+    public static String calculateHash(Path path) {
         try (FileChannel channel = FileChannel.open(path, StandardOpenOption.READ)) {
             MessageDigest md = MessageDigest.getInstance(EncryptUtil.MD5);
             long fileSize = channel.size();

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * FileDataRepository
@@ -38,7 +39,7 @@ public interface FileDataRepository extends JpaRepository<FileData, String> {
      * @param id     id
      * @return file
      */
-    FileData findFirstByUserIdAndId(String userId, String id);
+    Optional<FileData> findFirstByUserIdAndId(String userId, String id);
 
     /**
      * findAllByParentId

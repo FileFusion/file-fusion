@@ -37,6 +37,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
 /**
  * FileDataService
@@ -110,10 +111,8 @@ public class FileDataService {
 
     @Transactional(rollbackFor = HttpException.class)
     public void recycleOrDelete(String userId, String id) {
-        FileData file = fileDataRepository.findFirstByUserIdAndId(userId, id);
-        if (file == null) {
-            throw new HttpException(I18n.get("fileNotExist"));
-        }
+        FileData file = fileDataRepository.findFirstByUserIdAndId(userId, id)
+                .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
         List<FileData> allList = findAllChildren(file.getId());
         allList.addFirst(file);
         SysConfig config = sysConfigService.get(SysConfigKey.RECYCLE_BIN);
@@ -172,14 +171,14 @@ public class FileDataService {
         Path chunkPath = chunkDirPath.resolve(String.valueOf(chunkIndex));
         distributedLock.tryLock(RedisAttribute.LockType.file, hashValue + chunkIndex, () -> {
             if (Files.exists(chunkPath)) {
-                if (chunkHashValue.equals(FileUtil.calculateMd5(chunkPath))) {
+                if (chunkHashValue.equals(FileUtil.calculateHash(chunkPath))) {
                     return;
                 } else {
                     FileUtil.delete(chunkPath);
                 }
             }
             FileUtil.upload(file, chunkPath);
-            if (!chunkHashValue.equals(FileUtil.calculateMd5(chunkPath))) {
+            if (!chunkHashValue.equals(FileUtil.calculateHash(chunkPath))) {
                 FileUtil.delete(chunkPath);
                 throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
             }
@@ -235,7 +234,7 @@ public class FileDataService {
         AtomicBoolean uploadStatus = new AtomicBoolean(false);
         distributedLock.tryLock(RedisAttribute.LockType.file, hashValue, () -> {
             if (Files.exists(filePath)) {
-                if (hashValue.equals(FileUtil.calculateMd5(filePath))) {
+                if (hashValue.equals(FileUtil.calculateHash(filePath))) {
                     uploadStatus.set(true);
                     return;
                 } else {
@@ -246,7 +245,7 @@ public class FileDataService {
                 return;
             }
             FileUtil.chunkMerge(chunkDirPath, filePath);
-            if (!hashValue.equals(FileUtil.calculateMd5(filePath))) {
+            if (!hashValue.equals(FileUtil.calculateHash(filePath))) {
                 FileUtil.delete(filePath);
                 throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
             }
@@ -262,10 +261,8 @@ public class FileDataService {
         if (!StringUtils.hasLength(name)) {
             throw new HttpException(I18n.get("fileNameEmpty"));
         }
-        FileData file = fileDataRepository.findFirstByUserIdAndId(userId, id);
-        if (file == null) {
-            throw new HttpException(I18n.get("fileNotExist"));
-        }
+        FileData file = fileDataRepository.findFirstByUserIdAndId(userId, id)
+                .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
         file.setName(name);
         fileDataRepository.save(file);
     }
@@ -275,8 +272,9 @@ public class FileDataService {
         if (fileList.isEmpty() || fileList.size() != idList.size()) {
             throw new HttpException(I18n.get("fileNotExist"));
         }
-        List<FileData> allList = new ArrayList<>(fileList);
-        fileList.forEach(file -> allList.addAll(findAllChildren(file.getId())));
+        List<FileData> allList = fileList.stream()
+                .flatMap(file -> Stream.concat(Stream.of(file), findAllChildren(file.getId()).stream()))
+                .toList();
         String downloadId = ULID.randomULID();
         RList<String> idRList = redissonClient.getList(RedisAttribute.DOWNLOAD_ID_PREFIX + RedisAttribute.SEPARATOR + downloadId);
         idRList.addAll(allList.stream().map(FileData::getId).toList());
@@ -301,10 +299,8 @@ public class FileDataService {
     }
 
     public ResponseEntity<StreamingResponseBody> downloadChunked(String userId, String id, String range) {
-        FileData file = fileDataRepository.findFirstByUserIdAndId(userId, id);
-        if (file == null) {
-            throw new HttpException(I18n.get("fileNotExist"));
-        }
+        FileData file = fileDataRepository.findFirstByUserIdAndId(userId, id)
+                .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
         String[] ranges = range.replace("bytes=", "").split("-");
         long start = 0L;
         long end = Long.MAX_VALUE;
@@ -319,10 +315,8 @@ public class FileDataService {
     }
 
     public ResponseEntity<StreamingResponseBody> thumbnail(String userId, String id) {
-        FileData file = fileDataRepository.findFirstByUserIdAndId(userId, id);
-        if (file == null) {
-            throw new HttpException(I18n.get("fileNotExist"));
-        }
+        FileData file = fileDataRepository.findFirstByUserIdAndId(userId, id)
+                .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
         String mimeType = file.getMimeType();
         if (!ThumbnailUtil.hasThumbnail(mimeType, fileProperties.getThumbnailImageMimeType(),
                 fileProperties.getThumbnailVideoMimeType())) {
