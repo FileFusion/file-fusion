@@ -35,10 +35,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -72,20 +71,21 @@ public class FileDataService {
 
     private List<FileData> findAllChildren(String id) {
         List<FileData> children = new ArrayList<>();
-        findAllChildren(id, children);
-        return children;
-    }
-
-    private void findAllChildren(String parentId, List<FileData> children) {
-        List<FileData> currentChildren = fileDataRepository.findAllByParentId(parentId);
-        if (!currentChildren.isEmpty()) {
+        Queue<String> queue = new ArrayDeque<>();
+        queue.add(id);
+        while (!queue.isEmpty()) {
+            int levelSize = queue.size();
+            List<String> currentLevelParentIds = new ArrayList<>(levelSize);
+            for (int i = 0; i < levelSize; i++) {
+                currentLevelParentIds.add(queue.poll());
+            }
+            List<FileData> currentChildren = fileDataRepository.findAllByParentIdIn(currentLevelParentIds);
             children.addAll(currentChildren);
-            currentChildren.forEach(child -> {
-                if (FileAttribute.MimeType.FOLDER.value().toString().equals(child.getMimeType())) {
-                    findAllChildren(child.getId(), children);
-                }
-            });
+            currentChildren.stream()
+                    .filter(child -> FileAttribute.MimeType.FOLDER.value().toString().equals(child.getMimeType()))
+                    .forEach(child -> queue.add(child.getId()));
         }
+        return children;
     }
 
     public Page<FileData> get(PageRequest page, String userId, String parentId) {
@@ -134,7 +134,7 @@ public class FileDataService {
         if (!StringUtils.hasLength(name)) {
             throw new HttpException(I18n.get("fileNameEmpty"));
         }
-        StringBuffer id = new StringBuffer();
+        AtomicReference<String> id = new AtomicReference<>();
         String pId = !StringUtils.hasLength(parentId) ? FileAttribute.PARENT_ROOT : parentId;
         distributedLock.tryLock(RedisAttribute.LockType.file, userId + pId + name, () -> {
             FileData file = fileDataRepository.findFirstByUserIdAndParentIdAndName(userId, pId, name);
@@ -142,7 +142,7 @@ public class FileDataService {
                 throw new HttpException(I18n.get("fileExits", name));
             }
             if (file != null) {
-                id.append(file.getId());
+                id.set(file.getId());
                 return;
             }
             file = new FileData();
@@ -155,9 +155,9 @@ public class FileDataService {
             file.setFileLastModifiedDate(lastModifiedDate);
             file.setDeleted(false);
             fileDataRepository.save(file);
-            id.append(file.getId());
+            id.set(file.getId());
         }, fileProperties.getLockTimeout());
-        return id.toString();
+        return id.get();
     }
 
     public void uploadChunk(MultipartFile file, Integer chunkIndex, String chunkHashValue, String hashValue) {

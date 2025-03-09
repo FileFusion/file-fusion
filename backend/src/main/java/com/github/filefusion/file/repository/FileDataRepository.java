@@ -42,12 +42,12 @@ public interface FileDataRepository extends JpaRepository<FileData, String> {
     Optional<FileData> findFirstByUserIdAndId(String userId, String id);
 
     /**
-     * findAllByParentId
+     * findAllByParentIdIn
      *
-     * @param parentId parent id
+     * @param parentIdList parent id list
      * @return file list
      */
-    List<FileData> findAllByParentId(String parentId);
+    List<FileData> findAllByParentIdIn(List<String> parentIdList);
 
     /**
      * findFirstByUserIdAndParentIdAndName
