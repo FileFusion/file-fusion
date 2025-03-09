@@ -28,6 +28,8 @@ import java.util.stream.Stream;
  */
 public final class FileUtil {
 
+    private static final int BUFFER_SIZE = 4 * 1024 * 1024;
+
     public static void transferTo(Path path, WritableByteChannel outChannel) throws IOException {
         transferTo(path, outChannel, true);
     }
@@ -71,12 +73,10 @@ public final class FileUtil {
     public static String calculateHash(Path path) {
         try (FileChannel channel = FileChannel.open(path, StandardOpenOption.READ)) {
             Blake3.Blake3_256 digest = new Blake3.Blake3_256();
-            ByteBuffer buffer = ByteBuffer.allocateDirect(1024 * 1024);
+            ByteBuffer buffer = ByteBuffer.allocate(BUFFER_SIZE);
             while (channel.read(buffer) != -1) {
                 buffer.flip();
-                byte[] chunk = new byte[buffer.remaining()];
-                buffer.get(chunk);
-                digest.update(chunk, 0, chunk.length);
+                digest.update(buffer.array(), buffer.position(), buffer.remaining());
                 buffer.clear();
             }
             return EncryptUtil.bytesToHex(digest.digest());
