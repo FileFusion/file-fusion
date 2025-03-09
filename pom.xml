@@ -24,6 +24,7 @@
         <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
         <java.version>21</java.version>
         <ulid.version>8.3.0</ulid.version>
+        <bouncycastle.version>1.80</bouncycastle.version>
         <commons-exec.version>1.4.0</commons-exec.version>
         <redisson.version>3.44.0</redisson.version>
         <hikaricp.version>6.2.1</hikaricp.version>

@@ -59,7 +59,7 @@ public class UserService implements UserDetailsService {
 
     public String login(UserInfo user) throws AuthenticationException {
         String username = user.getUsername();
-        String password = EncryptUtil.sha256(user.getPassword());
+        String password = EncryptUtil.blake3(user.getPassword());
         user = userRepository.findByUsername(username);
         if (user == null) {
             throw new UsernameNotFoundException(I18n.get("usernameNotFound"));
@@ -92,10 +92,10 @@ public class UserService implements UserDetailsService {
 
     public void updateCurrentUserPassword(String userId, String originalPassword, String newPassword) {
         UserInfo u = userRepository.findById(userId).orElseThrow();
-        if (!passwordEncoder.matches(EncryptUtil.sha256(originalPassword), u.getPassword())) {
+        if (!passwordEncoder.matches(EncryptUtil.blake3(originalPassword), u.getPassword())) {
             throw new HttpException(I18n.get("originalPasswordError"));
         }
-        u.setPassword(passwordEncoder.encode(EncryptUtil.sha256(newPassword)));
+        u.setPassword(passwordEncoder.encode(EncryptUtil.blake3(newPassword)));
         u.setEarliestCredentials(LocalDateTime.now());
         userRepository.save(u);
     }
@@ -136,7 +136,7 @@ public class UserService implements UserDetailsService {
             throw new HttpException(I18n.get("usernameExits"));
         }
         user.setId(null);
-        user.setPassword(passwordEncoder.encode(EncryptUtil.sha256(user.getPassword())));
+        user.setPassword(passwordEncoder.encode(EncryptUtil.blake3(user.getPassword())));
         if (!StringUtils.hasLength(user.getEmail())) {
             user.setEmail(null);
         }
@@ -166,7 +166,7 @@ public class UserService implements UserDetailsService {
 
         boolean modifyPassword = !oldUser.getPassword().equals(user.getPassword());
         if (modifyPassword) {
-            oldUser.setPassword(passwordEncoder.encode(EncryptUtil.sha256(user.getPassword())));
+            oldUser.setPassword(passwordEncoder.encode(EncryptUtil.blake3(user.getPassword())));
         }
 
         if (modifyPassword || oldUser.getEnabled() != user.getEnabled()) {

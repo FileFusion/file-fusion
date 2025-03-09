@@ -189,7 +189,7 @@ public class FileDataService {
             throw new HttpException(I18n.get("fileHashEmpty"));
         }
         if (StringUtils.hasLength(path) && (path.contains("..") || path.contains("//") || path.startsWith("/"))) {
-            throw new HttpException(I18n.get("fileHashFormatError"));
+            throw new HttpException(I18n.get("filePathFormatError"));
         }
         String hashPath = FileUtil.getHashPath(hashValue);
         LocalDateTime lastModifiedDate = lastModified == null ? LocalDateTime.now() : lastModified;
