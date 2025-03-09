@@ -30,13 +30,16 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
@@ -83,15 +86,6 @@ public class FileDataService {
                 }
             });
         }
-    }
-
-    private List<String> getHierarchyPathList(String path) {
-        Path rootPath = Paths.get(path).normalize();
-        List<String> hierarchyPathList = new ArrayList<>(rootPath.getNameCount());
-        for (int i = 0; i < rootPath.getNameCount(); i++) {
-            hierarchyPathList.add(rootPath.getName(i).toString());
-        }
-        return hierarchyPathList;
     }
 
     public Page<FileData> get(PageRequest page, String userId, String parentId) {
@@ -203,10 +197,13 @@ public class FileDataService {
         distributedLock.tryLock(RedisAttribute.LockType.file, userId + pId + path + name, () -> {
             String fileParentId = pId;
             if (StringUtils.hasLength(path)) {
-                List<String> hierarchyPathList = getHierarchyPathList(path);
-                for (String hierarchyPath : hierarchyPathList) {
-                    fileParentId = createFolder(userId, fileParentId, hierarchyPath, lastModifiedDate, true);
-                }
+                fileParentId =
+                        Arrays.stream(Paths.get(path).normalize().toString().split(Pattern.quote(File.separator)))
+                                .filter(StringUtils::hasLength)
+                                .reduce(fileParentId,
+                                        (currentParentId, segment) ->
+                                                createFolder(userId, currentParentId, segment, lastModifiedDate, true),
+                                        (prev, current) -> current);
             }
             if (fileDataRepository.existsByUserIdAndParentIdAndName(userId, fileParentId, name)) {
                 throw new HttpException(I18n.get("fileExits", name));
@@ -276,9 +273,9 @@ public class FileDataService {
                 .flatMap(file -> Stream.concat(Stream.of(file), findAllChildren(file.getId()).stream()))
                 .toList();
         String downloadId = ULID.randomULID();
-        RList<String> idRList = redissonClient.getList(RedisAttribute.DOWNLOAD_ID_PREFIX + RedisAttribute.SEPARATOR + downloadId);
-        idRList.addAll(allList.stream().map(FileData::getId).toList());
-        idRList.expire(fileProperties.getDownloadLinkTimeout());
+        RList<String> downloadIdList = redissonClient.getList(RedisAttribute.DOWNLOAD_ID_PREFIX + RedisAttribute.SEPARATOR + downloadId);
+        downloadIdList.addAll(allList.stream().map(FileData::getId).toList());
+        downloadIdList.expire(fileProperties.getDownloadLinkTimeout());
         return downloadId;
     }
 
