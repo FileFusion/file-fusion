@@ -306,8 +306,8 @@ public class FileDataService {
             throw new HttpException(I18n.get("fileNotExist"));
         }
         String[] ranges = range.replace("bytes=", "").split("-");
-        long start = 0;
-        long end = -1;
+        long start = 0L;
+        long end = Long.MAX_VALUE;
         if (ranges.length > 0) {
             start = Long.parseLong(ranges[0]);
         }
