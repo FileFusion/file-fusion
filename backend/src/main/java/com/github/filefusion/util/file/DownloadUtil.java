@@ -71,7 +71,7 @@ public final class DownloadUtil {
                     if (currentPosition >= total) {
                         break;
                     }
-                    throw new IOException("Failed to transfer any bytes. Check if the output stream is closed or full.");
+                    throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileDownloadFailed"));
                 }
                 start += transferred;
             }
