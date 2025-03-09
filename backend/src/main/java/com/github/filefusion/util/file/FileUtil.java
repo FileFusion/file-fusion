@@ -4,17 +4,17 @@ import com.github.filefusion.common.HttpException;
 import com.github.filefusion.util.EncryptUtil;
 import com.github.filefusion.util.I18n;
 import jakarta.annotation.Nonnull;
+import org.bouncycastle.jcajce.provider.digest.Blake3;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -63,23 +63,24 @@ public final class FileUtil {
 
     public static String getHashPath(String hash) {
         if (!StringUtils.hasLength(hash) || hash.length() != 32 || !hash.matches("^[a-zA-Z0-9]+$")) {
-            throw new HttpException(I18n.get("filePathFormatError"));
+            throw new HttpException(I18n.get("fileHashFormatError"));
         }
         return Paths.get(hash.substring(0, 2), hash.substring(2, 4), hash).toString();
     }
 
     public static String calculateHash(Path path) {
         try (FileChannel channel = FileChannel.open(path, StandardOpenOption.READ)) {
-            MessageDigest md = MessageDigest.getInstance(EncryptUtil.MD5);
-            long fileSize = channel.size();
-            long position = 0;
-            while (position < fileSize) {
-                long chunkSize = Math.min(fileSize - position, Integer.MAX_VALUE);
-                md.update(channel.map(FileChannel.MapMode.READ_ONLY, position, chunkSize));
-                position += chunkSize;
+            Blake3.Blake3_256 digest = new Blake3.Blake3_256();
+            ByteBuffer buffer = ByteBuffer.allocateDirect(1024 * 1024);
+            while (channel.read(buffer) != -1) {
+                buffer.flip();
+                byte[] chunk = new byte[buffer.remaining()];
+                buffer.get(chunk);
+                digest.update(chunk, 0, chunk.length);
+                buffer.clear();
             }
-            return EncryptUtil.bytesToHex(md.digest());
-        } catch (NoSuchAlgorithmException | IOException e) {
+            return EncryptUtil.bytesToHex(digest.digest());
+        } catch (IOException e) {
             throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("getFileHashFailed"));
         }
     }
