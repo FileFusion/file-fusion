@@ -11,7 +11,7 @@ function formatFileSize(bytes: number) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-async function getFileHash(file: File): Promise<string> {
+async function getFileHash(file: File | Blob): Promise<string> {
   const hashInstance = await createBLAKE3();
   hashInstance.init();
   const reader = file.stream().getReader();
@@ -41,9 +41,22 @@ function supportVideoPreview(mimeType: string) {
   return supportVideoPreviewType.includes(mimeType);
 }
 
+function getFileChunks(fileSize: number, chunkSize: number) {
+  if (fileSize <= 0) {
+    return [];
+  }
+  const totalChunks = Math.ceil(fileSize / chunkSize);
+  return Array.from({ length: totalChunks }, (_, index) => {
+    const start = index * chunkSize;
+    const end = Math.min(start + chunkSize - 1, fileSize - 1);
+    return { index, start, end };
+  });
+}
+
 export {
   formatFileSize,
   getFileHash,
   supportImagePreview,
-  supportVideoPreview
+  supportVideoPreview,
+  getFileChunks
 };
