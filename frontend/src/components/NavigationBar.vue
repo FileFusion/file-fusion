@@ -41,10 +41,10 @@
         selectable>
         <n-spin :show="getLicenseLoading">
           <n-card
+            class="w-128"
             :title="$t('navigationBar.about')"
             closable
             hoverable
-            class="w-128"
             @close="handleClose()">
             <template #cover>
               <n-grid
