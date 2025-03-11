@@ -204,10 +204,10 @@ import { useRequest, usePagination } from 'alova/client';
 import { hasPermission } from '@/commons/permission';
 import {
   formatFileSize,
-  renderIconMethod,
   supportImagePreview,
   supportVideoPreview
-} from '@/commons/utils';
+} from '@/commons/file';
+import { renderIconMethod } from '@/commons/utils';
 import { useRouter, useRoute } from 'vue-router';
 import { mainStore } from '@/store';
 import FileRename from '@/views/files/components/FileRename.vue';

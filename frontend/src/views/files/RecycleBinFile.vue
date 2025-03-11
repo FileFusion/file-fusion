@@ -179,7 +179,8 @@ import IconDown from '~icons/icon-park-outline/down';
 import IconDelete from '~icons/icon-park-outline/delete';
 import { useRequest, usePagination } from 'alova/client';
 import { hasPermission } from '@/commons/permission';
-import { formatFileSize, renderIconMethod } from '@/commons/utils';
+import { formatFileSize } from '@/commons/file';
+import { renderIconMethod } from '@/commons/utils';
 import { mainStore } from '@/store';
 import FileThumbnail from '@/views/files/components/FileThumbnail.vue';
 
