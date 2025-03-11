@@ -64,7 +64,7 @@ public final class FileUtil {
     }
 
     public static String getHashPath(String hash) {
-        if (!StringUtils.hasLength(hash) || hash.length() != 32 || !hash.matches("^[a-zA-Z0-9]+$")) {
+        if (!StringUtils.hasLength(hash) || hash.length() != 64 || !hash.matches("^[a-zA-Z0-9]+$")) {
             throw new HttpException(I18n.get("fileHashFormatError"));
         }
         return Paths.get(hash.substring(0, 2), hash.substring(2, 4), hash).toString();
