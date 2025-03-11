@@ -35,7 +35,7 @@ CREATE TABLE org_user
 );
 
 INSERT INTO user_info
-VALUES ('01JJK6FQS0K3N6K4JAEAP5ZC7P', 'admin', '$2a$10$w4.l9z/euD3drAEkjg/H...KL3BySerJkOwSVV9Mh/4Yv3R4d7hqS',
+VALUES ('01JJK6FQS0K3N6K4JAEAP5ZC7P', 'admin', '$2a$10$Ay1dB0oHBHdopm4YFJpVUu7N9QSumH2eTvSj7lONSsBcTgHhZ.C0W',
         'Admin', null, null, null, '2022-04-01 00:00:00', true,
         '01JJK6FQS0K3N6K4JAEAP5ZC7P', '2022-04-01 00:00:00', null, null,
         true, true, true, true);
