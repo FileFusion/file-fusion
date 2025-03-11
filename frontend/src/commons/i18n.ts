@@ -29,7 +29,7 @@ export function languageChange(language: SUPPORT_LANGUAGES) {
   document.title = getRouteTitle(router.currentRoute.value);
 }
 
-export const defaultLanguage = getDefaultLanguage();
+export const defaultLanguage: SUPPORT_LANGUAGES = getDefaultLanguage();
 
 const i18n = createI18n<[MessageSchema], SUPPORT_LANGUAGES>({
   legacy: false,

@@ -62,4 +62,4 @@ export function themeChange(theme: SUPPORT_THEMES) {
   document.documentElement.setAttribute('class', theme + '-theme');
 }
 
-export const defaultTheme = getDefaultTheme();
+export const defaultTheme: SUPPORT_THEMES = getDefaultTheme();

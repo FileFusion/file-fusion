@@ -8,7 +8,7 @@ const LOCALE_MAP = {
   [SUPPORT_LANGUAGES.EN_US]: enUS
 } as const;
 
-function format(date: number | Date, formatStr = 'PP HH:mm:ss') {
+function format(date: number | Date, formatStr = 'PP HH:mm:ss'): string {
   const mStore = mainStore(window.$pinia);
   const language = mStore.getLanguage;
   return formatFns(date, formatStr, {

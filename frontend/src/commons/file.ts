@@ -1,6 +1,6 @@
 import { createBLAKE3 } from 'hash-wasm';
 
-function formatFileSize(bytes: number) {
+function formatFileSize(bytes: number): string {
   if (!bytes || bytes === 0) {
     return '0 B';
   }
@@ -32,16 +32,22 @@ const supportImagePreviewType = [
   'image/svg+xml',
   'image/webp'
 ];
-function supportImagePreview(mimeType: string) {
+function supportImagePreview(mimeType: string): boolean {
   return supportImagePreviewType.includes(mimeType);
 }
 
 const supportVideoPreviewType = ['video/mp4'];
-function supportVideoPreview(mimeType: string) {
+function supportVideoPreview(mimeType: string): boolean {
   return supportVideoPreviewType.includes(mimeType);
 }
 
-function getFileChunks(fileSize: number, chunkSize: number) {
+interface Chunk {
+  index: number;
+  start: number;
+  end: number;
+}
+
+function getFileChunks(fileSize: number, chunkSize: number): Chunk[] {
   if (fileSize <= 0) {
     return [];
   }
