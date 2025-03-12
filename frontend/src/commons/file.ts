@@ -64,7 +64,7 @@ function getFileChunks(fileSize: number, chunkSize: number): Chunk[] {
   const totalChunks = Math.ceil(fileSize / chunkSize);
   return Array.from({ length: totalChunks }, (_, index) => {
     const start = index * chunkSize;
-    const end = Math.min(start + chunkSize - 1, fileSize - 1);
+    const end = Math.min(start + chunkSize, fileSize);
     return { index, start, end };
   });
 }
