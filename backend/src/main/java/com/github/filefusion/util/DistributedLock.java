@@ -1,11 +1,9 @@
 package com.github.filefusion.util;
 
-import com.github.filefusion.common.HttpException;
 import com.github.filefusion.constant.RedisAttribute;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -54,7 +52,7 @@ public class DistributedLock {
         try {
             isLockAcquired = lock.tryLock(lockTimeout.toMillis(), TimeUnit.MILLISECONDS);
             if (!isLockAcquired) {
-                throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("lockAcquisitionFailed"));
+                throw new RuntimeException();
             }
             task.run();
         } catch (InterruptedException e) {
