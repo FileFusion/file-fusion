@@ -24,7 +24,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -130,6 +129,19 @@ public class FileDataService {
         fileDataRepository.deleteAll(fileList);
     }
 
+    private String createMultiLevelFolder(String userId, String parentId, String path, LocalDateTime lastModifiedDate) {
+        String pId = !StringUtils.hasLength(parentId) ? FileAttribute.PARENT_ROOT : parentId;
+        if (StringUtils.hasLength(path)) {
+            pId =
+                    Arrays.stream(Paths.get(path).normalize().toString().split(Pattern.quote(File.separator)))
+                            .filter(StringUtils::hasLength).reduce(pId,
+                                    (currentParentId, segment) ->
+                                            createFolder(userId, currentParentId, segment, lastModifiedDate, true),
+                                    (prev, current) -> current);
+        }
+        return pId;
+    }
+
     public String createFolder(String userId, String parentId, String name, LocalDateTime lastModifiedDate, boolean allowExists) {
         if (!StringUtils.hasLength(name)) {
             throw new HttpException(I18n.get("fileNameEmpty"));
@@ -179,7 +191,6 @@ public class FileDataService {
         }, fileProperties.getLockTimeout());
     }
 
-    @Transactional(rollbackFor = HttpException.class)
     public boolean uploadChunkMerge(String userId, String parentId, String name, String path, String hashValue,
                                     String mimeType, Long size, LocalDateTime lastModified, boolean fastUpload) {
         if (!StringUtils.hasLength(name)) {
@@ -191,67 +202,50 @@ public class FileDataService {
         if (StringUtils.hasLength(path) && (path.contains("..") || path.contains("//") || path.startsWith("/"))) {
             throw new HttpException(I18n.get("filePathFormatError"));
         }
-        String hashPath = FileUtil.getHashPath(hashValue);
         LocalDateTime lastModifiedDate = lastModified == null ? LocalDateTime.now() : lastModified;
-        String pId = !StringUtils.hasLength(parentId) ? FileAttribute.PARENT_ROOT : parentId;
-        distributedLock.tryLock(RedisAttribute.LockType.file, userId + pId + path + name, () -> {
-            String fileParentId = pId;
-            if (StringUtils.hasLength(path)) {
-                fileParentId =
-                        Arrays.stream(Paths.get(path).normalize().toString().split(Pattern.quote(File.separator)))
-                                .filter(StringUtils::hasLength)
-                                .reduce(fileParentId,
-                                        (currentParentId, segment) ->
-                                                createFolder(userId, currentParentId, segment, lastModifiedDate, true),
-                                        (prev, current) -> current);
-            }
+        String fileParentId = createMultiLevelFolder(userId, parentId, path, lastModifiedDate);
+
+        AtomicBoolean uploadStatus = new AtomicBoolean(false);
+        String hashPath = FileUtil.getHashPath(hashValue);
+        distributedLock.tryMultiLock(RedisAttribute.LockType.file, List.of(hashValue, userId + fileParentId + path + name), () -> {
             if (fileDataRepository.existsByUserIdAndParentIdAndName(userId, fileParentId, name)) {
                 throw new HttpException(I18n.get("fileExits", name));
             }
-            FileData file = new FileData();
-            file.setUserId(userId);
-            file.setParentId(fileParentId);
-            file.setName(name);
-            file.setPath(hashPath);
-            file.setHashValue(hashValue);
-            file.setMimeType(mimeType);
-            file.setSize(size);
-            file.setEncrypted(false);
-            file.setFileLastModifiedDate(lastModifiedDate);
-            file.setDeleted(false);
-            fileDataRepository.save(file);
+            uploadStatus.set(chunkMerge(hashPath, hashValue, fastUpload));
+            if (uploadStatus.get()) {
+                FileData file = new FileData();
+                file.setUserId(userId);
+                file.setParentId(fileParentId);
+                file.setName(name);
+                file.setPath(hashPath);
+                file.setHashValue(hashValue);
+                file.setMimeType(mimeType);
+                file.setSize(size);
+                file.setEncrypted(false);
+                file.setFileLastModifiedDate(lastModifiedDate);
+                file.setDeleted(false);
+                fileDataRepository.save(file);
+            }
         }, fileProperties.getLockTimeout());
-
-        return chunkMerge(hashPath, hashValue, fastUpload);
+        return uploadStatus.get();
     }
 
     private boolean chunkMerge(String hashPath, String hashValue, boolean fastUpload) {
         Path chunkDirPath = fileProperties.getTmpDir().resolve(hashPath);
         Path filePath = fileProperties.getDir().resolve(hashPath);
-        AtomicBoolean uploadStatus = new AtomicBoolean(false);
-        distributedLock.tryLock(RedisAttribute.LockType.file, hashValue, () -> {
-            if (Files.exists(filePath)) {
-                if (hashValue.equals(FileUtil.calculateHash(filePath))) {
-                    uploadStatus.set(true);
-                    return;
-                } else {
-                    FileUtil.delete(filePath);
-                }
-            }
-            if (fastUpload) {
-                return;
-            }
-            FileUtil.chunkMerge(chunkDirPath, filePath);
-            if (!hashValue.equals(FileUtil.calculateHash(filePath))) {
-                FileUtil.delete(filePath);
-                throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
-            }
-            uploadStatus.set(true);
-        }, fileProperties.getLockTimeout());
-        if (!uploadStatus.get()) {
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        if (hashValue.equals(FileUtil.calculateHash(filePath))) {
+            return true;
         }
-        return uploadStatus.get();
+        if (fastUpload) {
+            return false;
+        }
+        FileUtil.chunkMerge(chunkDirPath, filePath);
+        if (hashValue.equals(FileUtil.calculateHash(filePath))) {
+            return true;
+        } else {
+            FileUtil.delete(filePath);
+        }
+        return false;
     }
 
     public void rename(String userId, String id, String name) {

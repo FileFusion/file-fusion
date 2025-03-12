@@ -108,6 +108,7 @@ public final class FileUtil {
             }
             delete(chunkDirPath);
         } catch (IOException e) {
+            delete(targetPath);
             throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
         }
     }
