@@ -3,8 +3,6 @@ package com.github.filefusion.common;
 import lombok.Data;
 import org.springframework.http.HttpStatus;
 
-import java.io.Serializable;
-
 /**
  * HttpException
  *
@@ -12,7 +10,7 @@ import java.io.Serializable;
  * @since 2022/4/1
  */
 @Data
-public class HttpException extends RuntimeException implements Serializable {
+public class HttpException extends BaseException {
 
     private HttpStatus httpStatus;
 

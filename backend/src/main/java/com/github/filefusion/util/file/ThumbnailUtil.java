@@ -1,10 +1,8 @@
 package com.github.filefusion.util.file;
 
-import com.github.filefusion.common.HttpException;
+import com.github.filefusion.common.BaseException;
 import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.util.ExecUtil;
-import com.github.filefusion.util.I18n;
-import org.springframework.http.HttpStatus;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
@@ -36,7 +34,8 @@ public final class ThumbnailUtil {
 
     public static Path generateThumbnail(Path baseDir, Path originalPath, String path,
                                          String mimeType, List<String> thumbnailImageMimeType,
-                                         List<String> thumbnailVideoMimeType, Duration thumbnailGenerateTimeout) {
+                                         List<String> thumbnailVideoMimeType, Duration thumbnailGenerateTimeout)
+            throws FileNotSupportThumbnailException, ThumbnailGenerationFailedException, IOException {
         Path targetPath = baseDir.resolve(path + FileAttribute.THUMBNAIL_FILE_SUFFIX);
         if (Files.isRegularFile(targetPath)) {
             return targetPath;
@@ -47,18 +46,20 @@ public final class ThumbnailUtil {
         } else if (thumbnailVideoMimeType.contains(mimeType)) {
             exec = GENERATE_VIDEO_THUMBNAIL_EXEC.formatted(originalPath, targetPath);
         } else {
-            throw new HttpException(I18n.get("fileNotSupportThumbnail"));
+            throw new FileNotSupportThumbnailException();
         }
-        boolean execResult = false;
-        try {
-            Files.createDirectories(targetPath.getParent());
-            execResult = ExecUtil.exec(Arrays.asList(exec.split(" ")), thumbnailGenerateTimeout);
-        } catch (IOException ignored) {
-        }
+        Files.createDirectories(targetPath.getParent());
+        boolean execResult = ExecUtil.exec(Arrays.asList(exec.split(" ")), thumbnailGenerateTimeout);
         if (!execResult || !Files.exists(targetPath)) {
-            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("thumbnailGenerationFailed"));
+            throw new ThumbnailGenerationFailedException();
         }
         return targetPath;
+    }
+
+    public static class FileNotSupportThumbnailException extends BaseException {
+    }
+
+    public static class ThumbnailGenerationFailedException extends BaseException {
     }
 
 }
