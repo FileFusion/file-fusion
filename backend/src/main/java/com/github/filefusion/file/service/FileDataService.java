@@ -250,23 +250,25 @@ public class FileDataService {
         Path chunkDirPath = fileProperties.getTmpDir().resolve(getHashPath(hashValue));
         Path chunkPath = chunkDirPath.resolve(String.valueOf(chunkIndex));
         distributedLock.tryLock(RedisAttribute.LockType.file, hashValue + chunkIndex, () -> {
-            if (Files.exists(chunkPath)) {
-                if (chunkHashValue.equals(FileUtil.calculateHash(chunkPath))) {
-                    return;
-                } else {
-                    try {
+            try {
+                if (Files.exists(chunkPath)) {
+                    if (chunkHashValue.equals(FileUtil.calculateHash(chunkPath))) {
+                        return;
+                    } else {
                         FileUtil.delete(chunkPath);
-                    } catch (IOException e) {
-                        throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
                     }
                 }
-            }
-            try {
                 Files.createDirectories(chunkPath.getParent());
-                file.transferTo(chunkPath);
-                if (!chunkHashValue.equals(FileUtil.calculateHash(chunkPath))) {
+                boolean transferSuccess;
+                try {
+                    file.transferTo(chunkPath);
+                    transferSuccess = true;
+                } catch (IOException e) {
+                    transferSuccess = false;
+                }
+                if (!transferSuccess || !chunkHashValue.equals(FileUtil.calculateHash(chunkPath))) {
                     FileUtil.delete(chunkPath);
-                    throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
+                    throw new IOException();
                 }
             } catch (IOException e) {
                 throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
