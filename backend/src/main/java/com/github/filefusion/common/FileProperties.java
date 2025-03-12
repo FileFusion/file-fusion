@@ -31,46 +31,30 @@ public class FileProperties {
     private List<String> thumbnailImageMimeType;
     private List<String> thumbnailVideoMimeType;
 
-    public void setDir(Path dir) {
-        try {
-            if (!Files.exists(dir)) {
-                Files.createDirectories(dir);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+    public void setDir(Path dir) throws IOException {
+        if (!Files.exists(dir)) {
+            Files.createDirectories(dir);
         }
         this.dir = dir;
     }
 
-    public void setTmpDir(Path tmpDir) {
-        try {
-            if (!Files.exists(tmpDir)) {
-                Files.createDirectories(tmpDir);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+    public void setTmpDir(Path tmpDir) throws IOException {
+        if (!Files.exists(tmpDir)) {
+            Files.createDirectories(tmpDir);
         }
         this.tmpDir = tmpDir;
     }
 
-    public void setRecycleBinDir(Path recycleBinDir) {
-        try {
-            if (!Files.exists(recycleBinDir)) {
-                Files.createDirectories(recycleBinDir);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+    public void setRecycleBinDir(Path recycleBinDir) throws IOException {
+        if (!Files.exists(recycleBinDir)) {
+            Files.createDirectories(recycleBinDir);
         }
         this.recycleBinDir = recycleBinDir;
     }
 
-    public void setThumbnailDir(Path thumbnailDir) {
-        try {
-            if (!Files.exists(thumbnailDir)) {
-                Files.createDirectories(thumbnailDir);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+    public void setThumbnailDir(Path thumbnailDir) throws IOException {
+        if (!Files.exists(thumbnailDir)) {
+            Files.createDirectories(thumbnailDir);
         }
         this.thumbnailDir = thumbnailDir;
     }
