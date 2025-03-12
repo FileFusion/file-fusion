@@ -20,6 +20,7 @@ import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -203,7 +204,7 @@ public class FileDataService {
             try {
                 uploadStatus.set(chunkMerge(hashPath, hashValue, fastUpload));
             } catch (IOException e) {
-                throw new HttpException(I18n.get("fileUploadFailed"));
+                throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
             }
             if (uploadStatus.get()) {
                 FileData file = new FileData();
@@ -256,7 +257,7 @@ public class FileDataService {
                     try {
                         FileUtil.delete(chunkPath);
                     } catch (IOException e) {
-                        throw new HttpException(I18n.get("fileUploadFailed"));
+                        throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
                     }
                 }
             }
@@ -265,10 +266,10 @@ public class FileDataService {
                 file.transferTo(chunkPath);
                 if (!chunkHashValue.equals(FileUtil.calculateHash(chunkPath))) {
                     FileUtil.delete(chunkPath);
-                    throw new HttpException(I18n.get("fileUploadFailed"));
+                    throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
                 }
             } catch (IOException e) {
-                throw new HttpException(I18n.get("fileUploadFailed"));
+                throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
             }
         }, fileProperties.getLockTimeout());
     }
@@ -330,7 +331,7 @@ public class FileDataService {
             return DownloadUtil.downloadChunked(file.getName(), file.getMimeType(),
                     fileProperties.getDir().resolve(file.getPath()), start, end);
         } catch (IOException e) {
-            throw new HttpException(I18n.get("fileDownloadFailed"));
+            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileDownloadFailed"));
         }
     }
 
