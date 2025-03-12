@@ -1,11 +1,8 @@
 package com.github.filefusion.util.file;
 
-import com.github.filefusion.common.HttpException;
 import com.github.filefusion.util.EncryptUtil;
-import com.github.filefusion.util.I18n;
 import jakarta.annotation.Nonnull;
 import org.bouncycastle.jcajce.provider.digest.Blake3;
-import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -59,13 +56,6 @@ public final class FileUtil {
         } catch (Exception e) {
             throw new IOException(e);
         }
-    }
-
-    public static String getHashPath(String hash) {
-        if (!StringUtils.hasLength(hash) || hash.length() != 64 || !hash.matches("^[a-zA-Z0-9]+$")) {
-            throw new HttpException(I18n.get("fileHashFormatError"));
-        }
-        return Paths.get(hash.substring(0, 2), hash.substring(2, 4), hash).toString();
     }
 
     public static String calculateHash(Path path) {

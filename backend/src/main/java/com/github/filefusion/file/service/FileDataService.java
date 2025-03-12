@@ -68,6 +68,13 @@ public class FileDataService {
         this.sysConfigService = sysConfigService;
     }
 
+    public static String getHashPath(String hash) {
+        if (!StringUtils.hasLength(hash) || hash.length() != 64 || !hash.matches("^[a-zA-Z0-9]+$")) {
+            throw new HttpException(I18n.get("fileHashFormatError"));
+        }
+        return Paths.get(hash.substring(0, 2), hash.substring(2, 4), hash).toString();
+    }
+
     private List<FileData> findAllChildren(String id) {
         List<FileData> children = new ArrayList<>();
         Queue<String> queue = new ArrayDeque<>();
@@ -184,7 +191,7 @@ public class FileDataService {
             throw new HttpException(I18n.get("filePathFormatError"));
         }
         LocalDateTime lastModifiedDate = lastModified == null ? LocalDateTime.now() : lastModified;
-        String hashPath = FileUtil.getHashPath(hashValue);
+        String hashPath = getHashPath(hashValue);
 
         String fileParentId = createMultiLevelFolder(userId, parentId, path, lastModifiedDate);
 
@@ -239,7 +246,7 @@ public class FileDataService {
     }
 
     public void uploadChunk(MultipartFile file, Integer chunkIndex, String chunkHashValue, String hashValue) {
-        Path chunkDirPath = fileProperties.getTmpDir().resolve(FileUtil.getHashPath(hashValue));
+        Path chunkDirPath = fileProperties.getTmpDir().resolve(getHashPath(hashValue));
         Path chunkPath = chunkDirPath.resolve(String.valueOf(chunkIndex));
         distributedLock.tryLock(RedisAttribute.LockType.file, hashValue + chunkIndex, () -> {
             if (Files.exists(chunkPath)) {
