@@ -11,6 +11,16 @@ function formatFileSize(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
+function getFileRelativePath(file: File): string {
+  if (!file?.webkitRelativePath?.includes('/')) {
+    return '';
+  }
+  return file.webkitRelativePath.substring(
+    0,
+    file.webkitRelativePath.lastIndexOf('/')
+  );
+}
+
 async function getFileHash(file: File | Blob): Promise<string> {
   const hashInstance = await createBLAKE3();
   hashInstance.init();
@@ -59,11 +69,13 @@ function getFileChunks(fileSize: number, chunkSize: number): Chunk[] {
   });
 }
 
+export type { Chunk };
+
 export {
   formatFileSize,
+  getFileRelativePath,
   getFileHash,
   supportImagePreview,
   supportVideoPreview,
-  Chunk,
   getFileChunks
 };
