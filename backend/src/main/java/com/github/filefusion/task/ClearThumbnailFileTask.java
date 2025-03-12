@@ -89,7 +89,7 @@ public class ClearThumbnailFileTask {
         }, taskLockTimeout);
     }
 
-    public void clearThumbnail(Map<String, Path> thumbnailMap) {
+    public void clearThumbnail(Map<String, Path> thumbnailMap) throws IOException {
         List<String> hashList = new ArrayList<>(thumbnailMap.keySet());
         Map<String, FileHashUsageCount> hashUsageCountMap = fileDataRepository.countByHashValueList(hashList)
                 .stream().collect(Collectors.toMap(FileHashUsageCount::getHashValue, Function.identity()));

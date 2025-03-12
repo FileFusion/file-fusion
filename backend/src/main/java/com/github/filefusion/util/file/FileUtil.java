@@ -5,7 +5,6 @@ import com.github.filefusion.util.EncryptUtil;
 import com.github.filefusion.util.I18n;
 import jakarta.annotation.Nonnull;
 import org.bouncycastle.jcajce.provider.digest.Blake3;
-import org.springframework.http.HttpStatus;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
@@ -53,7 +52,7 @@ public final class FileUtil {
                     if (currentPosition >= total) {
                         break;
                     }
-                    throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileDownloadFailed"));
+                    throw new IOException();
                 }
                 start += transferred;
             }
@@ -103,7 +102,7 @@ public final class FileUtil {
         }
     }
 
-    public static void delete(List<Path> pathList) {
+    public static void delete(List<Path> pathList) throws FileDeletionFailedException {
         AtomicBoolean success = new AtomicBoolean(true);
         pathList.forEach(path -> {
             try {
@@ -113,11 +112,11 @@ public final class FileUtil {
             }
         });
         if (!success.get()) {
-            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileDeletionFailed"));
+            throw new FileDeletionFailedException();
         }
     }
 
-    public static void delete(Path path) {
+    public static void delete(Path path) throws FileDeletionFailedException {
         if (!Files.exists(path)) {
             return;
         }
@@ -150,8 +149,11 @@ public final class FileUtil {
             success.set(false);
         }
         if (!success.get()) {
-            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileDeletionFailed"));
+            throw new FileDeletionFailedException();
         }
+    }
+
+    public static class FileDeletionFailedException extends IOException {
     }
 
 }

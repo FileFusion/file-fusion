@@ -10,7 +10,7 @@ import org.springframework.http.HttpStatus;
  * @since 2022/4/1
  */
 @Data
-public class HttpException extends BaseException {
+public class HttpException extends RuntimeException {
 
     private HttpStatus httpStatus;
 

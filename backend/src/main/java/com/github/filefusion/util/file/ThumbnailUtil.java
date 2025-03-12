@@ -1,6 +1,5 @@
 package com.github.filefusion.util.file;
 
-import com.github.filefusion.common.BaseException;
 import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.util.ExecUtil;
 import org.springframework.util.StringUtils;
@@ -56,10 +55,10 @@ public final class ThumbnailUtil {
         return targetPath;
     }
 
-    public static class FileNotSupportThumbnailException extends BaseException {
+    public static class FileNotSupportThumbnailException extends Exception {
     }
 
-    public static class ThumbnailGenerationFailedException extends BaseException {
+    public static class ThumbnailGenerationFailedException extends Exception {
     }
 
 }
