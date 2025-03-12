@@ -30,6 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -172,25 +173,6 @@ public class FileDataService {
         return id.get();
     }
 
-    public void uploadChunk(MultipartFile file, Integer chunkIndex, String chunkHashValue, String hashValue) {
-        Path chunkDirPath = fileProperties.getTmpDir().resolve(FileUtil.getHashPath(hashValue));
-        Path chunkPath = chunkDirPath.resolve(String.valueOf(chunkIndex));
-        distributedLock.tryLock(RedisAttribute.LockType.file, hashValue + chunkIndex, () -> {
-            if (Files.exists(chunkPath)) {
-                if (chunkHashValue.equals(FileUtil.calculateHash(chunkPath))) {
-                    return;
-                } else {
-                    FileUtil.delete(chunkPath);
-                }
-            }
-            FileUtil.upload(file, chunkPath);
-            if (!chunkHashValue.equals(FileUtil.calculateHash(chunkPath))) {
-                FileUtil.delete(chunkPath);
-                throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
-            }
-        }, fileProperties.getLockTimeout());
-    }
-
     public boolean uploadChunkMerge(String userId, String parentId, String name, String path, String hashValue,
                                     String mimeType, Long size, LocalDateTime lastModified, boolean fastUpload) {
         if (!StringUtils.hasLength(name)) {
@@ -203,10 +185,11 @@ public class FileDataService {
             throw new HttpException(I18n.get("filePathFormatError"));
         }
         LocalDateTime lastModifiedDate = lastModified == null ? LocalDateTime.now() : lastModified;
+        String hashPath = FileUtil.getHashPath(hashValue);
+
         String fileParentId = createMultiLevelFolder(userId, parentId, path, lastModifiedDate);
 
         AtomicBoolean uploadStatus = new AtomicBoolean(false);
-        String hashPath = FileUtil.getHashPath(hashValue);
         distributedLock.tryMultiLock(RedisAttribute.LockType.file, List.of(hashValue, userId + fileParentId + path + name), () -> {
             if (fileDataRepository.existsByUserIdAndParentIdAndName(userId, fileParentId, name)) {
                 throw new HttpException(I18n.get("fileExits", name));
@@ -239,13 +222,41 @@ public class FileDataService {
         if (fastUpload) {
             return false;
         }
-        FileUtil.chunkMerge(chunkDirPath, filePath);
+        try {
+            FileUtil.chunkMerge(chunkDirPath, filePath);
+        } catch (IOException e) {
+            return false;
+        }
         if (hashValue.equals(FileUtil.calculateHash(filePath))) {
             return true;
         } else {
             FileUtil.delete(filePath);
         }
         return false;
+    }
+
+    public void uploadChunk(MultipartFile file, Integer chunkIndex, String chunkHashValue, String hashValue) {
+        Path chunkDirPath = fileProperties.getTmpDir().resolve(FileUtil.getHashPath(hashValue));
+        Path chunkPath = chunkDirPath.resolve(String.valueOf(chunkIndex));
+        distributedLock.tryLock(RedisAttribute.LockType.file, hashValue + chunkIndex, () -> {
+            if (Files.exists(chunkPath)) {
+                if (chunkHashValue.equals(FileUtil.calculateHash(chunkPath))) {
+                    return;
+                } else {
+                    FileUtil.delete(chunkPath);
+                }
+            }
+            try {
+                Files.createDirectories(chunkPath.getParent());
+                file.transferTo(chunkPath);
+                if (!chunkHashValue.equals(FileUtil.calculateHash(chunkPath))) {
+                    FileUtil.delete(chunkPath);
+                    throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
+                }
+            } catch (IOException e) {
+                throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
+            }
+        }, fileProperties.getLockTimeout());
     }
 
     public void rename(String userId, String id, String name) {
