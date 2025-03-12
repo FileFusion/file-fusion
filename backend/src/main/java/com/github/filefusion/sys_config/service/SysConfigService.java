@@ -36,12 +36,7 @@ public class SysConfigService {
         if (!StringUtils.hasLength(sysConfig.getConfigValue())) {
             throw new HttpException(I18n.get("configValueCannotNull"));
         }
-        SysConfigKey sysConfigKey;
-        try {
-            sysConfigKey = SysConfigKey.valueOf(sysConfig.getConfigKey());
-        } catch (IllegalArgumentException e) {
-            throw new HttpException(I18n.get("configKeyNotExist"));
-        }
+        SysConfigKey sysConfigKey = SysConfigKey.valueOf(sysConfig.getConfigKey());
         SysConfig oldSysConfig = get(sysConfigKey);
         oldSysConfig.setConfigValue(sysConfig.getConfigValue());
         return sysConfigRepository.save(oldSysConfig);
