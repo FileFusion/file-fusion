@@ -35,8 +35,8 @@ public class EncryptUtil {
     private static final byte[] HEX_LOOKUP = new byte[128];
     private static final char[] HEX_TABLE = new char[256 * 2];
 
-    private static String SECRET_KEY;
-    private static String SECRET_IV;
+    private static byte[] SECRET_KEY;
+    private static byte[] SECRET_IV;
 
     static {
         Arrays.fill(HEX_LOOKUP, (byte) -1);
@@ -59,21 +59,17 @@ public class EncryptUtil {
     @Autowired
     public EncryptUtil(@Value("${security.secret.key}") String secretKey,
                        @Value("${security.secret.iv}") String secretIv) {
-        SECRET_KEY = secretKey;
-        SECRET_IV = secretIv;
+        SECRET_KEY = secretKey.getBytes(StandardCharsets.UTF_8);
+        SECRET_IV = secretIv.getBytes(StandardCharsets.UTF_8);
     }
 
-    private static Cipher getCipher(int cipherMode) {
-        try {
-            Cipher cipher = Cipher.getInstance(AES_TRANSFORMATION);
-            cipher.init(cipherMode,
-                    new SecretKeySpec(SECRET_KEY.getBytes(StandardCharsets.UTF_8), AES),
-                    new IvParameterSpec(SECRET_IV.getBytes(StandardCharsets.UTF_8)));
-            return cipher;
-        } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException
-                 | NoSuchPaddingException | InvalidKeyException e) {
-            throw new RuntimeException(e);
-        }
+    private static Cipher getCipher(int cipherMode) throws InvalidAlgorithmParameterException,
+            InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException {
+        Cipher cipher = Cipher.getInstance(AES_TRANSFORMATION);
+        cipher.init(cipherMode,
+                new SecretKeySpec(SECRET_KEY, AES),
+                new IvParameterSpec(SECRET_IV));
+        return cipher;
     }
 
     public static String bytesToHex(byte[] bytes) {
@@ -110,7 +106,8 @@ public class EncryptUtil {
         try {
             Cipher cipher = getCipher(Cipher.ENCRYPT_MODE);
             return bytesToHex(cipher.doFinal(original.getBytes(StandardCharsets.UTF_8)));
-        } catch (BadPaddingException | IllegalBlockSizeException e) {
+        } catch (BadPaddingException | IllegalBlockSizeException | InvalidAlgorithmParameterException |
+                 NoSuchPaddingException | NoSuchAlgorithmException | InvalidKeyException e) {
             throw new RuntimeException(e);
         }
     }
@@ -119,7 +116,8 @@ public class EncryptUtil {
         try {
             Cipher cipher = getCipher(Cipher.DECRYPT_MODE);
             return new String(cipher.doFinal(hexToBytes(original)), StandardCharsets.UTF_8);
-        } catch (IllegalBlockSizeException | BadPaddingException e) {
+        } catch (IllegalBlockSizeException | BadPaddingException | InvalidAlgorithmParameterException |
+                 NoSuchPaddingException | NoSuchAlgorithmException | InvalidKeyException e) {
             throw new RuntimeException(e);
         }
     }
