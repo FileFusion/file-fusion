@@ -35,7 +35,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
@@ -139,13 +142,15 @@ public class FileDataService {
 
     private String createMultiLevelFolder(String userId, String parentId, String path, LocalDateTime lastModifiedDate) {
         String pId = !StringUtils.hasLength(parentId) ? FileAttribute.PARENT_ROOT : parentId;
-        if (StringUtils.hasLength(path)) {
-            pId =
-                    Arrays.stream(Paths.get(path).normalize().toString().split(Pattern.quote(File.separator)))
-                            .filter(StringUtils::hasLength).reduce(pId,
-                                    (currentParentId, segment) ->
-                                            createFolder(userId, currentParentId, segment, lastModifiedDate, true),
-                                    (prev, current) -> current);
+        if (!StringUtils.hasLength(path)) {
+            return pId;
+        }
+        String normalizedPath = Paths.get(path).normalize().toString();
+        String[] segments = normalizedPath.split(Pattern.quote(File.separator));
+        for (String segment : segments) {
+            if (StringUtils.hasLength(segment)) {
+                pId = createFolder(userId, pId, segment, lastModifiedDate, true);
+            }
         }
         return pId;
     }
@@ -259,16 +264,14 @@ public class FileDataService {
                     }
                 }
                 Files.createDirectories(chunkPath.getParent());
-                boolean transferSuccess;
                 try {
                     file.transferTo(chunkPath);
-                    transferSuccess = true;
+                    if (!chunkHashValue.equals(FileUtil.calculateHash(chunkPath))) {
+                        throw new IOException();
+                    }
                 } catch (IOException e) {
-                    transferSuccess = false;
-                }
-                if (!transferSuccess || !chunkHashValue.equals(FileUtil.calculateHash(chunkPath))) {
                     FileUtil.delete(chunkPath);
-                    throw new IOException();
+                    throw new IOException(e);
                 }
             } catch (IOException e) {
                 throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
