@@ -64,5 +64,6 @@ export {
   getFileHash,
   supportImagePreview,
   supportVideoPreview,
+  Chunk,
   getFileChunks
 };
