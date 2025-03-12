@@ -37,7 +37,7 @@
     "eslint-config-prettier": "10.1.1",
     "eslint-plugin-vue": "10.0.0",
     "globals": "16.0.0",
-    "meow": "9.0.0",
+    "meow": "13.2.0",
     "naive-ui": "2.41.0",
     "optionator": "0.9.4",
     "prettier": "3.5.3",
