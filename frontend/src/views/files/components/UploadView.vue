@@ -256,8 +256,8 @@ const uploadFileRequest = async ({
   formData.append('path', getFileRelativePath(fileInfo));
   formData.append('hashValue', await getFileHash(fileInfo));
   formData.append('mimeType', fileInfo.type);
-  formData.append('size', fileInfo.size + '');
-  formData.append('fileLastModifiedDate', fileInfo.lastModified + '');
+  formData.append('size', fileInfo.size.toString());
+  formData.append('fileLastModifiedDate', fileInfo.lastModified.toString());
   try {
     const fastUploadSuccess = await handleUploadMerge(formData, true);
     if (!fastUploadSuccess) {

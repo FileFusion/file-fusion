@@ -23,7 +23,7 @@ function notify(
   content?: string
 ) {
   window.$notice[type]({
-    title: title + '',
+    title: title.toString(),
     content: content,
     meta: format(new Date()),
     duration: 3000
