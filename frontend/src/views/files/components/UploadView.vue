@@ -259,10 +259,10 @@ const uploadFileRequest = async ({
   formData.append('size', fileInfo.size + '');
   formData.append('fileLastModifiedDate', fileInfo.lastModified + '');
   try {
-    const fastUploadSuccess = await tryFastUpload(formData);
+    const fastUploadSuccess = await handleUploadMerge(formData, true);
     if (!fastUploadSuccess) {
       await normalChunkUpload(formData, fileInfo, onProgress);
-      await finalizeUpload(formData);
+      await handleUploadMerge(formData, false);
     }
     onProgress({ percent: 100 });
     onFinish();
@@ -272,19 +272,9 @@ const uploadFileRequest = async ({
   }
 };
 
-const tryFastUpload = async (formData: FormData): Promise<boolean> => {
-  try {
-    formData.set('fastUpload', 'true');
-    const result = await http.Post('/file_data/_upload_chunk_merge', formData);
-    return result === true;
-  } catch {
-    return false;
-  }
-};
-
-const finalizeUpload = async (formData: FormData) => {
-  formData.set('fastUpload', 'false');
-  await http.Post('/file_data/_upload_chunk_merge', formData);
+const handleUploadMerge = async (formData: FormData, fastUpload: boolean) => {
+  formData.set('fastUpload', fastUpload.toString());
+  return http.Post('/file_data/_upload_chunk_merge', formData);
 };
 
 const CHUNK_SIZE = 5 * 1024 * 1024;
@@ -301,39 +291,39 @@ const normalChunkUpload = async (
   const fileSize = parseInt(<string>formData.get('size'));
   const fileHash = <string>formData.get('hashValue');
   const chunks: Chunk[] = getFileChunks(fileSize, CHUNK_SIZE);
-  let chunkUploadedSize: any = {};
-  const uploadPromises = chunks.map((chunk) =>
-    uploadQueue.add(async () => {
-      const chunkFile = file.slice(chunk.start, chunk.end);
-      const chunkHash = await getFileHash(chunkFile);
-      const chunkFormData = new FormData();
-      chunkFormData.append('file', chunkFile);
-      chunkFormData.append('chunkIndex', chunk.index + '');
-      chunkFormData.append('chunkHashValue', chunkHash);
-      chunkFormData.append('hashValue', fileHash);
-      const uploadMethod = http.Post(
-        '/file_data/_upload_chunk',
-        chunkFormData,
-        {
-          meta: {
-            loading: false
+  let totalUploaded = 0;
+  await Promise.all(
+    chunks.map((chunk) =>
+      uploadQueue.add(async () => {
+        const chunkFile = file.slice(chunk.start, chunk.end);
+        const chunkHash = await getFileHash(chunkFile);
+        const chunkFormData = new FormData();
+        chunkFormData.append('file', chunkFile);
+        chunkFormData.append('chunkIndex', chunk.index.toString());
+        chunkFormData.append('chunkHashValue', chunkHash);
+        chunkFormData.append('hashValue', fileHash);
+        const uploadMethod = http.Post(
+          '/file_data/_upload_chunk',
+          chunkFormData,
+          {
+            meta: {
+              loading: false
+            }
           }
-        }
-      );
-      uploadMethod.onUpload((progress: Progress) => {
-        chunkUploadedSize[chunkHash] = progress.loaded;
-        let uploadedSize = 0;
-        for (const hash in chunkUploadedSize) {
-          uploadedSize += chunkUploadedSize[hash];
-        }
-        onProgress({
-          percent: Math.round((uploadedSize / fileSize) * 100)
+        );
+        let chunkLoaded = 0;
+        uploadMethod.onUpload((progress: Progress) => {
+          const delta = progress.loaded - chunkLoaded;
+          totalUploaded += delta;
+          chunkLoaded = progress.loaded;
+          onProgress({
+            percent: Math.min(99, Math.round((totalUploaded / fileSize) * 100))
+          });
         });
-      });
-      await uploadMethod;
-    })
+        await uploadMethod;
+      })
+    )
   );
-  await Promise.all(uploadPromises);
 };
 </script>
 
