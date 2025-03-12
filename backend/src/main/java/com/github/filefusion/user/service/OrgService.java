@@ -108,7 +108,6 @@ public class OrgService {
         }
     }
 
-    @Transactional(rollbackFor = HttpException.class)
     public void delete(String orgId) {
         if (!StringUtils.hasLength(orgId)) {
             return;
