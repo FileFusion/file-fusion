@@ -7,7 +7,6 @@ import jakarta.annotation.Nonnull;
 import org.bouncycastle.jcajce.provider.digest.Blake3;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.StringUtils;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -81,20 +80,11 @@ public final class FileUtil {
             }
             return EncryptUtil.bytesToHex(digest.digest());
         } catch (IOException e) {
-            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("getFileHashFailed"));
+            return null;
         }
     }
 
-    public static void upload(MultipartFile file, Path path) {
-        try {
-            Files.createDirectories(path.getParent());
-            file.transferTo(path);
-        } catch (IOException e) {
-            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
-        }
-    }
-
-    public static void chunkMerge(Path chunkDirPath, Path targetPath) {
+    public static void chunkMerge(Path chunkDirPath, Path targetPath) throws IOException {
         try {
             Files.createDirectories(targetPath.getParent());
             try (Stream<Path> chunkPathStream = Files.list(chunkDirPath);
@@ -109,7 +99,7 @@ public final class FileUtil {
             delete(chunkDirPath);
         } catch (IOException e) {
             delete(targetPath);
-            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
+            throw new IOException(e);
         }
     }
 
