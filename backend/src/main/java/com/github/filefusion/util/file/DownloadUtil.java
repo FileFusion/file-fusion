@@ -1,9 +1,7 @@
 package com.github.filefusion.util.file;
 
-import com.github.filefusion.common.HttpException;
 import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.file.entity.FileData;
-import com.github.filefusion.util.I18n;
 import org.springframework.http.*;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
@@ -50,13 +48,9 @@ public final class DownloadUtil {
                 new HttpHeaders());
     }
 
-    public static ResponseEntity<StreamingResponseBody> downloadChunked(String name, String mimeType, Path path, long start, long end) {
-        long size;
-        try {
-            size = Files.size(path);
-        } catch (IOException e) {
-            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("getFileSizeFailed"));
-        }
+    public static ResponseEntity<StreamingResponseBody> downloadChunked(
+            String name, String mimeType, Path path, long start, long end) throws IOException {
+        long size = Files.size(path);
         long endReal = Math.min(end, size - 1);
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.ACCEPT_RANGES, "bytes");
