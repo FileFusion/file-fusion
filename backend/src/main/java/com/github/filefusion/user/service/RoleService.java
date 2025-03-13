@@ -48,6 +48,18 @@ public class RoleService {
     }
 
     @Transactional(rollbackFor = HttpException.class)
+    public Role add(Role role, List<String> permissionIds) {
+        if (roleRepository.existsByName(role.getName())) {
+            throw new HttpException(I18n.get("roleNameExits"));
+        }
+        role.setId(null);
+        role.setSystemRole(false);
+        role = roleRepository.save(role);
+        saveRolePermission(role.getId(), permissionIds);
+        return role;
+    }
+
+    @Transactional(rollbackFor = HttpException.class)
     public Role update(Role role, List<String> permissionIds) {
         if (roleRepository.existsByNameAndIdNot(role.getName(), role.getId())) {
             throw new HttpException(I18n.get("roleNameExits"));
@@ -66,20 +78,7 @@ public class RoleService {
         return role;
     }
 
-    @Transactional(rollbackFor = HttpException.class)
-    public Role add(Role role, List<String> permissionIds) {
-        if (roleRepository.existsByName(role.getName())) {
-            throw new HttpException(I18n.get("roleNameExits"));
-        }
-        role.setId(null);
-        role.setSystemRole(false);
-        role = roleRepository.save(role);
-        saveRolePermission(role.getId(), permissionIds);
-        return role;
-    }
-
-    @Transactional(rollbackFor = HttpException.class)
-    public void saveRolePermission(String roleId, List<String> permissionIds) {
+    private void saveRolePermission(String roleId, List<String> permissionIds) {
         rolePermissionRepository.deleteAllByRoleId(roleId);
         List<Permission> permissions = permissionRepository.findAllByIdInAndBasics(permissionIds, false);
         List<RolePermission> rolePermissions = new ArrayList<>(permissions.size());

@@ -38,18 +38,6 @@ public class RoleController {
     }
 
     /**
-     * update role
-     *
-     * @param roleModel role model
-     * @return role
-     */
-    @PutMapping
-    @PreAuthorize("hasAuthority('role:edit')")
-    public Role update(@RequestBody RoleModel roleModel) {
-        return roleService.update(roleModel.getRole(), roleModel.getPermissions());
-    }
-
-    /**
      * add role
      *
      * @param roleModel role model
@@ -59,6 +47,18 @@ public class RoleController {
     @PreAuthorize("hasAuthority('role:add')")
     public Role add(@RequestBody RoleModel roleModel) {
         return roleService.add(roleModel.getRole(), roleModel.getPermissions());
+    }
+
+    /**
+     * update role
+     *
+     * @param roleModel role model
+     * @return role
+     */
+    @PutMapping
+    @PreAuthorize("hasAuthority('role:edit')")
+    public Role update(@RequestBody RoleModel roleModel) {
+        return roleService.update(roleModel.getRole(), roleModel.getPermissions());
     }
 
     /**

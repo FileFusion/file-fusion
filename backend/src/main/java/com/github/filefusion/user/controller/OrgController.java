@@ -83,7 +83,7 @@ public class OrgController {
      * @param search   key work
      * @return user list
      */
-    @GetMapping("/{orgId}/users/{page}/{pageSize}")
+    @GetMapping("/{orgId}/user/{page}/{pageSize}")
     @PreAuthorize("hasAuthority('org:read')")
     public Page<UserInfo> getOrgUser(@PathVariable String orgId,
                                      @PathVariable Integer page,
@@ -98,7 +98,7 @@ public class OrgController {
      * @param orgId org id
      * @return user list
      */
-    @GetMapping("/{orgId}/users/not_exits")
+    @GetMapping("/{orgId}/user/not_exits")
     @PreAuthorize("hasAuthority('org:edit')")
     public List<UserInfo> getNotExitsOrgUser(@PathVariable String orgId) {
         return orgService.getNotExitsOrgUser(orgId);
@@ -110,7 +110,7 @@ public class OrgController {
      * @param orgId   org id
      * @param userIds user ids
      */
-    @PutMapping("/{orgId}/users")
+    @PutMapping("/{orgId}/user")
     @PreAuthorize("hasAuthority('org:edit')")
     public void addOrgUser(@PathVariable String orgId, @RequestBody List<String> userIds) {
         orgService.addOrgUser(orgId, userIds);
@@ -122,7 +122,7 @@ public class OrgController {
      * @param orgId  org id
      * @param userId user id
      */
-    @DeleteMapping("/{orgId}/users/{userId}")
+    @DeleteMapping("/{orgId}/user/{userId}")
     @PreAuthorize("hasAuthority('org:edit')")
     public void deleteOrgUser(@PathVariable String orgId, @PathVariable String userId) {
         orgService.deleteOrgUser(orgId, userId);

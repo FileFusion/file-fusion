@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -121,6 +122,7 @@ public class OrgService {
         }
     }
 
+    @Transactional(rollbackFor = HttpException.class)
     public void addOrgUser(String orgId, List<String> userIds) {
         List<UserInfo> users = getNotExitsOrgUser(orgId);
         List<String> uIds = users.stream().map(UserInfo::getId).toList();

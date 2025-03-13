@@ -386,7 +386,7 @@ const {
     http.Get<any>(
       '/org/' +
         currentOrgId.value +
-        '/users/' +
+        '/user/' +
         page +
         '/' +
         pageSize +
@@ -405,7 +405,7 @@ const {
   data: notExistOrgUsers,
   send: doGetNotExistOrgUsers
 } = useRequest(
-  () => http.Get<any[]>('/org/' + currentOrgId.value + '/users/not_exits'),
+  () => http.Get<any[]>('/org/' + currentOrgId.value + '/user/not_exits'),
   {
     immediate: false
   }
@@ -413,7 +413,7 @@ const {
 
 const { loading: addUsersToOrgLoading, send: doAddUsersToOrg } = useRequest(
   () =>
-    http.Put('/org/' + currentOrgId.value + '/users', addOrgUsers.value.users),
+    http.Put('/org/' + currentOrgId.value + '/user', addOrgUsers.value.users),
   {
     immediate: false
   }
@@ -426,7 +426,7 @@ const { loading: addUsersToOrgLoading, send: doAddUsersToOrg } = useRequest(
 const { loading: removeUsersFromOrgLoading, send: doRemoveUsersFromOrg } =
   useRequest(
     (userId: string) =>
-      http.Delete('/org/' + currentOrgId.value + '/users/' + userId),
+      http.Delete('/org/' + currentOrgId.value + '/user/' + userId),
     {
       immediate: false
     }
