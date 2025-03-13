@@ -157,58 +157,60 @@ public class FileDataService {
         if (fileDataRepository.existsByUserIdAndParentIdAndName(userId, parentId, name)) {
             throw new HttpException(I18n.get("fileExits", name));
         }
-        createMultiLevelFolder(userId, parentId, name, LocalDateTime.now());
+        createHierarchicalFolders(userId, parentId, name, LocalDateTime.now());
     }
 
-    private FileData createMultiLevelFolder(String userId, String parentId, String path, LocalDateTime lastModifiedDate) {
-        AtomicReference<String> pId = new AtomicReference<>();
+    private FileData createHierarchicalFolders(String userId, String parentId, String path, LocalDateTime lastModifiedDate) {
+        AtomicReference<String> currentParentId = new AtomicReference<>();
         StringBuilder parentPath;
         if (!StringUtils.hasLength(parentId)) {
-            pId.set(FileAttribute.PARENT_ROOT);
+            currentParentId.set(FileAttribute.PARENT_ROOT);
             parentPath = new StringBuilder();
         } else {
-            FileData parent = fileDataRepository.findFirstByUserIdAndId(userId, parentId)
-                    .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
-            pId.set(parent.getId());
-            parentPath = new StringBuilder(parent.getRelativePath());
+            currentParentId.set(parentId);
+            parentPath = new StringBuilder(fileDataRepository.findFirstByUserIdAndId(userId, parentId)
+                    .map(FileData::getRelativePath)
+                    .orElseThrow(() -> new HttpException(I18n.get("fileNotExist"))));
         }
-        String[] segments = path.split(Pattern.quote(File.separator));
-        List<String> relativePathList = new ArrayList<>(segments.length);
-        for (String segment : segments) {
+
+        String[] pathSegments = path.split(Pattern.quote(File.separator));
+        List<String> relativePathList = new ArrayList<>(pathSegments.length);
+        for (String pathSegment : pathSegments) {
+            if (!StringUtils.hasLength(pathSegment)) {
+                continue;
+            }
             if (!parentPath.isEmpty()) {
                 parentPath.append(File.separator);
             }
-            parentPath.append(segment);
+            parentPath.append(pathSegment);
             relativePathList.add(parentPath.toString());
         }
-        List<String> lockList = new ArrayList<>(relativePathList.size());
-        for (String relativePath : relativePathList) {
-            lockList.add(userId + relativePath);
-        }
-        AtomicReference<FileData> atomicFile = new AtomicReference<>();
-        distributedLock.tryMultiLock(RedisAttribute.LockType.file, lockList, () -> {
-            List<FileData> fileList = fileDataRepository.findAllByUserIdAndRelativePathIn(userId, relativePathList);
-            Map<String, FileData> relativePathFileMap = fileList.stream().collect(Collectors.toMap(FileData::getRelativePath, Function.identity()));
-            for (String relativePath : relativePathList) {
-                FileData file = relativePathFileMap.get(relativePath);
-                if (file == null) {
-                    file = new FileData();
-                    file.setUserId(userId);
-                    file.setParentId(pId.get());
-                    file.setName(Paths.get(relativePath).getFileName().toString());
-                    file.setRelativePath(relativePath);
-                    file.setMimeType(FileAttribute.MimeType.FOLDER.value().toString());
-                    file.setSize(0L);
-                    file.setEncrypted(false);
-                    file.setFileLastModifiedDate(lastModifiedDate);
-                    file.setDeleted(false);
-                    fileDataRepository.save(file);
-                }
-                pId.set(file.getId());
-                atomicFile.set(file);
-            }
-        }, fileProperties.getLockTimeout());
-        return atomicFile.get();
+
+        AtomicReference<FileData> lastCreatedFile = new AtomicReference<>();
+        distributedLock.tryMultiLock(RedisAttribute.LockType.file,
+                relativePathList.stream().map(rp -> userId + rp).toList(), () -> {
+                    Map<String, FileData> existsFileMap = fileDataRepository.findAllByUserIdAndRelativePathIn(userId, relativePathList)
+                            .stream().collect(Collectors.toMap(FileData::getRelativePath, Function.identity()));
+                    for (String relativePath : relativePathList) {
+                        FileData file = existsFileMap.get(relativePath);
+                        if (file == null) {
+                            file = new FileData();
+                            file.setUserId(userId);
+                            file.setParentId(currentParentId.get());
+                            file.setName(Paths.get(relativePath).getFileName().toString());
+                            file.setRelativePath(relativePath);
+                            file.setMimeType(FileAttribute.MimeType.FOLDER.value().toString());
+                            file.setSize(0L);
+                            file.setEncrypted(false);
+                            file.setFileLastModifiedDate(lastModifiedDate);
+                            file.setDeleted(false);
+                            fileDataRepository.save(file);
+                        }
+                        currentParentId.set(file.getId());
+                        lastCreatedFile.set(file);
+                    }
+                }, fileProperties.getLockTimeout());
+        return lastCreatedFile.get();
     }
 
     public boolean uploadChunkMerge(String userId, String parentId, String name, String path, String hashValue,
@@ -220,7 +222,7 @@ public class FileDataService {
         String relativePath;
         if (StringUtils.hasLength(path)) {
             nameFormatCheck(path);
-            FileData parentFile = createMultiLevelFolder(userId, parentId, path, lastModifiedDate);
+            FileData parentFile = createHierarchicalFolders(userId, parentId, path, lastModifiedDate);
             pId = parentFile.getId();
             relativePath = parentFile.getRelativePath() + File.separator + name;
         } else {
