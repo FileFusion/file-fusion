@@ -102,7 +102,6 @@ public class FileDataService {
         }
     }
 
-
     private List<FileData> findAllChildren(String id) {
         List<FileData> children = new ArrayList<>();
         Queue<String> queue = new ArrayDeque<>();
@@ -324,13 +323,31 @@ public class FileDataService {
         }, fileProperties.getLockTimeout());
     }
 
+    @Transactional(rollbackFor = HttpException.class)
     public void rename(String userId, String id, String name) {
         nameFormatCheck(name);
+
         FileData file = fileDataRepository.findFirstByUserIdAndId(userId, id)
                 .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
         file.setName(name);
-        file.setPath(Paths.get(file.getPath()).getParent().resolve(name).toString());
-        fileDataRepository.save(file);
+        String sourcePath = file.getPath();
+        Path parentPath = Paths.get(sourcePath).getParent();
+        String targetPath;
+        if (parentPath == null) {
+            targetPath = name;
+        } else {
+            targetPath = parentPath.resolve(name).toString();
+        }
+        file.setPath(targetPath);
+
+        List<FileData> childrenList = findAllChildren(file.getId());
+        for (FileData children : childrenList) {
+            String childrenPath = children.getPath().substring(sourcePath.length());
+            children.setPath(targetPath + childrenPath);
+        }
+        childrenList.add(file);
+
+        fileDataRepository.saveAll(childrenList);
     }
 
     public String submitDownload(String userId, List<String> idList) {
