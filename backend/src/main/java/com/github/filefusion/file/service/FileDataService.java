@@ -210,7 +210,7 @@ public class FileDataService {
         return lastCreatedFile.get();
     }
 
-    public boolean uploadChunkMerge(String userId, String parentId, String name, String parentPath, String hashValue,
+    public boolean uploadChunkMerge(String userId, String parentId, String parentPath, String name, String hashValue,
                                     String mimeType, Long size, LocalDateTime lastModified, boolean fastUpload) {
         nameFormatCheck(name);
         hashFormatCheck(hashValue);
