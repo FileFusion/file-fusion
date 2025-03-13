@@ -25,6 +25,10 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * UserService
@@ -109,21 +113,16 @@ public class UserService implements UserDetailsService {
 
     public Page<UserInfo> get(PageRequest page, String search) {
         Page<UserInfo> users = userRepository.findAllOrderBySort(search, page);
-        List<UserRole> userRoles = userRoleRepository.findAllByUserIdIn(users.getContent().stream().map(UserInfo::getId).toList());
-        List<Role> roles = roleRepository.findAllById(userRoles.stream().map(UserRole::getRoleId).toList());
+        Map<String, List<String>> userIdRoleListMap = userRoleRepository.findAllByUserIdIn(users.getContent().stream().map(UserInfo::getId).toList())
+                .stream().collect(Collectors.groupingBy(
+                        UserRole::getUserId,
+                        Collectors.mapping(UserRole::getRoleId, Collectors.toList())
+                ));
+        Map<String, Role> roleMap = roleRepository.findAllById(userIdRoleListMap.values().stream().flatMap(List::stream).distinct().toList())
+                .stream().collect(Collectors.toMap(Role::getId, Function.identity()));
         for (UserInfo user : users.getContent()) {
-            List<Role> ur = new ArrayList<>();
-            for (UserRole userRole : userRoles) {
-                if (user.getId().equals(userRole.getUserId())) {
-                    for (Role role : roles) {
-                        if (userRole.getRoleId().equals(role.getId())) {
-                            ur.add(role);
-                            break;
-                        }
-                    }
-                }
-            }
-            user.setRoles(ur);
+            user.setRoles(userIdRoleListMap.getOrDefault(user.getId(), List.of())
+                    .stream().map(roleMap::get).filter(Objects::nonNull).toList());
         }
         return users;
     }
