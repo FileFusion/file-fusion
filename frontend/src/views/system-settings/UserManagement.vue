@@ -707,14 +707,11 @@ const {
 );
 
 const { loading: deleteUserLoading, send: doDeleteUser } = useRequest(
-  (userIds: string[]) => http.Post('/user/_batch_delete', userIds),
+  (userId: string) => http.Delete('/user/' + userId),
   {
     immediate: false
   }
-).onSuccess(() => {
-  window.$msg.success(t('common.deleteSuccess'));
-  userTableReload();
-});
+);
 
 const { loading: addUserLoading, send: doAddUser } = useRequest(
   (user: any) => http.Post('/user', user),
@@ -808,12 +805,16 @@ function deleteUser(user: any) {
   });
 }
 
-function deleteUsers(userIds: string[]) {
+async function deleteUsers(userIds: string[]) {
   if (!userIds || userIds.length === 0) {
     window.$msg.warning(t('systemSettings.user.usersDeleteSelectCheck'));
     return;
   }
-  doDeleteUser(userIds);
+  for (const userId of userIds) {
+    await doDeleteUser(userId);
+  }
+  window.$msg.success(t('common.deleteSuccess'));
+  userTableReload();
 }
 
 function validateProfileForm() {

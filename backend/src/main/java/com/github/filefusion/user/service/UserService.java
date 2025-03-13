@@ -100,6 +100,15 @@ public class UserService implements UserDetailsService {
         userRepository.save(u);
     }
 
+    public UserInfo loadUserByUsername(String username) throws UsernameNotFoundException {
+        UserInfo user = userRepository.findById(username).orElse(null);
+        if (user == null) {
+            throw new UsernameNotFoundException(I18n.get("usernameNotFound"));
+        }
+        user.setPermissions(permissionRepository.findAllByUserId(user.getId()));
+        return user;
+    }
+
     public Page<UserInfo> get(PageRequest page, String search) {
         Page<UserInfo> users = userRepository.findAllOrderBySort(search, page);
         List<UserRole> userRoles = userRoleRepository.findAllByUserIdIn(users.getContent().stream().map(UserInfo::getId).toList());
@@ -119,15 +128,6 @@ public class UserService implements UserDetailsService {
             user.setRoles(ur);
         }
         return users;
-    }
-
-    public UserInfo loadUserByUsername(String username) throws UsernameNotFoundException {
-        UserInfo user = userRepository.findById(username).orElse(null);
-        if (user == null) {
-            throw new UsernameNotFoundException(I18n.get("usernameNotFound"));
-        }
-        user.setPermissions(permissionRepository.findAllByUserId(user.getId()));
-        return user;
     }
 
     @Transactional(rollbackFor = HttpException.class)
@@ -186,7 +186,7 @@ public class UserService implements UserDetailsService {
         return userRepository.save(oldUser);
     }
 
-    public void saveUserRoles(String userId, List<Role> roles) {
+    private void saveUserRoles(String userId, List<Role> roles) {
         if (CollectionUtils.isEmpty(roles)) {
             return;
         }

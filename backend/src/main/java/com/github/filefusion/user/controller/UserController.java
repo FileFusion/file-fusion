@@ -71,7 +71,7 @@ public class UserController {
      *
      * @param updateUserPasswordModel update user password model
      */
-    @PutMapping("/password/current")
+    @PutMapping("/current/password")
     @PreAuthorize("hasAuthority('user:edit')")
     public void updateCurrentUserPassword(@RequestBody UpdateUserPasswordModel updateUserPasswordModel) {
         userService.updateCurrentUserPassword(CurrentUser.get().getId(),

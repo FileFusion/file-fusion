@@ -110,7 +110,7 @@ const changePasswordRules = computed<FormRules>(() => {
 });
 
 const { loading: changePasswordLoading, send: doChangePassword } = useRequest(
-  () => http.Put('/user/password/current', changePasswordForm.value),
+  () => http.Put('/user/current/password', changePasswordForm.value),
   {
     immediate: false
   }
