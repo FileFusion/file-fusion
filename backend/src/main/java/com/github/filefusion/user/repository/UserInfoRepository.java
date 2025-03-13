@@ -61,6 +61,6 @@ public interface UserInfoRepository extends JpaRepository<UserInfo, String> {
      * @param username username
      * @return exists
      */
-    Boolean existsByUsername(String username);
+    boolean existsByUsername(String username);
 
 }

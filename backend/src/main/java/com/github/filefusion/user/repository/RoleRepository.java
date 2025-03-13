@@ -20,7 +20,7 @@ public interface RoleRepository extends JpaRepository<Role, String> {
      * @param id   role id
      * @return exists
      */
-    Boolean existsByNameAndIdNot(String name, String id);
+    boolean existsByNameAndIdNot(String name, String id);
 
     /**
      * existsByName
@@ -28,6 +28,6 @@ public interface RoleRepository extends JpaRepository<Role, String> {
      * @param name name
      * @return exists
      */
-    Boolean existsByName(String name);
+    boolean existsByName(String name);
 
 }

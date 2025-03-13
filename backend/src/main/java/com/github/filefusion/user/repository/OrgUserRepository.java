@@ -22,7 +22,7 @@ public interface OrgUserRepository extends JpaRepository<OrgUser, String> {
      * @param orgId org id
      * @return exists
      */
-    Boolean existsByOrgId(String orgId);
+    boolean existsByOrgId(String orgId);
 
     /**
      * findAllByOrgIdIn

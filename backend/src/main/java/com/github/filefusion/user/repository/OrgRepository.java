@@ -23,7 +23,7 @@ public interface OrgRepository extends JpaRepository<Org, String> {
      * @param id       org id
      * @return exists
      */
-    Boolean existsByNameAndParentIdAndIdNot(String name, String parentId, String id);
+    boolean existsByNameAndParentIdAndIdNot(String name, String parentId, String id);
 
     /**
      * existsByNameAndParentId
@@ -32,7 +32,7 @@ public interface OrgRepository extends JpaRepository<Org, String> {
      * @param parentId parent id
      * @return exists
      */
-    Boolean existsByNameAndParentId(String name, String parentId);
+    boolean existsByNameAndParentId(String name, String parentId);
 
     /**
      * existsByParentId
@@ -40,7 +40,7 @@ public interface OrgRepository extends JpaRepository<Org, String> {
      * @param parentId parent id
      * @return exists
      */
-    Boolean existsByParentId(String parentId);
+    boolean existsByParentId(String parentId);
 
     /**
      * findAllByParentId
