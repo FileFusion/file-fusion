@@ -155,10 +155,15 @@ const createFolderFormRules = computed<FormRules>(() => {
       {
         required: true,
         validator(_rule: FormItemRule, value: string) {
-          if (!value || value.length === 0) {
+          if (!value || value.trim().length === 0) {
             return new Error(t('files.personal.folderNameEmpty'));
           }
-          if (value.length > 255 || value.indexOf('/') !== -1) {
+          if (
+            value.length > 255 ||
+            value === '.' ||
+            value === '..' ||
+            /[\\/:*?"<>|]/.test(value)
+          ) {
             return new Error(t('files.personal.folderNameError'));
           }
           return true;

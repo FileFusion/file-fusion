@@ -156,7 +156,7 @@
       "uploadFolder": "上传文件夹",
       "createFolder": "新建文件夹",
       "folderNameEmpty": "请输入文件夹名",
-      "folderNameError": "文件夹名称需要小于255个字符且不能包含'/'",
+      "folderNameError": "文件夹名称需要小于255个字符且符合规则",
       "renameFile": "重命名",
       "fileNameEmpty": "请输入文件名",
       "fileNameError": "文件名称需要小于255个字符且不能包含'/'",

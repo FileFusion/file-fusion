@@ -156,7 +156,7 @@
       "uploadFolder": "Upload folder",
       "createFolder": "Create folder",
       "folderNameEmpty": "Please enter folder name",
-      "folderNameError": "The folder name needs to be less than 255 characters and cannot contain '/'",
+      "folderNameError": "The folder name needs to be less than 255 characters and meets the rules",
       "renameFile": "Rename",
       "fileNameEmpty": "Please enter file name",
       "fileNameError": "The file name needs to be less than 255 characters and cannot contain '/'",
