@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -81,9 +80,8 @@ public class FileDataController {
      */
     @PostMapping("/folder")
     @PreAuthorize("hasAuthority('personal_file:upload')")
-    public String createFolder(@RequestBody CreateFolderModel createFolderModel) {
-        return fileDataService.createFolder(CurrentUser.get().getId(), createFolderModel.getParentId(),
-                createFolderModel.getName(), LocalDateTime.now(), false);
+    public void createFolder(@RequestBody CreateFolderModel createFolderModel) {
+        fileDataService.createFolder(CurrentUser.get().getId(), createFolderModel.getParentId(), createFolderModel.getName());
     }
 
     /**

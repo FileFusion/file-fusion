@@ -35,13 +35,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -72,11 +71,23 @@ public class FileDataService {
         this.sysConfigService = sysConfigService;
     }
 
-    public static String getHashPath(String hash) {
-        if (!StringUtils.hasLength(hash) || hash.length() != 64 || !hash.matches("^[a-zA-Z0-9]+$")) {
+    private static String getHashPath(String hash) {
+        if (!StringUtils.hasLength(hash)) {
+            throw new HttpException(I18n.get("fileHashEmpty"));
+        }
+        if (hash.length() != 64 || !hash.matches("^[a-zA-Z0-9]+$")) {
             throw new HttpException(I18n.get("fileHashFormatError"));
         }
         return Paths.get(hash.substring(0, 2), hash.substring(2, 4), hash).toString();
+    }
+
+    private static void nameFormatCheck(String name) {
+        if (!StringUtils.hasLength(name)) {
+            throw new HttpException(I18n.get("fileNameEmpty"));
+        }
+        if (name.contains("//") || name.startsWith("/")) {
+            throw new HttpException(I18n.get("fileNameFormatError"));
+        }
     }
 
     private List<FileData> findAllChildren(String id) {
@@ -97,6 +108,7 @@ public class FileDataService {
         }
         return children;
     }
+
 
     public Page<FileData> get(PageRequest page, String userId, String parentId) {
         if (!StringUtils.hasLength(parentId)) {
@@ -140,70 +152,81 @@ public class FileDataService {
         fileDataRepository.deleteAll(fileList);
     }
 
-    private String createMultiLevelFolder(String userId, String parentId, String path, LocalDateTime lastModifiedDate) {
-        String pId = !StringUtils.hasLength(parentId) ? FileAttribute.PARENT_ROOT : parentId;
-        if (!StringUtils.hasLength(path)) {
-            return pId;
+    public void createFolder(String userId, String parentId, String name) {
+        nameFormatCheck(name);
+        if (fileDataRepository.existsByUserIdAndParentIdAndName(userId, parentId, name)) {
+            throw new HttpException(I18n.get("fileExits", name));
         }
-        String normalizedPath = Paths.get(path).normalize().toString();
-        String[] segments = normalizedPath.split(Pattern.quote(File.separator));
-        for (String segment : segments) {
-            if (StringUtils.hasLength(segment)) {
-                pId = createFolder(userId, pId, segment, lastModifiedDate, true);
-            }
-        }
-        return pId;
+        createMultiLevelFolder(userId, parentId, name, LocalDateTime.now());
     }
 
-    public String createFolder(String userId, String parentId, String name, LocalDateTime lastModifiedDate, boolean allowExists) {
-        if (!StringUtils.hasLength(name)) {
-            throw new HttpException(I18n.get("fileNameEmpty"));
+    private FileData createMultiLevelFolder(String userId, String parentId, String path, LocalDateTime lastModifiedDate) {
+        AtomicReference<String> pId = new AtomicReference<>();
+        StringBuilder parentPath;
+        if (!StringUtils.hasLength(parentId)) {
+            pId.set(FileAttribute.PARENT_ROOT);
+            parentPath = new StringBuilder();
+        } else {
+            FileData parent = fileDataRepository.findFirstByUserIdAndId(userId, parentId)
+                    .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
+            pId.set(parent.getId());
+            parentPath = new StringBuilder(parent.getRelativePath());
         }
-        AtomicReference<String> id = new AtomicReference<>();
-        String pId = !StringUtils.hasLength(parentId) ? FileAttribute.PARENT_ROOT : parentId;
-        distributedLock.tryLock(RedisAttribute.LockType.file, userId + pId + name, () -> {
-            FileData file = fileDataRepository.findFirstByUserIdAndParentIdAndName(userId, pId, name);
-            if (!allowExists && file != null) {
-                throw new HttpException(I18n.get("fileExits", name));
+        String[] segments = path.split(Pattern.quote(File.separator));
+        List<String> relativePathList = new ArrayList<>(segments.length);
+        for (String segment : segments) {
+            parentPath.append(File.separator).append(segment);
+            relativePathList.add(parentPath.toString());
+        }
+        List<String> lockList = new ArrayList<>(relativePathList.size());
+        for (String relativePath : relativePathList) {
+            lockList.add(userId + relativePath);
+        }
+        AtomicReference<FileData> atomicFile = new AtomicReference<>();
+        distributedLock.tryMultiLock(RedisAttribute.LockType.file, lockList, () -> {
+            List<FileData> fileList = fileDataRepository.findAllByUserIdAndRelativePathIn(userId, relativePathList);
+            Map<String, FileData> relativePathFileMap = fileList.stream().collect(Collectors.toMap(FileData::getRelativePath, Function.identity()));
+            for (String relativePath : relativePathList) {
+                FileData file = relativePathFileMap.get(relativePath);
+                if (file == null) {
+                    file = new FileData();
+                    file.setUserId(userId);
+                    file.setParentId(pId.get());
+                    file.setName(Paths.get(relativePath).getFileName().toString());
+                    file.setRelativePath(relativePath);
+                    file.setMimeType(FileAttribute.MimeType.FOLDER.value().toString());
+                    file.setSize(0L);
+                    file.setEncrypted(false);
+                    file.setFileLastModifiedDate(lastModifiedDate);
+                    file.setDeleted(false);
+                    fileDataRepository.save(file);
+                }
+                pId.set(file.getId());
+                atomicFile.set(file);
             }
-            if (file != null) {
-                id.set(file.getId());
-                return;
-            }
-            file = new FileData();
-            file.setUserId(userId);
-            file.setParentId(pId);
-            file.setName(name);
-            file.setMimeType(FileAttribute.MimeType.FOLDER.value().toString());
-            file.setSize(0L);
-            file.setEncrypted(false);
-            file.setFileLastModifiedDate(lastModifiedDate);
-            file.setDeleted(false);
-            fileDataRepository.save(file);
-            id.set(file.getId());
         }, fileProperties.getLockTimeout());
-        return id.get();
+        return atomicFile.get();
     }
 
     public boolean uploadChunkMerge(String userId, String parentId, String name, String path, String hashValue,
                                     String mimeType, Long size, LocalDateTime lastModified, boolean fastUpload) {
-        if (!StringUtils.hasLength(name)) {
-            throw new HttpException(I18n.get("fileNameEmpty"));
-        }
-        if (!StringUtils.hasLength(hashValue)) {
-            throw new HttpException(I18n.get("fileHashEmpty"));
-        }
-        if (StringUtils.hasLength(path) && (path.contains("..") || path.contains("//") || path.startsWith("/"))) {
-            throw new HttpException(I18n.get("filePathFormatError"));
-        }
-        LocalDateTime lastModifiedDate = lastModified == null ? LocalDateTime.now() : lastModified;
+        nameFormatCheck(name);
         String hashPath = getHashPath(hashValue);
-
-        String fileParentId = createMultiLevelFolder(userId, parentId, path, lastModifiedDate);
-
+        LocalDateTime lastModifiedDate = lastModified == null ? LocalDateTime.now() : lastModified;
+        String pId;
+        String relativePath;
+        if (StringUtils.hasLength(path)) {
+            nameFormatCheck(path);
+            FileData parentFile = createMultiLevelFolder(userId, parentId, path, lastModifiedDate);
+            pId = parentFile.getId();
+            relativePath = parentFile.getRelativePath() + File.separator + name;
+        } else {
+            pId = FileAttribute.PARENT_ROOT;
+            relativePath = name;
+        }
         AtomicBoolean uploadStatus = new AtomicBoolean(false);
-        distributedLock.tryMultiLock(RedisAttribute.LockType.file, List.of(hashValue, userId + fileParentId + path + name), () -> {
-            if (fileDataRepository.existsByUserIdAndParentIdAndName(userId, fileParentId, name)) {
+        distributedLock.tryMultiLock(RedisAttribute.LockType.file, List.of(hashValue, userId + pId + path + name), () -> {
+            if (fileDataRepository.existsByUserIdAndParentIdAndName(userId, pId, name)) {
                 throw new HttpException(I18n.get("fileExits", name));
             }
             try {
@@ -214,8 +237,9 @@ public class FileDataService {
             if (uploadStatus.get()) {
                 FileData file = new FileData();
                 file.setUserId(userId);
-                file.setParentId(fileParentId);
+                file.setParentId(pId);
                 file.setName(name);
+                file.setRelativePath(relativePath);
                 file.setPath(hashPath);
                 file.setHashValue(hashValue);
                 file.setMimeType(mimeType);
