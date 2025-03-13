@@ -50,13 +50,13 @@ public interface FileDataRepository extends JpaRepository<FileData, String> {
     List<FileData> findAllByParentIdIn(List<String> parentIdList);
 
     /**
-     * findAllByUserIdAndRelativePathIn
+     * findAllByUserIdAndPathIn
      *
-     * @param userId           user id
-     * @param relativePathList relative path list
+     * @param userId   user id
+     * @param pathList path list
      * @return file
      */
-    List<FileData> findAllByUserIdAndRelativePathIn(String userId, List<String> relativePathList);
+    List<FileData> findAllByUserIdAndPathIn(String userId, List<String> pathList);
 
     /**
      * existsByUserIdAndParentIdAndName

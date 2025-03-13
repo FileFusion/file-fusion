@@ -159,19 +159,19 @@ public class FileDataService {
         createHierarchicalFolders(userId, parentId, name, LocalDateTime.now());
     }
 
-    private FileData createHierarchicalFolders(String userId, String parentId, String path, LocalDateTime lastModifiedDate) {
+    private FileData createHierarchicalFolders(String userId, String parentId, String folder, LocalDateTime lastModifiedDate) {
         AtomicReference<String> currentParentId = new AtomicReference<>(parentId);
         StringBuilder parentPath;
         if (FileAttribute.PARENT_ROOT.equals(parentId)) {
             parentPath = new StringBuilder();
         } else {
             parentPath = new StringBuilder(fileDataRepository.findFirstByUserIdAndId(userId, parentId)
-                    .map(FileData::getRelativePath)
+                    .map(FileData::getPath)
                     .orElseThrow(() -> new HttpException(I18n.get("fileNotExist"))));
         }
 
-        String[] pathSegments = path.split(Pattern.quote(File.separator));
-        List<String> relativePathList = new ArrayList<>(pathSegments.length);
+        String[] pathSegments = folder.split(Pattern.quote(File.separator));
+        List<String> pathList = new ArrayList<>(pathSegments.length);
         for (String pathSegment : pathSegments) {
             if (!StringUtils.hasLength(pathSegment)) {
                 continue;
@@ -180,22 +180,22 @@ public class FileDataService {
                 parentPath.append(File.separator);
             }
             parentPath.append(pathSegment);
-            relativePathList.add(parentPath.toString());
+            pathList.add(parentPath.toString());
         }
 
         AtomicReference<FileData> lastCreatedFile = new AtomicReference<>();
         distributedLock.tryMultiLock(RedisAttribute.LockType.file,
-                relativePathList.stream().map(rp -> userId + rp).toList(), () -> {
-                    Map<String, FileData> existsFileMap = fileDataRepository.findAllByUserIdAndRelativePathIn(userId, relativePathList)
-                            .stream().collect(Collectors.toMap(FileData::getRelativePath, Function.identity()));
-                    for (String relativePath : relativePathList) {
-                        FileData file = existsFileMap.get(relativePath);
+                pathList.stream().map(rp -> userId + rp).toList(), () -> {
+                    Map<String, FileData> existsFileMap = fileDataRepository.findAllByUserIdAndPathIn(userId, pathList)
+                            .stream().collect(Collectors.toMap(FileData::getPath, Function.identity()));
+                    for (String path : pathList) {
+                        FileData file = existsFileMap.get(path);
                         if (file == null) {
                             file = new FileData();
                             file.setUserId(userId);
                             file.setParentId(currentParentId.get());
-                            file.setName(Paths.get(relativePath).getFileName().toString());
-                            file.setRelativePath(relativePath);
+                            file.setName(Paths.get(path).getFileName().toString());
+                            file.setPath(path);
                             file.setMimeType(FileAttribute.MimeType.FOLDER.value().toString());
                             file.setSize(0L);
                             file.setEncrypted(false);
@@ -210,25 +210,25 @@ public class FileDataService {
         return lastCreatedFile.get();
     }
 
-    public boolean uploadChunkMerge(String userId, String parentId, String name, String path, String hashValue,
+    public boolean uploadChunkMerge(String userId, String parentId, String name, String parentPath, String hashValue,
                                     String mimeType, Long size, LocalDateTime lastModified, boolean fastUpload) {
         nameFormatCheck(name);
         hashFormatCheck(hashValue);
         parentId = StringUtils.hasLength(parentId) ? parentId : FileAttribute.PARENT_ROOT;
         LocalDateTime lastModifiedDate = lastModified == null ? LocalDateTime.now() : lastModified;
         String pId;
-        String relativePath;
-        if (StringUtils.hasLength(path)) {
-            nameFormatCheck(path);
-            FileData parentFile = createHierarchicalFolders(userId, parentId, path, lastModifiedDate);
+        String path;
+        if (StringUtils.hasLength(parentPath)) {
+            nameFormatCheck(parentPath);
+            FileData parentFile = createHierarchicalFolders(userId, parentId, parentPath, lastModifiedDate);
             pId = parentFile.getId();
-            relativePath = parentFile.getRelativePath() + File.separator + name;
+            path = parentFile.getPath() + File.separator + name;
         } else {
             pId = parentId;
-            relativePath = name;
+            path = name;
         }
         AtomicBoolean uploadStatus = new AtomicBoolean(false);
-        distributedLock.tryMultiLock(RedisAttribute.LockType.file, List.of(hashValue, userId + relativePath), () -> {
+        distributedLock.tryMultiLock(RedisAttribute.LockType.file, List.of(hashValue, userId + path), () -> {
             if (fileDataRepository.existsByUserIdAndParentIdAndName(userId, pId, name)) {
                 throw new HttpException(I18n.get("fileExits", name));
             }
@@ -242,7 +242,7 @@ public class FileDataService {
                 file.setUserId(userId);
                 file.setParentId(pId);
                 file.setName(name);
-                file.setRelativePath(relativePath);
+                file.setPath(path);
                 file.setHashValue(hashValue);
                 file.setMimeType(mimeType);
                 file.setSize(size);

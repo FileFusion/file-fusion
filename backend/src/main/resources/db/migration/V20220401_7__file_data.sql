@@ -4,7 +4,6 @@ CREATE TABLE file_data
     user_id                 VARCHAR(26)  NOT NULL,
     parent_id               VARCHAR(26)  NOT NULL,
     name                    VARCHAR(255) NOT NULL,
-    relative_path           VARCHAR(4096) DEFAULT NULL,
     path                    VARCHAR(4096) DEFAULT NULL,
     hash_value              VARCHAR(64)   DEFAULT NULL,
     mime_type               VARCHAR(100)  DEFAULT NULL,
