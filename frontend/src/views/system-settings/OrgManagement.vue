@@ -413,10 +413,7 @@ const {
 
 const { loading: addUsersToOrgLoading, send: doAddUsersToOrg } = useRequest(
   () =>
-    http.Put(
-      '/org/' + currentOrgId.value + '/_add_users',
-      addOrgUsers.value.users
-    ),
+    http.Put('/org/' + currentOrgId.value + '/users', addOrgUsers.value.users),
   {
     immediate: false
   }
@@ -428,18 +425,12 @@ const { loading: addUsersToOrgLoading, send: doAddUsersToOrg } = useRequest(
 
 const { loading: removeUsersFromOrgLoading, send: doRemoveUsersFromOrg } =
   useRequest(
-    () =>
-      http.Put(
-        '/org/' + currentOrgId.value + '/_remove_users',
-        userTableCheck.value
-      ),
+    (userId: string) =>
+      http.Delete('/org/' + currentOrgId.value + '/users/' + userId),
     {
       immediate: false
     }
-  ).onSuccess(() => {
-    window.$msg.success(t('common.deleteSuccess'));
-    userTableReload();
-  });
+  );
 
 function selectedOrg(value: any) {
   treeForeach(orgList.value, (org: any, parent: any[]): boolean => {
@@ -545,11 +536,15 @@ function userTableHandleCheck(rowKeys: Array<string | number>) {
   userTableCheck.value = <string[]>rowKeys;
 }
 
-function deleteOrgUsers() {
+async function deleteOrgUsers() {
   if (!userTableCheck.value || userTableCheck.value.length === 0) {
     window.$msg.warning(t('systemSettings.org.orgUsersDeleteSelectCheck'));
     return;
   }
-  doRemoveUsersFromOrg();
+  for (const userId of userTableCheck.value) {
+    await doRemoveUsersFromOrg(userId);
+  }
+  window.$msg.success(t('common.deleteSuccess'));
+  userTableReload();
 }
 </script>

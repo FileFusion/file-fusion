@@ -13,7 +13,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -48,6 +47,14 @@ public class OrgService {
         return orgRepository.findAll(Sort.by(Sort.Direction.ASC, "name"));
     }
 
+    public Org add(Org org) {
+        if (orgRepository.existsByNameAndParentId(org.getName(), org.getParentId())) {
+            throw new HttpException(I18n.get("orgNameExits"));
+        }
+        org.setId(null);
+        return orgRepository.save(org);
+    }
+
     public Org update(Org org) {
         if (orgRepository.existsByNameAndParentIdAndIdNot(org.getName(), org.getParentId(), org.getId())) {
             throw new HttpException(I18n.get("orgNameExits"));
@@ -62,12 +69,18 @@ public class OrgService {
         return orgRepository.save(oldOrg);
     }
 
-    public Org add(Org org) {
-        if (orgRepository.existsByNameAndParentId(org.getName(), org.getParentId())) {
-            throw new HttpException(I18n.get("orgNameExits"));
+    public void delete(String orgId) {
+        if (!StringUtils.hasLength(orgId)) {
+            return;
         }
-        org.setId(null);
-        return orgRepository.save(org);
+        if (orgRepository.existsByParentId(orgId)) {
+            throw new HttpException(I18n.get("existSubOrganizations"));
+        }
+        if (orgUserRepository.existsByOrgId(orgId)) {
+            throw new HttpException(I18n.get("existOrgUser"));
+        }
+        // todo Other items that prevent deletion
+        orgRepository.deleteById(orgId);
     }
 
     public Page<UserInfo> getOrgUser(String orgId, PageRequest page, String search) {
@@ -108,20 +121,6 @@ public class OrgService {
         }
     }
 
-    public void delete(String orgId) {
-        if (!StringUtils.hasLength(orgId)) {
-            return;
-        }
-        if (orgRepository.existsByParentId(orgId)) {
-            throw new HttpException(I18n.get("existSubOrganizations"));
-        }
-        if (orgUserRepository.existsByOrgId(orgId)) {
-            throw new HttpException(I18n.get("existOrgUser"));
-        }
-        // todo Other items that prevent deletion
-        orgRepository.deleteById(orgId);
-    }
-
     public void addOrgUser(String orgId, List<String> userIds) {
         List<UserInfo> users = getNotExitsOrgUser(orgId);
         List<String> uIds = users.stream().map(UserInfo::getId).toList();
@@ -140,19 +139,14 @@ public class OrgService {
         orgUserRepository.saveAll(orgUsers);
     }
 
-    @Transactional(rollbackFor = HttpException.class)
-    public void deleteOrgUser(String orgId, List<String> userIds) {
-        if (!StringUtils.hasLength(orgId) || CollectionUtils.isEmpty(userIds)) {
+    public void deleteOrgUser(String orgId, String userId) {
+        if (!StringUtils.hasLength(orgId) || !StringUtils.hasLength(userId)) {
             return;
         }
-        List<OrgUser> orgUsers = new ArrayList<>(userIds.size());
-        for (String userId : userIds) {
-            OrgUser orgUser = new OrgUser();
-            orgUser.setUserId(userId);
-            orgUser.setOrgId(orgId);
-            orgUsers.add(orgUser);
-        }
-        orgUserRepository.deleteAllInBatch(orgUsers);
+        OrgUser orgUser = new OrgUser();
+        orgUser.setUserId(userId);
+        orgUser.setOrgId(orgId);
+        orgUserRepository.delete(orgUser);
     }
 
 }

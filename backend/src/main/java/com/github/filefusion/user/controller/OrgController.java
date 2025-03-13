@@ -40,6 +40,18 @@ public class OrgController {
     }
 
     /**
+     * add org
+     *
+     * @param org org
+     * @return org
+     */
+    @PostMapping
+    @PreAuthorize("hasAuthority('org:add')")
+    public Org add(@RequestBody Org org) {
+        return orgService.add(org);
+    }
+
+    /**
      * update org
      *
      * @param org org
@@ -52,15 +64,14 @@ public class OrgController {
     }
 
     /**
-     * add org
+     * delete org
      *
-     * @param org org
-     * @return org
+     * @param orgId org id
      */
-    @PostMapping
-    @PreAuthorize("hasAuthority('org:add')")
-    public Org add(@RequestBody Org org) {
-        return orgService.add(org);
+    @DeleteMapping("/{orgId}")
+    @PreAuthorize("hasAuthority('org:delete')")
+    public void delete(@PathVariable String orgId) {
+        orgService.delete(orgId);
     }
 
     /**
@@ -94,23 +105,12 @@ public class OrgController {
     }
 
     /**
-     * delete org
-     *
-     * @param orgId org id
-     */
-    @DeleteMapping("/{orgId}")
-    @PreAuthorize("hasAuthority('org:delete')")
-    public void delete(@PathVariable String orgId) {
-        orgService.delete(orgId);
-    }
-
-    /**
      * add org user
      *
      * @param orgId   org id
      * @param userIds user ids
      */
-    @PutMapping("/{orgId}/_add_users")
+    @PutMapping("/{orgId}/users")
     @PreAuthorize("hasAuthority('org:edit')")
     public void addOrgUser(@PathVariable String orgId, @RequestBody List<String> userIds) {
         orgService.addOrgUser(orgId, userIds);
@@ -119,13 +119,13 @@ public class OrgController {
     /**
      * delete org user
      *
-     * @param orgId   org id
-     * @param userIds user ids
+     * @param orgId  org id
+     * @param userId user id
      */
-    @PutMapping("/{orgId}/_remove_users")
+    @DeleteMapping("/{orgId}/users/{userId}")
     @PreAuthorize("hasAuthority('org:edit')")
-    public void deleteOrgUser(@PathVariable String orgId, @RequestBody List<String> userIds) {
-        orgService.deleteOrgUser(orgId, userIds);
+    public void deleteOrgUser(@PathVariable String orgId, @PathVariable String userId) {
+        orgService.deleteOrgUser(orgId, userId);
     }
 
 }
