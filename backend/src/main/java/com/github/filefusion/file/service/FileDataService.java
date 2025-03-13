@@ -175,7 +175,10 @@ public class FileDataService {
         String[] segments = path.split(Pattern.quote(File.separator));
         List<String> relativePathList = new ArrayList<>(segments.length);
         for (String segment : segments) {
-            parentPath.append(File.separator).append(segment);
+            if (!parentPath.isEmpty()) {
+                parentPath.append(File.separator);
+            }
+            parentPath.append(segment);
             relativePathList.add(parentPath.toString());
         }
         List<String> lockList = new ArrayList<>(relativePathList.size());
