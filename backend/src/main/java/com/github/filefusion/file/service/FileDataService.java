@@ -108,7 +108,6 @@ public class FileDataService {
         return children;
     }
 
-
     public Page<FileData> get(PageRequest page, String userId, String parentId) {
         if (!StringUtils.hasLength(parentId)) {
             parentId = FileAttribute.PARENT_ROOT;

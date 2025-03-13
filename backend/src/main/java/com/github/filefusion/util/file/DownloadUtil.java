@@ -83,7 +83,7 @@ public final class DownloadUtil {
                         for (FileData file : fileList) {
                             if (!FileAttribute.MimeType.FOLDER.value().toString().equals(file.getMimeType())) {
                                 zos.putNextEntry(new ZipEntry(idToZipPath.get(file.getId())));
-                                FileUtil.transferTo(dir.resolve(file.getPath()), outChannel, false);
+                                FileUtil.transferTo(FileUtil.getHashPath(dir, file.getHashValue()), outChannel, false);
                                 zos.closeEntry();
                             }
                         }
