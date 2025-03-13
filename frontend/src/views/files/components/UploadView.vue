@@ -279,7 +279,11 @@ const uploadFileRequest = async ({
 
 const handleUploadMerge = async (formData: FormData, fastUpload: boolean) => {
   formData.set('fastUpload', fastUpload.toString());
-  return http.Post('/file_data/_upload_chunk_merge', formData);
+  return http.Post('/file_data/_upload_chunk_merge', formData, {
+    meta: {
+      loading: false
+    }
+  });
 };
 
 const CHUNK_SIZE = 5 * 1024 * 1024;
