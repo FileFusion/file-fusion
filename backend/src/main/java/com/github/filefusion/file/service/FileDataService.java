@@ -71,14 +71,13 @@ public class FileDataService {
         this.sysConfigService = sysConfigService;
     }
 
-    private static String getHashPath(String hash) {
+    private static void hashFormatCheck(String hash) {
         if (!StringUtils.hasLength(hash)) {
             throw new HttpException(I18n.get("fileHashEmpty"));
         }
         if (hash.length() != 64 || !hash.matches("^[a-zA-Z0-9]+$")) {
             throw new HttpException(I18n.get("fileHashFormatError"));
         }
-        return Paths.get(hash.substring(0, 2), hash.substring(2, 4), hash).toString();
     }
 
     private static void nameFormatCheck(String name) {
@@ -215,8 +214,8 @@ public class FileDataService {
     public boolean uploadChunkMerge(String userId, String parentId, String name, String path, String hashValue,
                                     String mimeType, Long size, LocalDateTime lastModified, boolean fastUpload) {
         nameFormatCheck(name);
+        hashFormatCheck(hashValue);
         parentId = StringUtils.hasLength(parentId) ? parentId : FileAttribute.PARENT_ROOT;
-        String hashPath = getHashPath(hashValue);
         LocalDateTime lastModifiedDate = lastModified == null ? LocalDateTime.now() : lastModified;
         String pId;
         String relativePath;
@@ -235,7 +234,7 @@ public class FileDataService {
                 throw new HttpException(I18n.get("fileExits", name));
             }
             try {
-                uploadStatus.set(chunkMerge(hashPath, hashValue, fastUpload));
+                uploadStatus.set(chunkMerge(hashValue, fastUpload));
             } catch (IOException e) {
                 throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
             }
@@ -245,7 +244,6 @@ public class FileDataService {
                 file.setParentId(pId);
                 file.setName(name);
                 file.setRelativePath(relativePath);
-                file.setPath(hashPath);
                 file.setHashValue(hashValue);
                 file.setMimeType(mimeType);
                 file.setSize(size);
@@ -258,9 +256,9 @@ public class FileDataService {
         return uploadStatus.get();
     }
 
-    private boolean chunkMerge(String hashPath, String hashValue, boolean fastUpload) throws IOException {
-        Path chunkDirPath = fileProperties.getTmpDir().resolve(hashPath);
-        Path filePath = fileProperties.getDir().resolve(hashPath);
+    private boolean chunkMerge(String hashValue, boolean fastUpload) throws IOException {
+        Path chunkDirPath = FileUtil.getHashPath(fileProperties.getTmpDir(), hashValue);
+        Path filePath = FileUtil.getHashPath(fileProperties.getDir(), hashValue);
         if (hashValue.equals(FileUtil.calculateHash(filePath))) {
             return true;
         }
@@ -281,7 +279,8 @@ public class FileDataService {
     }
 
     public void uploadChunk(MultipartFile file, Integer chunkIndex, String chunkHashValue, String hashValue) {
-        Path chunkDirPath = fileProperties.getTmpDir().resolve(getHashPath(hashValue));
+        hashFormatCheck(hashValue);
+        Path chunkDirPath = FileUtil.getHashPath(fileProperties.getTmpDir(), hashValue);
         Path chunkPath = chunkDirPath.resolve(String.valueOf(chunkIndex));
         distributedLock.tryLock(RedisAttribute.LockType.file, hashValue + chunkIndex, () -> {
             try {
@@ -344,7 +343,8 @@ public class FileDataService {
         }
         FileData file = fileList.getFirst();
         if (fileList.size() == 1 && !FileAttribute.MimeType.FOLDER.value().toString().equals(file.getMimeType())) {
-            return DownloadUtil.download(file.getName(), file.getMimeType(), fileProperties.getDir().resolve(file.getPath()));
+            return DownloadUtil.download(file.getName(), file.getMimeType(),
+                    FileUtil.getHashPath(fileProperties.getDir(), file.getHashValue()));
         }
         return DownloadUtil.downloadZip(fileProperties.getDir(), fileList);
     }
@@ -363,7 +363,7 @@ public class FileDataService {
         }
         try {
             return DownloadUtil.downloadChunked(file.getName(), file.getMimeType(),
-                    fileProperties.getDir().resolve(file.getPath()), start, end);
+                    FileUtil.getHashPath(fileProperties.getDir(), file.getHashValue()), start, end);
         } catch (IOException e) {
             throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileDownloadFailed"));
         }
@@ -379,8 +379,9 @@ public class FileDataService {
         }
         try {
             return DownloadUtil.download(FileAttribute.DOWNLOAD_THUMBNAIL_NAME, FileAttribute.THUMBNAIL_FILE_MIME_TYPE,
-                    ThumbnailUtil.generateThumbnail(fileProperties.getThumbnailDir(),
-                            fileProperties.getDir().resolve(file.getPath()), file.getPath(), mimeType,
+                    ThumbnailUtil.generateThumbnail(mimeType,
+                            FileUtil.getHashPath(fileProperties.getDir(), file.getHashValue()),
+                            FileUtil.getHashPath(fileProperties.getThumbnailDir(), file.getHashValue(), FileAttribute.THUMBNAIL_FILE_SUFFIX),
                             fileProperties.getThumbnailImageMimeType(), fileProperties.getThumbnailVideoMimeType(),
                             fileProperties.getThumbnailGenerateTimeout()));
         } catch (ThumbnailUtil.FileNotSupportThumbnailException e) {

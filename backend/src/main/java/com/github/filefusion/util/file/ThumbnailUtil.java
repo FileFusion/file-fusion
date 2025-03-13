@@ -1,6 +1,5 @@
 package com.github.filefusion.util.file;
 
-import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.util.ExecUtil;
 import org.springframework.util.StringUtils;
 
@@ -31,11 +30,11 @@ public final class ThumbnailUtil {
         return thumbnailImageMimeType.contains(mimeType) || thumbnailVideoMimeType.contains(mimeType);
     }
 
-    public static Path generateThumbnail(Path baseDir, Path originalPath, String path,
-                                         String mimeType, List<String> thumbnailImageMimeType,
+    public static Path generateThumbnail(String mimeType,
+                                         Path originalPath, Path targetPath,
+                                         List<String> thumbnailImageMimeType,
                                          List<String> thumbnailVideoMimeType, Duration thumbnailGenerateTimeout)
             throws FileNotSupportThumbnailException, ThumbnailGenerationFailedException, IOException {
-        Path targetPath = baseDir.resolve(path + FileAttribute.THUMBNAIL_FILE_SUFFIX);
         if (Files.isRegularFile(targetPath)) {
             return targetPath;
         }

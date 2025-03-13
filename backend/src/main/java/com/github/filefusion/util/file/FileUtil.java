@@ -58,6 +58,14 @@ public final class FileUtil {
         }
     }
 
+    public static Path getHashPath(Path dir, String hash, String... extension) {
+        if (extension.length > 0) {
+            return dir.resolve(Paths.get(hash.substring(0, 2), hash.substring(2, 4), hash) + extension[0]);
+        } else {
+            return dir.resolve(Paths.get(hash.substring(0, 2), hash.substring(2, 4), hash).toString());
+        }
+    }
+
     public static String calculateHash(Path path) {
         try (FileChannel channel = FileChannel.open(path, StandardOpenOption.READ)) {
             Blake3.Blake3_256 digest = new Blake3.Blake3_256();

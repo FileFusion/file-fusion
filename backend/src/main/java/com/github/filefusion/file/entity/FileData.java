@@ -40,11 +40,6 @@ public class FileData extends BaseEntity {
     private String relativePath;
 
     /**
-     * path
-     */
-    private String path;
-
-    /**
      * hash value
      */
     private String hashValue;
