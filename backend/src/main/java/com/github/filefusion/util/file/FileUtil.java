@@ -59,10 +59,11 @@ public final class FileUtil {
     }
 
     public static Path getHashPath(Path dir, String hash, String... extension) {
+        String path = Paths.get(hash.substring(0, 2), hash.substring(2, 4), hash).toString();
         if (extension.length > 0) {
-            return dir.resolve(Paths.get(hash.substring(0, 2), hash.substring(2, 4), hash) + extension[0]);
+            return dir.resolve(path + extension[0]);
         } else {
-            return dir.resolve(Paths.get(hash.substring(0, 2), hash.substring(2, 4), hash).toString());
+            return dir.resolve(path);
         }
     }
 
