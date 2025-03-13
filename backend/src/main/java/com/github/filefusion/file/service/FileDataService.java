@@ -29,7 +29,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -84,10 +83,25 @@ public class FileDataService {
         if (!StringUtils.hasLength(name)) {
             throw new HttpException(I18n.get("fileNameEmpty"));
         }
-        if (name.contains("//") || name.startsWith("/")) {
+        if (name.length() > 255 || name.equals(".") || name.equals("..")
+                || !name.matches("[^\\\\/:*?\"<>|]+")) {
             throw new HttpException(I18n.get("fileNameFormatError"));
         }
     }
+
+    private static void pathFormatCheck(String path) {
+        if (!StringUtils.hasLength(path)) {
+            throw new HttpException(I18n.get("filePathEmpty"));
+        }
+        if (path.length() > 4096 || path.contains(".") || path.contains("..") || path.startsWith("/")) {
+            throw new HttpException(I18n.get("filePathFormatError"));
+        }
+        String[] parts = path.split(Pattern.quote(FileAttribute.SEPARATOR));
+        for (String part : parts) {
+            nameFormatCheck(part);
+        }
+    }
+
 
     private List<FileData> findAllChildren(String id) {
         List<FileData> children = new ArrayList<>();
@@ -170,14 +184,14 @@ public class FileDataService {
                     .orElseThrow(() -> new HttpException(I18n.get("fileNotExist"))));
         }
 
-        String[] pathSegments = folder.split(Pattern.quote(File.separator));
+        String[] pathSegments = folder.split(Pattern.quote(FileAttribute.SEPARATOR));
         List<String> pathList = new ArrayList<>(pathSegments.length);
         for (String pathSegment : pathSegments) {
             if (!StringUtils.hasLength(pathSegment)) {
                 continue;
             }
             if (!parentPath.isEmpty()) {
-                parentPath.append(File.separator);
+                parentPath.append(FileAttribute.SEPARATOR);
             }
             parentPath.append(pathSegment);
             pathList.add(parentPath.toString());
@@ -219,11 +233,14 @@ public class FileDataService {
         String pId;
         String path;
         if (StringUtils.hasLength(parentPath)) {
-            nameFormatCheck(parentPath);
+            pathFormatCheck(parentPath);
             FileData parentFile = createHierarchicalFolders(userId, parentId, parentPath, lastModifiedDate);
             pId = parentFile.getId();
-            path = parentFile.getPath() + File.separator + name;
+            path = parentFile.getPath() + FileAttribute.SEPARATOR + name;
         } else {
+            if (!fileDataRepository.existsByUserIdAndId(userId, parentId)) {
+                throw new HttpException(I18n.get("fileNotExist"));
+            }
             pId = parentId;
             path = name;
         }
@@ -278,6 +295,7 @@ public class FileDataService {
     }
 
     public void uploadChunk(MultipartFile file, Integer chunkIndex, String chunkHashValue, String hashValue) {
+        hashFormatCheck(chunkHashValue);
         hashFormatCheck(hashValue);
         Path chunkDirPath = FileUtil.getHashPath(fileProperties.getTmpDir(), hashValue);
         Path chunkPath = chunkDirPath.resolve(String.valueOf(chunkIndex));
@@ -307,12 +325,11 @@ public class FileDataService {
     }
 
     public void rename(String userId, String id, String name) {
-        if (!StringUtils.hasLength(name)) {
-            throw new HttpException(I18n.get("fileNameEmpty"));
-        }
+        nameFormatCheck(name);
         FileData file = fileDataRepository.findFirstByUserIdAndId(userId, id)
                 .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
         file.setName(name);
+        file.setPath(Paths.get(file.getPath()).getParent().resolve(name).toString());
         fileDataRepository.save(file);
     }
 

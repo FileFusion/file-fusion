@@ -42,6 +42,15 @@ public interface FileDataRepository extends JpaRepository<FileData, String> {
     Optional<FileData> findFirstByUserIdAndId(String userId, String id);
 
     /**
+     * exitsByUserIdAndId
+     *
+     * @param userId user id
+     * @param id     id
+     * @return exists
+     */
+    boolean existsByUserIdAndId(String userId, String id);
+
+    /**
      * findAllByParentIdIn
      *
      * @param parentIdList parent id list
