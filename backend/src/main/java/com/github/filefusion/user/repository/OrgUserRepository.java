@@ -35,9 +35,9 @@ public interface OrgUserRepository extends JpaRepository<OrgUser, String> {
     /**
      * deleteAllByUserId
      *
-     * @param userIds user ids
+     * @param userId user id
      */
     @Modifying
-    void deleteAllByUserIdIn(List<String> userIds);
+    void deleteAllByUserId(String userId);
 
 }

@@ -13,8 +13,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 /**
  * UserController
  *
@@ -128,14 +126,14 @@ public class UserController {
     }
 
     /**
-     * batch delete user
+     * delete user
      *
-     * @param userIds user ids
+     * @param userId user id
      */
-    @PostMapping("/_batch_delete")
+    @DeleteMapping("/{userId}")
     @PreAuthorize("hasAuthority('user_management:delete')")
-    public void batchDelete(@RequestBody List<String> userIds) {
-        userService.batchDelete(userIds);
+    public void delete(@PathVariable String userId) {
+        userService.delete(userId);
     }
 
 }

@@ -201,20 +201,18 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional(rollbackFor = HttpException.class)
-    public void batchDelete(List<String> userIds) {
-        if (CollectionUtils.isEmpty(userIds)) {
+    public void delete(String userId) {
+        if (!StringUtils.hasLength(userId)) {
             return;
         }
-        List<UserInfo> userList = userRepository.findAllById(userIds);
-        for (UserInfo user : userList) {
-            if (user.getSystemdUser()) {
-                throw new HttpException(I18n.get("systemdUserCannotDeleted"));
-            }
+        UserInfo user = userRepository.findById(userId).orElseThrow();
+        if (user.getSystemdUser()) {
+            throw new HttpException(I18n.get("systemdUserCannotDeleted"));
         }
         // todo Other items that prevent deletion
-        orgUserRepository.deleteAllByUserIdIn(userIds);
-        userRoleRepository.deleteAllByUserIdIn(userIds);
-        userRepository.deleteAllByIdInBatch(userIds);
+        orgUserRepository.deleteAllByUserId(userId);
+        userRoleRepository.deleteAllByUserId(userId);
+        userRepository.deleteById(userId);
     }
 
 }

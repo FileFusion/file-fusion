@@ -33,14 +33,6 @@ public interface UserRoleRepository extends JpaRepository<UserRole, String> {
     void deleteAllByUserId(String userId);
 
     /**
-     * deleteAllByUserIdIn
-     *
-     * @param userIds user ids
-     */
-    @Modifying
-    void deleteAllByUserIdIn(List<String> userIds);
-
-    /**
      * findAllByUserIdIn
      *
      * @param userIds user ids
