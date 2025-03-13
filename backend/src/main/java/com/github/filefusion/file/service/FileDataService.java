@@ -230,7 +230,7 @@ public class FileDataService {
             relativePath = name;
         }
         AtomicBoolean uploadStatus = new AtomicBoolean(false);
-        distributedLock.tryMultiLock(RedisAttribute.LockType.file, List.of(hashValue, userId + pId + path + name), () -> {
+        distributedLock.tryMultiLock(RedisAttribute.LockType.file, List.of(hashValue, userId + relativePath), () -> {
             if (fileDataRepository.existsByUserIdAndParentIdAndName(userId, pId, name)) {
                 throw new HttpException(I18n.get("fileExits", name));
             }
