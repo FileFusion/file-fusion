@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * UserInfoRepository
@@ -24,7 +25,7 @@ public interface UserInfoRepository extends JpaRepository<UserInfo, String> {
      * @param username username
      * @return user
      */
-    UserInfo findByUsername(String username);
+    Optional<UserInfo> findByUsername(String username);
 
     /**
      * findAllByIdNotInOrderByUsernameAsc

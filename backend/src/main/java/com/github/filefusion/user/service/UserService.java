@@ -60,10 +60,8 @@ public class UserService implements UserDetailsService {
     public String login(UserInfo user) throws AuthenticationException {
         String username = user.getUsername();
         String password = EncryptUtil.blake3(user.getPassword());
-        user = userRepository.findByUsername(username);
-        if (user == null) {
-            throw new UsernameNotFoundException(I18n.get("usernameNotFound"));
-        }
+        user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException(I18n.get("usernameNotFound")));
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new BadCredentialsException(I18n.get("passwordError"));
         }
