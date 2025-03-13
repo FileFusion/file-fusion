@@ -154,6 +154,7 @@ public class FileDataService {
 
     public void createFolder(String userId, String parentId, String name) {
         nameFormatCheck(name);
+        parentId = StringUtils.hasLength(parentId) ? parentId : FileAttribute.PARENT_ROOT;
         if (fileDataRepository.existsByUserIdAndParentIdAndName(userId, parentId, name)) {
             throw new HttpException(I18n.get("fileExits", name));
         }
@@ -161,13 +162,11 @@ public class FileDataService {
     }
 
     private FileData createHierarchicalFolders(String userId, String parentId, String path, LocalDateTime lastModifiedDate) {
-        AtomicReference<String> currentParentId = new AtomicReference<>();
+        AtomicReference<String> currentParentId = new AtomicReference<>(parentId);
         StringBuilder parentPath;
-        if (!StringUtils.hasLength(parentId)) {
-            currentParentId.set(FileAttribute.PARENT_ROOT);
+        if (FileAttribute.PARENT_ROOT.equals(parentId)) {
             parentPath = new StringBuilder();
         } else {
-            currentParentId.set(parentId);
             parentPath = new StringBuilder(fileDataRepository.findFirstByUserIdAndId(userId, parentId)
                     .map(FileData::getRelativePath)
                     .orElseThrow(() -> new HttpException(I18n.get("fileNotExist"))));
@@ -216,6 +215,7 @@ public class FileDataService {
     public boolean uploadChunkMerge(String userId, String parentId, String name, String path, String hashValue,
                                     String mimeType, Long size, LocalDateTime lastModified, boolean fastUpload) {
         nameFormatCheck(name);
+        parentId = StringUtils.hasLength(parentId) ? parentId : FileAttribute.PARENT_ROOT;
         String hashPath = getHashPath(hashValue);
         LocalDateTime lastModifiedDate = lastModified == null ? LocalDateTime.now() : lastModified;
         String pId;
@@ -226,7 +226,7 @@ public class FileDataService {
             pId = parentFile.getId();
             relativePath = parentFile.getRelativePath() + File.separator + name;
         } else {
-            pId = FileAttribute.PARENT_ROOT;
+            pId = parentId;
             relativePath = name;
         }
         AtomicBoolean uploadStatus = new AtomicBoolean(false);
