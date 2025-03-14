@@ -198,7 +198,7 @@ public class FileDataService {
 
         AtomicReference<FileData> lastCreatedFile = new AtomicReference<>();
         distributedLock.tryMultiLock(RedisAttribute.LockType.file,
-                pathList.stream().map(rp -> userId + rp).toList(), () -> {
+                pathList.stream().map(rp -> userId + RedisAttribute.SEPARATOR + rp).toList(), () -> {
                     Map<String, FileData> existsFileMap = fileDataRepository.findAllByUserIdAndPathIn(userId, pathList)
                             .stream().collect(Collectors.toMap(FileData::getPath, Function.identity()));
                     for (String path : pathList) {
@@ -244,7 +244,7 @@ public class FileDataService {
             path = name;
         }
         AtomicBoolean uploadStatus = new AtomicBoolean(false);
-        distributedLock.tryMultiLock(RedisAttribute.LockType.file, List.of(hashValue, userId + path), () -> {
+        distributedLock.tryMultiLock(RedisAttribute.LockType.file, List.of(hashValue, userId + RedisAttribute.SEPARATOR + path), () -> {
             if (fileDataRepository.existsByUserIdAndParentIdAndName(userId, pId, name)) {
                 throw new HttpException(I18n.get("fileExits", name));
             }
@@ -298,7 +298,7 @@ public class FileDataService {
         hashFormatCheck(hashValue);
         Path chunkDirPath = FileUtil.getHashPath(fileProperties.getTmpDir(), hashValue);
         Path chunkPath = chunkDirPath.resolve(String.valueOf(chunkIndex));
-        distributedLock.tryLock(RedisAttribute.LockType.file, hashValue + chunkIndex, () -> {
+        distributedLock.tryLock(RedisAttribute.LockType.file, hashValue + RedisAttribute.SEPARATOR + chunkIndex, () -> {
             try {
                 if (Files.exists(chunkPath)) {
                     if (chunkHashValue.equals(FileUtil.calculateHash(chunkPath))) {
