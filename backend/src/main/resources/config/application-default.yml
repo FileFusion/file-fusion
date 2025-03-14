@@ -34,8 +34,8 @@ spring:
     password: ${FF_DATASOURCE_PASSWORD:file_fusion}
 security:
   secret:
-    public-key: ${FF_SECRET_PUBLIC_KEY:/opt/file_fusion/secret/id_ed25519}
-    private-key: ${FF_SECRET_PRIVATE_KEY:/opt/file_fusion/secret/id_ed25519.pub}
+    public-key: ${FF_SECRET_PUBLIC_KEY:/opt/file_fusion/secret/id_ed25519.pub}
+    private-key: ${FF_SECRET_PRIVATE_KEY:/opt/file_fusion/secret/id_ed25519}
 task:
   lock-timeout: ${FF_TASK_LOCK_TIMEOUT:60s}
   clear-thumbnail-file: ${FF_TASK_CLEAR_THUMBNAIL_FILE:0 0 1 * * ?}
