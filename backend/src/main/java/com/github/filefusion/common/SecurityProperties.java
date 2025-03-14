@@ -2,7 +2,9 @@ package com.github.filefusion.common;
 
 import com.github.filefusion.util.EncryptUtil;
 import io.jsonwebtoken.security.Jwks;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Getter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
@@ -15,7 +17,6 @@ import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -35,51 +36,62 @@ public class SecurityProperties {
 
     @Data
     public static class Secret {
-        private PublicKey publicKey;
-        private PrivateKey privateKey;
+        private static final String ALGORITHM = "Ed25519";
+
+        private KeyPair pair;
 
         public Secret(Path publicKey, Path privateKey) throws IOException,
                 NoSuchAlgorithmException, InvalidKeySpecException {
             if (!Files.exists(publicKey) || !Files.exists(privateKey)) {
-                KeyPair pair = Jwks.CRV.Ed25519.keyPair().build();
-                this.publicKey = pair.getPublic();
-                this.privateKey = pair.getPrivate();
-                writePublicKey(publicKey, this.publicKey);
-                writePrivateKey(privateKey, this.privateKey);
+                this.pair = Jwks.CRV.Ed25519.keyPair().build();
+                writeKey(publicKey, pair.getPublic(), KeyType.PUBLIC);
+                writeKey(privateKey, pair.getPrivate(), KeyType.PRIVATE);
             } else {
-                this.publicKey = loadPublicKey(publicKey);
-                this.privateKey = loadPrivateKey(privateKey);
+                this.pair = new KeyPair((PublicKey) loadKey(publicKey, KeyType.PUBLIC),
+                        (PrivateKey) loadKey(privateKey, KeyType.PRIVATE));
             }
         }
 
-        private static PublicKey loadPublicKey(Path path)
+        private static Key loadKey(Path path, KeyType type)
                 throws NoSuchAlgorithmException, InvalidKeySpecException, IOException {
-            List<String> keyString = Files.readAllLines(path);
-            X509EncodedKeySpec spec = new X509EncodedKeySpec(EncryptUtil.base64ToBytes(keyString.get(1)));
-            return KeyFactory.getInstance("Ed25519").generatePublic(spec);
+            byte[] key = EncryptUtil.base64ToBytes(Files.readString(path)
+                    .replaceAll(".*?-----", "")
+                    .replaceAll("\\s+", ""));
+            KeyFactory keyFactory = KeyFactory.getInstance(ALGORITHM);
+            if (KeyType.PUBLIC.equals(type)) {
+                return keyFactory.generatePublic(new X509EncodedKeySpec(key));
+            } else {
+                return keyFactory.generatePrivate(new PKCS8EncodedKeySpec(key));
+            }
         }
 
-        private static PrivateKey loadPrivateKey(Path path)
-                throws NoSuchAlgorithmException, InvalidKeySpecException, IOException {
-            List<String> keyString = Files.readAllLines(path);
-            PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(EncryptUtil.base64ToBytes(keyString.get(1)));
-            return KeyFactory.getInstance("Ed25519").generatePrivate(spec);
+        private static void writeKey(Path path, Key key, KeyType type) throws IOException {
+            Path parent = path.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+            String keyString = type.getHeader() + "\n"
+                    + formatBase64(EncryptUtil.bytesToBase64(key.getEncoded()))
+                    + type.getFooter() + "\n";
+            Files.writeString(path, keyString, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         }
 
-        private static void writePublicKey(Path path, PublicKey key) throws IOException {
-            Files.createDirectories(path.getParent());
-            String keyString = "-----BEGIN PUBLIC KEY-----\n"
-                    + EncryptUtil.bytesToBase64(key.getEncoded())
-                    + "\n-----END PUBLIC KEY-----\n";
-            Files.writeString(path, keyString, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+        private static String formatBase64(String base64) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < base64.length(); i += 64) {
+                sb.append(base64, i, Math.min(i + 64, base64.length())).append("\n");
+            }
+            return sb.toString();
         }
 
-        private static void writePrivateKey(Path path, PrivateKey key) throws IOException {
-            Files.createDirectories(path.getParent());
-            String keyString = "-----BEGIN PRIVATE KEY-----\n"
-                    + EncryptUtil.bytesToBase64(key.getEncoded())
-                    + "\n-----END PRIVATE KEY-----\n";
-            Files.writeString(path, keyString, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+        @Getter
+        @AllArgsConstructor
+        private enum KeyType {
+            PUBLIC("-----BEGIN PUBLIC KEY-----", "-----END PUBLIC KEY-----"),
+            PRIVATE("-----BEGIN PRIVATE KEY-----", "-----END PRIVATE KEY-----");
+
+            private final String header;
+            private final String footer;
         }
     }
 

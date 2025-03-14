@@ -1,6 +1,7 @@
 package com.github.filefusion.config;
 
 import com.github.filefusion.common.SecurityProperties;
+import com.github.filefusion.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,7 +11,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
@@ -31,15 +31,15 @@ public class SecurityConfiguration {
 
     private final SecurityProperties securityProperties;
     private final WebServerFactory webServerFactory;
-    private final UserDetailsService userDetailsService;
+    private final UserService userService;
 
     @Autowired
     public SecurityConfiguration(SecurityProperties securityProperties,
                                  WebServerFactory webServerFactory,
-                                 UserDetailsService userDetailsService) {
+                                 UserService userService) {
         this.securityProperties = securityProperties;
         this.webServerFactory = webServerFactory;
-        this.userDetailsService = userDetailsService;
+        this.userService = userService;
     }
 
     private static String buildFullPath(String path) {
@@ -53,7 +53,7 @@ public class SecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .headers(headers -> headers.frameOptions((HeadersConfigurer.FrameOptionsConfig::sameOrigin)))
                 .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(new AuthenticationTokenFilter(userDetailsService), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new AuthenticationTokenFilter(userService), UsernamePasswordAuthenticationFilter.class);
         configureWhitelistAccess(http);
         return http.build();
     }

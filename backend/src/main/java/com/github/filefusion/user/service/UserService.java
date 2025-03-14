@@ -1,32 +1,33 @@
 package com.github.filefusion.user.service;
 
 import com.github.filefusion.common.HttpException;
+import com.github.filefusion.common.SecurityProperties;
 import com.github.filefusion.user.entity.Role;
 import com.github.filefusion.user.entity.UserInfo;
 import com.github.filefusion.user.entity.UserRole;
 import com.github.filefusion.user.model.UpdateUserModel;
-import com.github.filefusion.user.model.UserToken;
 import com.github.filefusion.user.repository.*;
 import com.github.filefusion.util.EncryptUtil;
 import com.github.filefusion.util.I18n;
+import com.github.filefusion.util.ULID;
+import io.jsonwebtoken.Jwts;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.security.KeyPair;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -37,9 +38,14 @@ import java.util.stream.Collectors;
  * @since 2022/4/1
  */
 @Service
-public class UserService implements UserDetailsService {
+public class UserService {
 
-    private final PasswordEncoder passwordEncoder;
+    private static final String TOKEN_HEADER = "Bearer ";
+    private static final long TOKEN_EXPIRATION = 1000 * 60 * 60 * 24;
+    private static final PasswordEncoder PASSWORD_ENCODER = new BCryptPasswordEncoder();
+
+    private final String applicationName;
+    private final SecurityProperties securityProperties;
     private final UserInfoRepository userRepository;
     private final RoleRepository roleRepository;
     private final UserRoleRepository userRoleRepository;
@@ -47,13 +53,15 @@ public class UserService implements UserDetailsService {
     private final PermissionRepository permissionRepository;
 
     @Autowired
-    public UserService(PasswordEncoder passwordEncoder,
+    public UserService(@Value("${spring.application.name}") String applicationName,
+                       SecurityProperties securityProperties,
                        UserInfoRepository userRepository,
                        RoleRepository roleRepository,
                        UserRoleRepository userRoleRepository,
                        OrgUserRepository orgUserRepository,
                        PermissionRepository permissionRepository) {
-        this.passwordEncoder = passwordEncoder;
+        this.applicationName = applicationName;
+        this.securityProperties = securityProperties;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.userRoleRepository = userRoleRepository;
@@ -61,16 +69,31 @@ public class UserService implements UserDetailsService {
         this.permissionRepository = permissionRepository;
     }
 
+    private String getUserToken(String userId) {
+        KeyPair pair = securityProperties.getSecret().getPair();
+        Date currentTime = new Date();
+        return TOKEN_HEADER + Jwts.builder()
+                .issuer(applicationName)
+                .issuedAt(currentTime)
+                .notBefore(currentTime)
+                .expiration(new Date(currentTime.getTime() + TOKEN_EXPIRATION))
+                .audience().add("").and()
+                .subject(userId)
+                .id(ULID.randomULID())
+                .signWith(pair.getPrivate(), Jwts.SIG.EdDSA)
+                .compact();
+    }
+
     public String login(UserInfo user) throws AuthenticationException {
         String username = user.getUsername();
         String password = EncryptUtil.blake3(user.getPassword());
         user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException(I18n.get("usernameNotFound")));
-        if (!passwordEncoder.matches(password, user.getPassword())) {
+        if (!PASSWORD_ENCODER.matches(password, user.getPassword())) {
             throw new BadCredentialsException(I18n.get("passwordError"));
         }
         user.verifyUser();
-        return UserToken.encoder(user.getId());
+        return getUserToken(user.getId());
     }
 
     public void updateCurrentUser(UpdateUserModel user) {
@@ -94,21 +117,12 @@ public class UserService implements UserDetailsService {
 
     public void updateCurrentUserPassword(String userId, String originalPassword, String newPassword) {
         UserInfo u = userRepository.findById(userId).orElseThrow();
-        if (!passwordEncoder.matches(EncryptUtil.blake3(originalPassword), u.getPassword())) {
+        if (!PASSWORD_ENCODER.matches(EncryptUtil.blake3(originalPassword), u.getPassword())) {
             throw new HttpException(I18n.get("originalPasswordError"));
         }
-        u.setPassword(passwordEncoder.encode(EncryptUtil.blake3(newPassword)));
+        u.setPassword(PASSWORD_ENCODER.encode(EncryptUtil.blake3(newPassword)));
         u.setEarliestCredentials(LocalDateTime.now());
         userRepository.save(u);
-    }
-
-    public UserInfo loadUserByUsername(String username) throws UsernameNotFoundException {
-        UserInfo user = userRepository.findById(username).orElse(null);
-        if (user == null) {
-            throw new UsernameNotFoundException(I18n.get("usernameNotFound"));
-        }
-        user.setPermissions(permissionRepository.findAllByUserId(user.getId()));
-        return user;
     }
 
     public Page<UserInfo> get(PageRequest page, String search) {
@@ -127,13 +141,20 @@ public class UserService implements UserDetailsService {
         return users;
     }
 
+    public UserInfo getByUsername(String username) {
+        UserInfo user = userRepository.findById(username)
+                .orElseThrow(() -> new UsernameNotFoundException(I18n.get("usernameNotFound")));
+        user.setPermissions(permissionRepository.findAllByUserId(user.getId()));
+        return user;
+    }
+
     @Transactional(rollbackFor = HttpException.class)
     public UserInfo add(UserInfo user) {
         if (userRepository.existsByUsername(user.getUsername())) {
             throw new HttpException(I18n.get("usernameExits"));
         }
         user.setId(null);
-        user.setPassword(passwordEncoder.encode(EncryptUtil.blake3(user.getPassword())));
+        user.setPassword(PASSWORD_ENCODER.encode(EncryptUtil.blake3(user.getPassword())));
         if (!StringUtils.hasLength(user.getEmail())) {
             user.setEmail(null);
         }
@@ -163,7 +184,7 @@ public class UserService implements UserDetailsService {
 
         boolean modifyPassword = !oldUser.getPassword().equals(user.getPassword());
         if (modifyPassword) {
-            oldUser.setPassword(passwordEncoder.encode(EncryptUtil.blake3(user.getPassword())));
+            oldUser.setPassword(PASSWORD_ENCODER.encode(EncryptUtil.blake3(user.getPassword())));
         }
 
         if (modifyPassword || oldUser.getEnabled() != user.getEnabled()) {

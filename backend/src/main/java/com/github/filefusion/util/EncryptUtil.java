@@ -1,24 +1,10 @@
 package com.github.filefusion.util;
 
 import org.bouncycastle.jcajce.provider.digest.Blake3;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Component;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.Base64;
 
 /**
  * EncryptUtil
@@ -26,17 +12,10 @@ import java.util.Arrays;
  * @author hackyo
  * @since 2022/4/1
  */
-@Component
-public class EncryptUtil {
-
-    public static final String AES = "AES";
-    public static final String AES_TRANSFORMATION = "AES/CBC/PKCS5Padding";
+public final class EncryptUtil {
 
     private static final byte[] HEX_LOOKUP = new byte[128];
     private static final char[] HEX_TABLE = new char[256 * 2];
-
-    private static byte[] SECRET_KEY;
-    private static byte[] SECRET_IV;
 
     static {
         Arrays.fill(HEX_LOOKUP, (byte) -1);
@@ -54,22 +33,6 @@ public class EncryptUtil {
         }
         String tableStr = new String(HEX_TABLE);
         tableStr.getChars(0, tableStr.length(), HEX_TABLE, 0);
-    }
-
-    @Autowired
-    public EncryptUtil(@Value("${security.secret.key}") String secretKey,
-                       @Value("${security.secret.iv}") String secretIv) {
-        SECRET_KEY = secretKey.getBytes(StandardCharsets.UTF_8);
-        SECRET_IV = secretIv.getBytes(StandardCharsets.UTF_8);
-    }
-
-    private static Cipher getCipher(int cipherMode) throws InvalidAlgorithmParameterException,
-            InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException {
-        Cipher cipher = Cipher.getInstance(AES_TRANSFORMATION);
-        cipher.init(cipherMode,
-                new SecretKeySpec(SECRET_KEY, AES),
-                new IvParameterSpec(SECRET_IV));
-        return cipher;
     }
 
     public static String bytesToHex(byte[] bytes) {
@@ -97,34 +60,17 @@ public class EncryptUtil {
         return result;
     }
 
+    public static String bytesToBase64(byte[] bytes) {
+        return Base64.getEncoder().encodeToString(bytes);
+    }
+
+    public static byte[] base64ToBytes(String base64) {
+        return Base64.getDecoder().decode(base64.getBytes(StandardCharsets.UTF_8));
+    }
+
     public static String blake3(String original) {
         Blake3.Blake3_256 digest = new Blake3.Blake3_256();
         return bytesToHex(digest.digest(original.getBytes(StandardCharsets.UTF_8)));
-    }
-
-    public static String aesEncoder(String original) {
-        try {
-            Cipher cipher = getCipher(Cipher.ENCRYPT_MODE);
-            return bytesToHex(cipher.doFinal(original.getBytes(StandardCharsets.UTF_8)));
-        } catch (BadPaddingException | IllegalBlockSizeException | InvalidAlgorithmParameterException |
-                 NoSuchPaddingException | NoSuchAlgorithmException | InvalidKeyException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static String aesDecoder(String original) {
-        try {
-            Cipher cipher = getCipher(Cipher.DECRYPT_MODE);
-            return new String(cipher.doFinal(hexToBytes(original)), StandardCharsets.UTF_8);
-        } catch (IllegalBlockSizeException | BadPaddingException | InvalidAlgorithmParameterException |
-                 NoSuchPaddingException | NoSuchAlgorithmException | InvalidKeyException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
     }
 
 }
