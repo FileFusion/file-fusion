@@ -103,12 +103,13 @@ public class FileDataController {
      * upload chunk merge
      *
      * @param parentId             parent id
-     * @param name                 name
      * @param path                 path
+     * @param name                 name
      * @param hashValue            hash value
      * @param mimeType             mime type
      * @param size                 size
      * @param fileLastModifiedDate file last modified date
+     * @param fastUpload           fast upload
      */
     @PostMapping("/_upload_chunk_merge")
     @PreAuthorize("hasAuthority('personal_file:upload')")

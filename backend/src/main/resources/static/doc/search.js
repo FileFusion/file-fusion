@@ -50,7 +50,7 @@ api[0].list[1].list.push({
 api[0].list[1].list.push({
     order: '4',
     deprecated: 'false',
-    url: '/api/user/password/current',
+    url: '/api/user/current/password',
     methodId: 'f600ca073f19b98e37ff9c37a7009cbc',
     desc: 'update current user password',
 });
@@ -78,9 +78,9 @@ api[0].list[1].list.push({
 api[0].list[1].list.push({
     order: '8',
     deprecated: 'false',
-    url: '/api/user/_batch_delete',
-    methodId: '30a8b4147e6d027fb844f401d0409fa5',
-    desc: 'batch delete user',
+    url: '/api/user/{userId}',
+    methodId: '5bfa0e729eaae180920b44a2b0f53a83',
+    desc: 'delete user',
 });
 api[0].list.push({
     alias: 'OrgController',
@@ -100,48 +100,48 @@ api[0].list[2].list.push({
     order: '2',
     deprecated: 'false',
     url: '/api/org',
-    methodId: 'd765a8b5b1c30e9498300ffbdead9ed1',
-    desc: 'update org',
+    methodId: '90d81556ef973529d7f165412b07f5ee',
+    desc: 'add org',
 });
 api[0].list[2].list.push({
     order: '3',
     deprecated: 'false',
     url: '/api/org',
-    methodId: 'c967c374282cda1b4a9dd10aa896c8e4',
-    desc: 'add org',
+    methodId: 'afce49f5f2530e8b1b8e36bbab0a825a',
+    desc: 'update org',
 });
 api[0].list[2].list.push({
     order: '4',
     deprecated: 'false',
-    url: '/api/org/{orgId}/users/{page}/{pageSize}',
-    methodId: '1f893a91df3a16a087d9f0926dd76752',
-    desc: 'get org user list - paged',
+    url: '/api/org/{orgId}',
+    methodId: '57130408f70f9b2d6d68420956656bce',
+    desc: 'delete org',
 });
 api[0].list[2].list.push({
     order: '5',
     deprecated: 'false',
-    url: '/api/org/{orgId}/users/not_exits',
-    methodId: 'e89739583fc082bb6eb9120cee4d6198',
-    desc: 'get not exits org user',
+    url: '/api/org/{orgId}/user/{page}/{pageSize}',
+    methodId: '3a6f06099f08679b328878ea04c9d065',
+    desc: 'get org user list - paged',
 });
 api[0].list[2].list.push({
     order: '6',
     deprecated: 'false',
-    url: '/api/org/{orgId}',
-    methodId: '615aeff0d7e2da3be35e1ecac9fc58a0',
-    desc: 'delete org',
+    url: '/api/org/{orgId}/user/not_exits',
+    methodId: 'e80592a574155393b08a45ea066f054e',
+    desc: 'get not exits org user',
 });
 api[0].list[2].list.push({
     order: '7',
     deprecated: 'false',
-    url: '/api/org/{orgId}/_add_users',
+    url: '/api/org/{orgId}/user',
     methodId: 'adc30f2edfd932fcda8c0907f22f8bbd',
     desc: 'add org user',
 });
 api[0].list[2].list.push({
     order: '8',
     deprecated: 'false',
-    url: '/api/org/{orgId}/_remove_users',
+    url: '/api/org/{orgId}/user/{userId}',
     methodId: '22184f8c5ff7daf9acdb6e9dd294f8b9',
     desc: 'delete org user',
 });
@@ -162,30 +162,30 @@ api[0].list[3].list.push({
 api[0].list[3].list.push({
     order: '2',
     deprecated: 'false',
-    url: '/api/file_data/recycle_bin/{page}/{pageSize}',
-    methodId: 'e8c47e0d8671f0f9e8f048c7853b1858',
-    desc: 'get recycle bin file list - paged',
+    url: '/api/file_data/{id}',
+    methodId: '843b87f25883c0ec7f22bf5b85db57be',
+    desc: 'delete file',
 });
 api[0].list[3].list.push({
     order: '3',
     deprecated: 'false',
-    url: '/api/file_data/_batch_delete',
-    methodId: 'd657067588c71ce903661294c163a2f6',
-    desc: 'batch delete file',
+    url: '/api/file_data/folder',
+    methodId: '3b9d2aaed797730efc3f3a6d7c9464d6',
+    desc: 'create folder',
 });
 api[0].list[3].list.push({
     order: '4',
     deprecated: 'false',
-    url: '/api/file_data/_create_folder',
-    methodId: 'a215b5ff5b6439f15184fb426811c99f',
-    desc: 'create folder',
+    url: '/api/file_data/_upload_chunk',
+    methodId: 'e5249a6dc3462b55661be90b207b0a63',
+    desc: 'upload file chunk',
 });
 api[0].list[3].list.push({
     order: '5',
     deprecated: 'false',
-    url: '/api/file_data/_upload',
-    methodId: 'b7a6fb1f2747c95eecf404aa82c4a461',
-    desc: 'upload file',
+    url: '/api/file_data/_upload_chunk_merge',
+    methodId: 'bf3aa6f48e2bf4105ddedaf5f0802893',
+    desc: 'upload chunk merge',
 });
 api[0].list[3].list.push({
     order: '6',
@@ -198,28 +198,28 @@ api[0].list[3].list.push({
     order: '7',
     deprecated: 'false',
     url: '/api/file_data/_submit_download',
-    methodId: '2b25e169f73b27385639ab852d64ca6f',
+    methodId: '5f8bfc42404b9dae602fcb80b8fc63ea',
     desc: 'submit download file list',
 });
 api[0].list[3].list.push({
     order: '8',
     deprecated: 'false',
     url: '/api/file_data/_download/{downloadId}',
-    methodId: 'e127e5fbb4fd6c320e8e23a1f7d6bbd4',
+    methodId: '776799877f01434157432acaa1e0256d',
     desc: 'download file list',
 });
 api[0].list[3].list.push({
     order: '9',
     deprecated: 'false',
-    url: '/api/file_data/_download_chunked',
+    url: '/api/file_data/_download_chunked/{id}',
     methodId: 'b500c72e332077f6114a75fa37294140',
     desc: 'download chunked',
 });
 api[0].list[3].list.push({
     order: '10',
     deprecated: 'false',
-    url: '/api/file_data/_thumbnail',
-    methodId: 'a5d1a5fb1b49da91a4a1a48a7201623f',
+    url: '/api/file_data/thumbnail/{id}',
+    methodId: 'b475488fe13382f22b1dea1a5b5fa8b0',
     desc: 'thumbnail file',
 });
 api[0].list.push({
@@ -261,15 +261,15 @@ api[0].list[5].list.push({
     order: '2',
     deprecated: 'false',
     url: '/api/role',
-    methodId: '21ef1892558ee9d6840153b19a5c4514',
-    desc: 'update role',
+    methodId: 'a8deb55585dd4dad4e0c7cbd1ae758f2',
+    desc: 'add role',
 });
 api[0].list[5].list.push({
     order: '3',
     deprecated: 'false',
     url: '/api/role',
-    methodId: '26778cf8e07e9fd73ad683c78cd2a7f1',
-    desc: 'add role',
+    methodId: '0875307d23ad4ed44f0ef2cc9c293fb6',
+    desc: 'update role',
 });
 api[0].list[5].list.push({
     order: '4',

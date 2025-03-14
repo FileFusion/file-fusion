@@ -24,6 +24,10 @@ spring:
   threads:
     virtual:
       enabled: true
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 100MB
   messages:
     basename: i18n/messages
     fallback-to-system-locale: false
