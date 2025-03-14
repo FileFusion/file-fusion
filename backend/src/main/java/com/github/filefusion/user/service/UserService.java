@@ -81,7 +81,6 @@ public class UserService {
                 .issuedAt(currentTime)
                 .notBefore(currentTime)
                 .expiration(new Date(currentTime.getTime() + TOKEN_EXPIRATION))
-                .audience().add("").and()
                 .subject(userId)
                 .id(ULID.randomULID())
                 .signWith(pair.getPrivate(), Jwts.SIG.EdDSA)
