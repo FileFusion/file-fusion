@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -38,7 +39,7 @@ public final class AuthenticationTokenFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, @Nonnull HttpServletResponse response, @Nonnull FilterChain chain) throws ServletException, IOException {
         String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (StringUtils.hasLength(authorization)) {
+        if (StringUtils.hasLength(authorization) && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserInfo user;
             try {
                 user = userService.getUserIdFromToken(authorization);
@@ -46,8 +47,10 @@ public final class AuthenticationTokenFilter extends OncePerRequestFilter {
                 response.sendError(HttpStatus.UNAUTHORIZED.value(), e.getMessage());
                 return;
             }
-            SecurityContextHolder.getContext()
-                    .setAuthentication(UsernamePasswordAuthenticationToken.authenticated(user, user.getPassword(), user.getAuthorities()));
+            UsernamePasswordAuthenticationToken authenticationToken = UsernamePasswordAuthenticationToken
+                    .authenticated(user, user.getPassword(), user.getAuthorities());
+            authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
         }
         chain.doFilter(request, response);
     }

@@ -237,7 +237,7 @@ public class FileDataService {
             pId = parentFile.getId();
             path = parentFile.getPath() + FileAttribute.SEPARATOR + name;
         } else {
-            if (!fileDataRepository.existsByUserIdAndId(userId, parentId)) {
+            if (!FileAttribute.PARENT_ROOT.equals(parentId) && !fileDataRepository.existsByUserIdAndId(userId, parentId)) {
                 throw new HttpException(I18n.get("fileNotExist"));
             }
             pId = parentId;
