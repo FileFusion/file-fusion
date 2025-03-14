@@ -1,4 +1,5 @@
 server:
+  domain: ${FF_DOMAIN:localhost}
   http-port: ${FF_PORT:18880}
   http2:
     enabled: ${FF_HTTPS:true}

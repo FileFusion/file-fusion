@@ -9,13 +9,17 @@ import com.github.filefusion.user.model.UpdateUserModel;
 import com.github.filefusion.user.repository.*;
 import com.github.filefusion.util.EncryptUtil;
 import com.github.filefusion.util.I18n;
+import com.github.filefusion.util.TimeUtil;
 import com.github.filefusion.util.ULID;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -84,6 +88,27 @@ public class UserService {
                 .compact();
     }
 
+    public UserInfo getUserIdFromToken(String token) throws AuthenticationException {
+        KeyPair pair = securityProperties.getSecret().getPair();
+        Jws<Claims> jws;
+        try {
+            jws = Jwts.parser()
+                    .verifyWith(pair.getPublic()).build()
+                    .parseSignedClaims(token.substring(TOKEN_HEADER.length()));
+        } catch (Exception e) {
+            throw new BadCredentialsException(I18n.get("tokenError"));
+        }
+        UserInfo user = userRepository.findById(jws.getPayload().getSubject())
+                .orElseThrow(() -> new UsernameNotFoundException(I18n.get("usernameNotFound")));
+        LocalDateTime issuedAt = TimeUtil.fromMillis(jws.getPayload().getIssuedAt().getTime());
+        if (issuedAt.isBefore(user.getEarliestCredentials())) {
+            throw new CredentialsExpiredException(I18n.get("tokenExpired"));
+        }
+        user.verifyUser();
+        user.setPermissions(permissionRepository.findAllByUserId(user.getId()));
+        return user;
+    }
+
     public String login(UserInfo user) throws AuthenticationException {
         String username = user.getUsername();
         String password = EncryptUtil.blake3(user.getPassword());
@@ -139,13 +164,6 @@ public class UserService {
                     .stream().map(roleMap::get).filter(Objects::nonNull).toList());
         }
         return users;
-    }
-
-    public UserInfo getByUsername(String username) {
-        UserInfo user = userRepository.findById(username)
-                .orElseThrow(() -> new UsernameNotFoundException(I18n.get("usernameNotFound")));
-        user.setPermissions(permissionRepository.findAllByUserId(user.getId()));
-        return user;
     }
 
     @Transactional(rollbackFor = HttpException.class)
