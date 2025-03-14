@@ -1,6 +1,5 @@
 package com.github.filefusion.config;
 
-import com.github.filefusion.common.BaseEntity;
 import com.github.filefusion.util.CurrentUser;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,7 +24,7 @@ public class DataJpaConfig {
 
     @Bean
     public AuditorAware<String> auditorProvider() {
-        return () -> Optional.ofNullable(CurrentUser.get()).map(BaseEntity::getId);
+        return () -> Optional.ofNullable(CurrentUser.getId());
     }
 
 }

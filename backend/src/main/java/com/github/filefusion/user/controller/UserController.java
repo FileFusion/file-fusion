@@ -49,7 +49,7 @@ public class UserController {
     @GetMapping("/current")
     @PreAuthorize("hasAuthority('user:read')")
     public UserInfo getCurrentUser() {
-        return CurrentUser.get();
+        return userService.getById(CurrentUser.getId());
     }
 
     /**
@@ -60,7 +60,7 @@ public class UserController {
     @PutMapping("/current")
     @PreAuthorize("hasAuthority('user:edit')")
     public void updateCurrentUser(@RequestBody UpdateUserModel user) {
-        user.setId(CurrentUser.get().getId());
+        user.setId(CurrentUser.getId());
         userService.updateCurrentUser(user);
     }
 
@@ -72,7 +72,7 @@ public class UserController {
     @PutMapping("/current/password")
     @PreAuthorize("hasAuthority('user:edit')")
     public void updateCurrentUserPassword(@RequestBody UpdateUserPasswordModel updateUserPasswordModel) {
-        userService.updateCurrentUserPassword(CurrentUser.get().getId(),
+        userService.updateCurrentUserPassword(CurrentUser.getId(),
                 updateUserPasswordModel.getOriginalPassword(), updateUserPasswordModel.getNewPassword());
     }
 

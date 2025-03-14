@@ -2,6 +2,7 @@ package com.github.filefusion.user.service;
 
 import com.github.filefusion.common.HttpException;
 import com.github.filefusion.common.SecurityProperties;
+import com.github.filefusion.user.entity.Permission;
 import com.github.filefusion.user.entity.Role;
 import com.github.filefusion.user.entity.UserInfo;
 import com.github.filefusion.user.entity.UserRole;
@@ -9,18 +10,16 @@ import com.github.filefusion.user.model.UpdateUserModel;
 import com.github.filefusion.user.repository.*;
 import com.github.filefusion.util.EncryptUtil;
 import com.github.filefusion.util.I18n;
-import com.github.filefusion.util.TimeUtil;
 import com.github.filefusion.util.ULID;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -42,9 +41,10 @@ import java.util.stream.Collectors;
  * @since 2022/4/1
  */
 @Service
-public class UserService {
+public class UserService implements UserDetailsService {
 
     private static final String TOKEN_HEADER = "Bearer ";
+    private static final String TOKEN_SCOPE_KEY = "scope";
     private static final long TOKEN_EXPIRATION = 1000 * 60 * 60 * 24;
     private static final PasswordEncoder PASSWORD_ENCODER = new BCryptPasswordEncoder();
 
@@ -73,37 +73,26 @@ public class UserService {
         this.permissionRepository = permissionRepository;
     }
 
-    private String getUserToken(String userId) {
+    private String getUserToken(String userId, List<Permission> permissionList) {
         KeyPair pair = securityProperties.getSecret().getPair();
         Date currentTime = new Date();
+        List<String> scopeList = permissionList.stream().map(Permission::getAuthority).toList();
         return TOKEN_HEADER + Jwts.builder()
                 .issuer(applicationName)
                 .issuedAt(currentTime)
                 .notBefore(currentTime)
                 .expiration(new Date(currentTime.getTime() + TOKEN_EXPIRATION))
                 .subject(userId)
+                .claim(TOKEN_SCOPE_KEY, scopeList)
                 .id(ULID.randomULID())
                 .signWith(pair.getPrivate(), Jwts.SIG.EdDSA)
                 .compact();
     }
 
-    public UserInfo getUserIdFromToken(String token) throws AuthenticationException {
-        KeyPair pair = securityProperties.getSecret().getPair();
-        Jws<Claims> jws;
-        try {
-            jws = Jwts.parser()
-                    .verifyWith(pair.getPublic()).build()
-                    .parseSignedClaims(token.substring(TOKEN_HEADER.length()));
-        } catch (Exception e) {
-            throw new BadCredentialsException(I18n.get("tokenError"));
-        }
-        UserInfo user = userRepository.findById(jws.getPayload().getSubject())
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        UserInfo user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException(I18n.get("usernameNotFound")));
-        LocalDateTime issuedAt = TimeUtil.fromMillis(jws.getPayload().getIssuedAt().getTime());
-        if (issuedAt.isBefore(user.getEarliestCredentials())) {
-            throw new CredentialsExpiredException(I18n.get("tokenExpired"));
-        }
-        user.verifyUser();
         user.setPermissions(permissionRepository.findAllByUserId(user.getId()));
         return user;
     }
@@ -117,7 +106,13 @@ public class UserService {
             throw new BadCredentialsException(I18n.get("passwordError"));
         }
         user.verifyUser();
-        return getUserToken(user.getId());
+        return getUserToken(user.getId(), permissionRepository.findAllByUserId(user.getId()));
+    }
+
+    public UserInfo getById(String userId) {
+        UserInfo user = userRepository.findById(userId).orElseThrow();
+        user.setPermissions(permissionRepository.findAllByUserId(user.getId()));
+        return user;
     }
 
     public void updateCurrentUser(UpdateUserModel user) {

@@ -59,7 +59,7 @@ public class FileDataController {
             sorterOrder = SorterOrder.ascend;
         }
         return fileDataService.get(PageRequest.of(page - 1, pageSize, sorterOrder.order(), sorter),
-                CurrentUser.get().getId(), parentId);
+                CurrentUser.getId(), parentId);
     }
 
     /**
@@ -70,7 +70,7 @@ public class FileDataController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('personal_file:delete')")
     public void delete(@PathVariable String id) {
-        fileDataService.recycleOrDelete(CurrentUser.get().getId(), id);
+        fileDataService.recycleOrDelete(CurrentUser.getId(), id);
     }
 
     /**
@@ -81,7 +81,7 @@ public class FileDataController {
     @PostMapping("/folder")
     @PreAuthorize("hasAuthority('personal_file:upload')")
     public void createFolder(@RequestBody CreateFolderModel createFolderModel) {
-        fileDataService.createFolder(CurrentUser.get().getId(), createFolderModel.getParentId(), createFolderModel.getName());
+        fileDataService.createFolder(CurrentUser.getId(), createFolderModel.getParentId(), createFolderModel.getName());
     }
 
     /**
@@ -119,7 +119,7 @@ public class FileDataController {
                                     @RequestParam(required = false) String mimeType,
                                     @RequestParam Long size, @RequestParam(required = false) Long fileLastModifiedDate,
                                     @RequestParam(required = false) Boolean fastUpload) {
-        return fileDataService.uploadChunkMerge(CurrentUser.get().getId(), parentId, path, name, hashValue,
+        return fileDataService.uploadChunkMerge(CurrentUser.getId(), parentId, path, name, hashValue,
                 mimeType, size, TimeUtil.fromMillis(fileLastModifiedDate), Boolean.TRUE.equals(fastUpload));
     }
 
@@ -131,7 +131,7 @@ public class FileDataController {
     @PutMapping("/_rename")
     @PreAuthorize("hasAuthority('personal_file:edit')")
     public void rename(@RequestBody RenameFileModel renameFileModel) {
-        fileDataService.rename(CurrentUser.get().getId(), renameFileModel.getId(), renameFileModel.getName());
+        fileDataService.rename(CurrentUser.getId(), renameFileModel.getId(), renameFileModel.getName());
     }
 
     /**
@@ -143,7 +143,7 @@ public class FileDataController {
     @PostMapping("/_submit_download")
     @PreAuthorize("hasAnyAuthority('personal_file:download','personal_file:preview')")
     public String submitDownload(@RequestBody List<String> idList) {
-        return fileDataService.submitDownload(CurrentUser.get().getId(), idList);
+        return fileDataService.submitDownload(CurrentUser.getId(), idList);
     }
 
     /**
@@ -167,7 +167,7 @@ public class FileDataController {
     @GetMapping("/_download_chunked/{id}")
     @PreAuthorize("hasAnyAuthority('personal_file:download','personal_file:preview')")
     public ResponseEntity<StreamingResponseBody> downloadChunked(@PathVariable String id, @RequestHeader String range) {
-        return fileDataService.downloadChunked(CurrentUser.get().getId(), id, range);
+        return fileDataService.downloadChunked(CurrentUser.getId(), id, range);
     }
 
     /**
@@ -179,7 +179,7 @@ public class FileDataController {
     @GetMapping("/thumbnail/{id}")
     @PreAuthorize("hasAnyAuthority('personal_file:read','recycle_bin_file:read')")
     public ResponseEntity<StreamingResponseBody> thumbnail(@PathVariable String id) {
-        return fileDataService.thumbnail(CurrentUser.get().getId(), id);
+        return fileDataService.thumbnail(CurrentUser.getId(), id);
     }
 
 }
