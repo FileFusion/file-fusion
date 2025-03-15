@@ -38,17 +38,20 @@ public class SecurityProperties {
     public static class Secret {
         private static final String ALGORITHM = "Ed25519";
 
-        private KeyPair pair;
+        private PublicKey publicKey;
+        private PrivateKey privateKey;
 
         public Secret(Path publicKey, Path privateKey) throws IOException,
                 NoSuchAlgorithmException, InvalidKeySpecException {
             if (!Files.exists(publicKey) || !Files.exists(privateKey)) {
-                this.pair = Jwks.CRV.Ed25519.keyPair().build();
-                writeKey(publicKey, pair.getPublic(), KeyType.PUBLIC);
-                writeKey(privateKey, pair.getPrivate(), KeyType.PRIVATE);
+                KeyPair pair = Jwks.CRV.Ed25519.keyPair().build();
+                this.publicKey = pair.getPublic();
+                this.privateKey = pair.getPrivate();
+                writeKey(publicKey, this.publicKey, KeyType.PUBLIC);
+                writeKey(privateKey, this.privateKey, KeyType.PRIVATE);
             } else {
-                this.pair = new KeyPair((PublicKey) loadKey(publicKey, KeyType.PUBLIC),
-                        (PrivateKey) loadKey(privateKey, KeyType.PRIVATE));
+                this.publicKey = (PublicKey) loadKey(publicKey, KeyType.PUBLIC);
+                this.privateKey = (PrivateKey) loadKey(privateKey, KeyType.PRIVATE);
             }
         }
 

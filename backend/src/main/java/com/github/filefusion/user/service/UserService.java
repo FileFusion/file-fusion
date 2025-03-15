@@ -28,7 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.security.KeyPair;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -74,7 +73,6 @@ public class UserService implements UserDetailsService {
     }
 
     private String getUserToken(String userId, List<Permission> permissionList) {
-        KeyPair pair = securityProperties.getSecret().getPair();
         Date currentTime = new Date();
         List<String> scopeList = permissionList.stream().map(Permission::getAuthority).toList();
         return TOKEN_HEADER + Jwts.builder()
@@ -85,7 +83,7 @@ public class UserService implements UserDetailsService {
                 .subject(userId)
                 .claim(TOKEN_SCOPE_KEY, scopeList)
                 .id(ULID.randomULID())
-                .signWith(pair.getPrivate(), Jwts.SIG.EdDSA)
+                .signWith(securityProperties.getSecret().getPrivateKey(), Jwts.SIG.EdDSA)
                 .compact();
     }
 

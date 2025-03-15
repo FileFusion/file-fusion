@@ -99,7 +99,7 @@ public class SecurityConfiguration {
         return token -> {
             try {
                 Jws<Claims> jws = Jwts.parser()
-                        .verifyWith(securityProperties.getSecret().getPair().getPublic()).build()
+                        .verifyWith(securityProperties.getSecret().getPublicKey()).build()
                         .parseSignedClaims(token);
                 Claims payload = jws.getPayload();
                 return new Jwt(token, payload.getIssuedAt().toInstant(),
