@@ -81,15 +81,15 @@ public class UserInfo extends BaseEntity {
     private Boolean enabled;
 
     /**
-     * roles
+     * role ids
      */
     @Transient
     private List<String> roleIds;
 
     /**
-     * permissions
+     * permission ids
      */
     @Transient
-    private List<Permission> permissions;
+    private List<String> permissionIds;
 
 }

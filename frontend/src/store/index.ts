@@ -76,8 +76,8 @@ export const mainStore = defineStore('main', {
       }
     },
     setUser(user: any) {
-      this.permissionIds = user.permissions.map((p: any) => p.id);
-      user.permissions = null;
+      this.permissionIds = user.permissionIds;
+      user.permissionIds = null;
       this.user = user;
     },
     setFileShowType(fileShowType: string) {

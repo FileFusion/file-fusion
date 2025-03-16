@@ -121,7 +121,8 @@ public class UserService {
     @Cacheable(value = "users", key = "#userId")
     public UserInfo getById(String userId) {
         UserInfo user = userRepository.findById(userId).orElseThrow();
-        user.setPermissions(permissionRepository.findAllByUserId(user.getId()));
+        user.setPermissionIds(permissionRepository.findAllByUserId(user.getId())
+                .stream().map(Permission::getId).toList());
         return user;
     }
 
