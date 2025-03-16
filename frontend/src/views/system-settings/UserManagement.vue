@@ -275,7 +275,6 @@ const currentOptionUser = ref({
   password: '',
   systemdUser: false,
   enabled: true,
-  roles: <any[]>[],
   roleIds: <string[]>[]
 });
 const emailAutoCompleteStatus = ref<'success' | 'warning' | 'error'>('success');
@@ -555,7 +554,7 @@ const userTableColumns = computed<DataTableColumn[]>(() => {
       resizable: true,
       render: (row: any) => {
         let roles = [];
-        for (const role of row.roles) {
+        for (const roleId of row.roleIds) {
           roles.push(
             h(
               'div',
@@ -569,7 +568,7 @@ const userTableColumns = computed<DataTableColumn[]>(() => {
                     type: 'success'
                   },
                   {
-                    default: () => role.name
+                    default: () => roleIdNameMap.value[roleId]
                   }
                 )
               ]
@@ -672,13 +671,18 @@ const getUserTableSorter = computed(() => {
   );
 });
 
-const {
-  loading: getAllRoleLoading,
-  data: allRoles,
-  send: doGetAllRoles
-} = useRequest(() => http.Get<any[]>('/role'), {
-  immediate: false
+const roleIdNameMap = computed(() => {
+  let map: any = {};
+  if (allRoles.value) {
+    for (let role of allRoles.value) {
+      map[role.id] = role.name;
+    }
+  }
+  return map;
 });
+const { loading: getAllRoleLoading, data: allRoles } = useRequest(() =>
+  http.Get<any[]>('/role')
+);
 
 const {
   loading: userTableLoading,
@@ -772,23 +776,16 @@ function addUser() {
     password: '',
     systemdUser: false,
     enabled: true,
-    roles: [],
     roleIds: []
   };
-  doGetAllRoles();
   showUserEditIsAdd.value = true;
   showUserEdit.value = true;
 }
 
 function editUser(user: any) {
   currentOptionUser.value = JSON.parse(JSON.stringify(user));
-  currentOptionUser.value.roleIds = [];
-  for (const role of currentOptionUser.value.roles) {
-    currentOptionUser.value.roleIds.push(role.id);
-  }
   changePassword.value = false;
   newPassword.value = '';
-  doGetAllRoles();
   showUserEditIsAdd.value = false;
   showUserEdit.value = true;
 }
@@ -824,12 +821,6 @@ function validateProfileForm() {
         const form = JSON.parse(JSON.stringify(currentOptionUser.value));
         if (!showUserEditIsAdd.value && changePassword.value) {
           form.password = newPassword.value;
-        }
-        form.roles = [];
-        for (const roleId of form.roleIds) {
-          form.roles.push({
-            id: roleId
-          });
         }
         if (showUserEditIsAdd.value) {
           doAddUser(form);

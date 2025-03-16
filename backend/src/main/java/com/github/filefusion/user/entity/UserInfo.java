@@ -1,13 +1,10 @@
 package com.github.filefusion.user.entity;
 
 import com.github.filefusion.common.BaseEntity;
-import com.github.filefusion.util.I18n;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Transient;
 import lombok.Data;
 import lombok.experimental.FieldNameConstants;
-import org.springframework.security.authentication.*;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,7 +18,7 @@ import java.util.List;
 @Data
 @Entity(name = "user_info")
 @FieldNameConstants
-public class UserInfo extends BaseEntity implements UserDetails {
+public class UserInfo extends BaseEntity {
 
     /**
      * username
@@ -87,53 +84,12 @@ public class UserInfo extends BaseEntity implements UserDetails {
      * roles
      */
     @Transient
-    private List<Role> roles;
+    private List<String> roleIds;
 
     /**
      * permissions
      */
     @Transient
     private List<Permission> permissions;
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return this.nonExpired;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return this.nonLocked;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return this.credentialsNonExpired;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return this.enabled;
-    }
-
-    @Override
-    @Transient
-    public List<Permission> getAuthorities() {
-        return this.permissions;
-    }
-
-    public void verifyUser() throws AccountStatusException {
-        if (!this.isAccountNonExpired()) {
-            throw new AccountExpiredException(I18n.get("userExpired"));
-        }
-        if (!this.isAccountNonLocked()) {
-            throw new LockedException(I18n.get("userLocked"));
-        }
-        if (!this.isCredentialsNonExpired()) {
-            throw new CredentialsExpiredException(I18n.get("userPasswordExpired"));
-        }
-        if (!this.isEnabled()) {
-            throw new DisabledException(I18n.get("userDisabled"));
-        }
-    }
 
 }

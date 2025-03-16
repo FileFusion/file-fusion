@@ -3,23 +3,24 @@ package com.github.filefusion.user.service;
 import com.github.filefusion.common.HttpException;
 import com.github.filefusion.common.SecurityProperties;
 import com.github.filefusion.user.entity.Permission;
-import com.github.filefusion.user.entity.Role;
 import com.github.filefusion.user.entity.UserInfo;
 import com.github.filefusion.user.entity.UserRole;
 import com.github.filefusion.user.model.UpdateUserModel;
-import com.github.filefusion.user.repository.*;
+import com.github.filefusion.user.repository.OrgUserRepository;
+import com.github.filefusion.user.repository.PermissionRepository;
+import com.github.filefusion.user.repository.UserInfoRepository;
+import com.github.filefusion.user.repository.UserRoleRepository;
 import com.github.filefusion.util.EncryptUtil;
 import com.github.filefusion.util.I18n;
 import com.github.filefusion.util.ULID;
 import io.jsonwebtoken.Jwts;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.*;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,8 +30,10 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
-import java.util.*;
-import java.util.function.Function;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -40,7 +43,7 @@ import java.util.stream.Collectors;
  * @since 2022/4/1
  */
 @Service
-public class UserService implements UserDetailsService {
+public class UserService {
 
     private static final String TOKEN_HEADER = "Bearer ";
     private static final String TOKEN_SCOPE_KEY = "scope";
@@ -50,7 +53,6 @@ public class UserService implements UserDetailsService {
     private final String applicationName;
     private final SecurityProperties securityProperties;
     private final UserInfoRepository userRepository;
-    private final RoleRepository roleRepository;
     private final UserRoleRepository userRoleRepository;
     private final OrgUserRepository orgUserRepository;
     private final PermissionRepository permissionRepository;
@@ -59,14 +61,12 @@ public class UserService implements UserDetailsService {
     public UserService(@Value("${spring.application.name}") String applicationName,
                        SecurityProperties securityProperties,
                        UserInfoRepository userRepository,
-                       RoleRepository roleRepository,
                        UserRoleRepository userRoleRepository,
                        OrgUserRepository orgUserRepository,
                        PermissionRepository permissionRepository) {
         this.applicationName = applicationName;
         this.securityProperties = securityProperties;
         this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
         this.userRoleRepository = userRoleRepository;
         this.orgUserRepository = orgUserRepository;
         this.permissionRepository = permissionRepository;
@@ -87,14 +87,6 @@ public class UserService implements UserDetailsService {
                 .compact();
     }
 
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        UserInfo user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException(I18n.get("usernameNotFound")));
-        user.setPermissions(permissionRepository.findAllByUserId(user.getId()));
-        return user;
-    }
-
     public String login(UserInfo user) throws AuthenticationException {
         String username = user.getUsername();
         String password = EncryptUtil.blake3(user.getPassword());
@@ -103,10 +95,30 @@ public class UserService implements UserDetailsService {
         if (!PASSWORD_ENCODER.matches(password, user.getPassword())) {
             throw new BadCredentialsException(I18n.get("passwordError"));
         }
-        user.verifyUser();
+        verifyUser(user);
         return getUserToken(user.getId(), permissionRepository.findAllByUserId(user.getId()));
     }
 
+    public void verifyUser(UserInfo userInfo) throws AccountStatusException {
+        if (!userInfo.getNonExpired()) {
+            throw new AccountExpiredException(I18n.get("userExpired"));
+        }
+        if (!userInfo.getNonLocked()) {
+            throw new LockedException(I18n.get("userLocked"));
+        }
+        if (!userInfo.getCredentialsNonExpired()) {
+            throw new CredentialsExpiredException(I18n.get("userPasswordExpired"));
+        }
+        if (!userInfo.getEnabled()) {
+            throw new DisabledException(I18n.get("userDisabled"));
+        }
+    }
+
+    public List<Permission> getUserPermissionList(String userId) {
+        return permissionRepository.findAllByUserId(userId);
+    }
+
+    @Cacheable(value = "users", key = "#userId")
     public UserInfo getById(String userId) {
         UserInfo user = userRepository.findById(userId).orElseThrow();
         user.setPermissions(permissionRepository.findAllByUserId(user.getId()));
@@ -149,11 +161,8 @@ public class UserService implements UserDetailsService {
                         UserRole::getUserId,
                         Collectors.mapping(UserRole::getRoleId, Collectors.toList())
                 ));
-        Map<String, Role> roleMap = roleRepository.findAllById(userIdRoleListMap.values().stream().flatMap(List::stream).distinct().toList())
-                .stream().collect(Collectors.toMap(Role::getId, Function.identity()));
         for (UserInfo user : users.getContent()) {
-            user.setRoles(userIdRoleListMap.getOrDefault(user.getId(), List.of())
-                    .stream().map(roleMap::get).filter(Objects::nonNull).toList());
+            user.setRoleIds(userIdRoleListMap.getOrDefault(user.getId(), List.of()));
         }
         return users;
     }
@@ -178,9 +187,9 @@ public class UserService implements UserDetailsService {
         user.setNonLocked(true);
         user.setCredentialsNonExpired(true);
 
-        List<Role> roles = user.getRoles();
+        List<String> roleIds = user.getRoleIds();
         user = userRepository.save(user);
-        saveUserRoles(user.getId(), roles);
+        saveUserRoles(user.getId(), roleIds);
         return user;
     }
 
@@ -208,20 +217,20 @@ public class UserService implements UserDetailsService {
 
         if (!oldUser.getSystemdUser()) {
             userRoleRepository.deleteAllByUserId(oldUser.getId());
-            saveUserRoles(oldUser.getId(), user.getRoles());
+            saveUserRoles(oldUser.getId(), user.getRoleIds());
         }
 
         return userRepository.save(oldUser);
     }
 
-    private void saveUserRoles(String userId, List<Role> roles) {
-        if (CollectionUtils.isEmpty(roles)) {
+    private void saveUserRoles(String userId, List<String> roleIds) {
+        if (CollectionUtils.isEmpty(roleIds)) {
             return;
         }
-        List<UserRole> userRoles = new ArrayList<>(roles.size());
-        for (Role role : roles) {
+        List<UserRole> userRoles = new ArrayList<>(roleIds.size());
+        for (String roleId : roleIds) {
             UserRole userRole = new UserRole();
-            userRole.setRoleId(role.getId());
+            userRole.setRoleId(roleId);
             userRole.setUserId(userId);
             userRoles.add(userRole);
         }

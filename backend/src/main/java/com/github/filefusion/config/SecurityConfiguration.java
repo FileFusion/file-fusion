@@ -1,12 +1,14 @@
 package com.github.filefusion.config;
 
 import com.github.filefusion.common.SecurityProperties;
+import com.github.filefusion.user.service.UserService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -15,15 +17,18 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
-import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.stream.Collectors;
 
 /**
  * SecurityConfiguration
@@ -38,12 +43,15 @@ public class SecurityConfiguration {
 
     private final SecurityProperties securityProperties;
     private final WebServerFactory webServerFactory;
+    private final UserService userService;
 
     @Autowired
     public SecurityConfiguration(SecurityProperties securityProperties,
-                                 WebServerFactory webServerFactory) {
+                                 WebServerFactory webServerFactory,
+                                 UserService userService) {
         this.securityProperties = securityProperties;
         this.webServerFactory = webServerFactory;
+        this.userService = userService;
     }
 
     private static String buildFullPath(String path) {
@@ -87,8 +95,10 @@ public class SecurityConfiguration {
 
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
-        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        grantedAuthoritiesConverter.setAuthorityPrefix("");
+        Converter<Jwt, Collection<GrantedAuthority>> grantedAuthoritiesConverter = source ->
+                userService.getUserPermissionList(source.getSubject()).stream()
+                        .map(permission -> new SimpleGrantedAuthority(permission.getAuthority()))
+                        .collect(Collectors.toList());
         JwtAuthenticationConverter authenticationConverter = new JwtAuthenticationConverter();
         authenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
         return authenticationConverter;
