@@ -32,7 +32,7 @@ public class DistributedLock {
         if (lockType == null || !StringUtils.hasLength(key) || lockTimeout == null || lockTimeout.isNegative()) {
             return;
         }
-        RLock lock = redissonClient.getLock(RedisAttribute.LOCK_PREFIX + RedisAttribute.SEPARATOR + lockType + RedisAttribute.SEPARATOR + key);
+        RLock lock = redissonClient.getLock(RedisAttribute.LOCK_PREFIX + lockType + RedisAttribute.SEPARATOR + key);
         tryLock(lock, task, lockTimeout);
     }
 
@@ -41,7 +41,7 @@ public class DistributedLock {
             return;
         }
         RLock[] locks = keyList.stream()
-                .map(k -> RedisAttribute.LOCK_PREFIX + RedisAttribute.SEPARATOR + lockType + RedisAttribute.SEPARATOR + k)
+                .map(k -> RedisAttribute.LOCK_PREFIX + lockType + RedisAttribute.SEPARATOR + k)
                 .map(redissonClient::getLock).toArray(RLock[]::new);
         RLock multiLock = redissonClient.getMultiLock(locks);
         tryLock(multiLock, task, lockTimeout);

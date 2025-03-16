@@ -2,6 +2,7 @@ package com.github.filefusion.user.service;
 
 import com.github.filefusion.common.HttpException;
 import com.github.filefusion.common.SecurityProperties;
+import com.github.filefusion.constant.RedisAttribute;
 import com.github.filefusion.user.entity.Permission;
 import com.github.filefusion.user.entity.UserInfo;
 import com.github.filefusion.user.entity.UserRole;
@@ -87,18 +88,6 @@ public class UserService {
                 .compact();
     }
 
-    public String login(UserInfo user) throws AuthenticationException {
-        String username = user.getUsername();
-        String password = EncryptUtil.blake3(user.getPassword());
-        user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException(I18n.get("usernameNotFound")));
-        if (!PASSWORD_ENCODER.matches(password, user.getPassword())) {
-            throw new BadCredentialsException(I18n.get("passwordError"));
-        }
-        verifyUser(user);
-        return getUserToken(user.getId(), permissionRepository.findAllByUserId(user.getId()));
-    }
-
     public void verifyUser(UserInfo userInfo) throws AccountStatusException {
         if (!userInfo.getNonExpired()) {
             throw new AccountExpiredException(I18n.get("userExpired"));
@@ -114,11 +103,23 @@ public class UserService {
         }
     }
 
+    public String login(UserInfo user) throws AuthenticationException {
+        String username = user.getUsername();
+        String password = EncryptUtil.blake3(user.getPassword());
+        user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException(I18n.get("usernameNotFound")));
+        if (!PASSWORD_ENCODER.matches(password, user.getPassword())) {
+            throw new BadCredentialsException(I18n.get("passwordError"));
+        }
+        verifyUser(user);
+        return getUserToken(user.getId(), permissionRepository.findAllByUserId(user.getId()));
+    }
+
     public List<Permission> getUserPermissionList(String userId) {
         return permissionRepository.findAllByUserId(userId);
     }
 
-    @Cacheable(value = "users", key = "#userId")
+    @Cacheable(value = RedisAttribute.CACHE_PREFIX + "users", key = "#userId")
     public UserInfo getById(String userId) {
         UserInfo user = userRepository.findById(userId).orElseThrow();
         user.setPermissionIds(permissionRepository.findAllByUserId(user.getId())

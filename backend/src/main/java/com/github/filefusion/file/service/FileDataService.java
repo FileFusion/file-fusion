@@ -359,14 +359,14 @@ public class FileDataService {
                 .flatMap(file -> Stream.concat(Stream.of(file), findAllChildren(file.getId()).stream()))
                 .toList();
         String downloadId = ULID.randomULID();
-        RList<String> downloadIdList = redissonClient.getList(RedisAttribute.DOWNLOAD_ID_PREFIX + RedisAttribute.SEPARATOR + downloadId);
+        RList<String> downloadIdList = redissonClient.getList(RedisAttribute.DOWNLOAD_ID_PREFIX + downloadId);
         downloadIdList.addAll(allList.stream().map(FileData::getId).toList());
         downloadIdList.expire(fileProperties.getDownloadLinkTimeout());
         return downloadId;
     }
 
     public ResponseEntity<StreamingResponseBody> download(String downloadId) {
-        RList<String> idList = redissonClient.getList(RedisAttribute.DOWNLOAD_ID_PREFIX + RedisAttribute.SEPARATOR + downloadId);
+        RList<String> idList = redissonClient.getList(RedisAttribute.DOWNLOAD_ID_PREFIX + downloadId);
         if (CollectionUtils.isEmpty(idList)) {
             throw new HttpException(I18n.get("downloadLinkExpired"));
         }
