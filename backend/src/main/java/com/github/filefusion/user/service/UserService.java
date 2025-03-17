@@ -45,7 +45,6 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private static final String TOKEN_HEADER = "Bearer ";
-    private static final String TOKEN_SCOPE_KEY = "scope";
     private static final long TOKEN_EXPIRATION = 1000 * 60 * 60 * 24;
     private static final PasswordEncoder PASSWORD_ENCODER = new BCryptPasswordEncoder();
 
@@ -71,22 +70,20 @@ public class UserService {
         this.permissionRepository = permissionRepository;
     }
 
-    private String getUserToken(String userId, List<Permission> permissionList) {
+    private String getUserToken(String userId) {
         Date currentTime = new Date();
-        List<String> scopeList = permissionList.stream().map(Permission::getAuthority).toList();
         return TOKEN_HEADER + Jwts.builder()
                 .issuer(applicationName)
                 .issuedAt(currentTime)
                 .notBefore(currentTime)
                 .expiration(new Date(currentTime.getTime() + TOKEN_EXPIRATION))
                 .subject(userId)
-                .claim(TOKEN_SCOPE_KEY, scopeList)
                 .id(ULID.randomULID())
                 .signWith(securityProperties.getSecret().getPrivateKey(), Jwts.SIG.EdDSA)
                 .compact();
     }
 
-    private void verifyUser(UserInfo userInfo) throws AccountStatusException {
+    public void verifyUser(UserInfo userInfo) throws AccountStatusException {
         if (!userInfo.getNonExpired()) {
             throw new AccountExpiredException(I18n.get("userExpired"));
         }
@@ -110,17 +107,13 @@ public class UserService {
             throw new BadCredentialsException(I18n.get("passwordError"));
         }
         verifyUser(user);
-        return getUserToken(user.getId(), permissionRepository.findAllByUserId(user.getId()));
+        return getUserToken(user.getId());
     }
 
     public UserInfo getById(String userId) {
         UserInfo user = userRepository.findById(userId).orElseThrow();
-        user.setPermissionIds(getUserPermissionIdList(userId));
+        user.setPermissionIds(permissionRepository.findAllByUserId(userId).stream().map(Permission::getId).toList());
         return user;
-    }
-
-    public List<String> getUserPermissionIdList(String userId) {
-        return permissionRepository.findAllByUserId(userId).stream().map(Permission::getId).toList();
     }
 
     public UserInfo updateCurrentUser(UpdateUserModel user) {

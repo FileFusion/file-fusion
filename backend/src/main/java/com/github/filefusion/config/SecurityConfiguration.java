@@ -1,6 +1,7 @@
 package com.github.filefusion.config;
 
 import com.github.filefusion.common.SecurityProperties;
+import com.github.filefusion.user.entity.UserInfo;
 import com.github.filefusion.user.service.UserService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
@@ -20,14 +21,15 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimNames;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Arrays;
-import java.util.Collection;
+import java.time.Instant;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -40,6 +42,8 @@ import java.util.stream.Collectors;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfiguration {
+
+    private static final String CLAIM_SCOPE = "scope";
 
     private final SecurityProperties securityProperties;
     private final WebServerFactory webServerFactory;
@@ -95,10 +99,10 @@ public class SecurityConfiguration {
 
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
-        Converter<Jwt, Collection<GrantedAuthority>> grantedAuthoritiesConverter = source ->
-                userService.getUserPermissionIdList(source.getSubject()).stream()
-                        .map(SimpleGrantedAuthority::new)
-                        .collect(Collectors.toList());
+        Converter<Jwt, Collection<GrantedAuthority>> grantedAuthoritiesConverter = source -> {
+            List<String> permissionIds = source.getClaim(CLAIM_SCOPE);
+            return permissionIds.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList());
+        };
         JwtAuthenticationConverter authenticationConverter = new JwtAuthenticationConverter();
         authenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
         return authenticationConverter;
@@ -107,16 +111,21 @@ public class SecurityConfiguration {
     @Bean
     public JwtDecoder jwtDecoder() {
         return token -> {
+            Jws<Claims> jws;
             try {
-                Jws<Claims> jws = Jwts.parser()
+                jws = Jwts.parser()
                         .verifyWith(securityProperties.getSecret().getPublicKey()).build()
                         .parseSignedClaims(token);
-                Claims payload = jws.getPayload();
-                return new Jwt(token, payload.getIssuedAt().toInstant(),
-                        payload.getExpiration().toInstant(), jws.getHeader(), payload);
             } catch (Exception e) {
                 throw new BadCredentialsException(e.getMessage(), e);
             }
+            Map<String, Object> header = new LinkedHashMap<>(jws.getHeader());
+            Map<String, Object> payload = new LinkedHashMap<>(jws.getPayload());
+            UserInfo user = userService.getById((String) payload.get(JwtClaimNames.SUB));
+            userService.verifyUser(user);
+            payload.put(CLAIM_SCOPE, user.getPermissionIds());
+            return new Jwt(token, Instant.ofEpochMilli((Long) payload.get(JwtClaimNames.IAT)),
+                    Instant.ofEpochMilli((Long) payload.get(JwtClaimNames.EXP)), header, payload);
         };
     }
 
