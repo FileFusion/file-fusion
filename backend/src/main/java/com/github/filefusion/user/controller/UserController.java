@@ -13,8 +13,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 /**
  * UserController
  *
@@ -52,17 +50,6 @@ public class UserController {
     @PreAuthorize("hasAuthority('user:read')")
     public UserInfo getCurrentUser() {
         return userService.getById(CurrentUser.getId());
-    }
-
-    /**
-     * get current user permission
-     *
-     * @return user permission
-     */
-    @GetMapping("/current/permission")
-    @PreAuthorize("hasAuthority('user:read')")
-    public List<String> getCurrentUserPermission() {
-        return userService.getUserPermissionIdList(CurrentUser.getId());
     }
 
     /**

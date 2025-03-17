@@ -86,4 +86,10 @@ public class UserInfo extends BaseEntity {
     @Transient
     private List<String> roleIds;
 
+    /**
+     * permission ids
+     */
+    @Transient
+    private List<String> permissionIds;
+
 }

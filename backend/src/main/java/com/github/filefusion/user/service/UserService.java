@@ -2,7 +2,6 @@ package com.github.filefusion.user.service;
 
 import com.github.filefusion.common.HttpException;
 import com.github.filefusion.common.SecurityProperties;
-import com.github.filefusion.constant.RedisAttribute;
 import com.github.filefusion.user.entity.Permission;
 import com.github.filefusion.user.entity.UserInfo;
 import com.github.filefusion.user.entity.UserRole;
@@ -17,7 +16,6 @@ import com.github.filefusion.util.ULID;
 import io.jsonwebtoken.Jwts;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.authentication.*;
@@ -115,9 +113,10 @@ public class UserService {
         return getUserToken(user.getId(), permissionRepository.findAllByUserId(user.getId()));
     }
 
-    @Cacheable(value = RedisAttribute.CACHE_PREFIX + "users", key = "#userId")
     public UserInfo getById(String userId) {
-        return userRepository.findById(userId).orElseThrow();
+        UserInfo user = userRepository.findById(userId).orElseThrow();
+        user.setPermissionIds(getUserPermissionIdList(userId));
+        return user;
     }
 
     public List<String> getUserPermissionIdList(String userId) {

@@ -76,10 +76,9 @@ export const mainStore = defineStore('main', {
       }
     },
     setUser(user: any) {
+      this.permissionIds = user.permissionIds;
+      user.permissionIds = null;
       this.user = user;
-    },
-    setPermissionIds(permissionIds: any) {
-      this.permissionIds = permissionIds;
     },
     setFileShowType(fileShowType: string) {
       this.fileShowType = fileShowType;
