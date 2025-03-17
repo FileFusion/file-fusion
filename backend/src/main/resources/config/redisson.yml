@@ -1,0 +1,4 @@
+singleServerConfig:
+  address: redis://${FF_REDIS_HOST:-localhost}:${FF_REDIS_PORT:-6379}
+  password: ${FF_REDIS_PASSWORD:-redis}
+  database: ${FF_REDIS_DATABASE:-0}
