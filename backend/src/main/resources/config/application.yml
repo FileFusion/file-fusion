@@ -20,7 +20,7 @@ spring:
     name: file-fusion
   config:
     # Configuration file path
-    import: optional:file:${FF_CONFIG_FILE:/opt/file_fusion/conf.properties}
+    import: optional:file:${FF_CONFIG_FILE:/opt/file_fusion/config/conf.properties}
   threads:
     virtual:
       enabled: true
