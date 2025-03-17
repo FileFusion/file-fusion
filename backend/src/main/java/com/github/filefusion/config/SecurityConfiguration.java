@@ -3,6 +3,7 @@ package com.github.filefusion.config;
 import com.github.filefusion.common.SecurityProperties;
 import com.github.filefusion.user.entity.UserInfo;
 import com.github.filefusion.user.service.UserService;
+import com.github.filefusion.util.I18n;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
@@ -117,15 +118,18 @@ public class SecurityConfiguration {
                         .verifyWith(securityProperties.getSecret().getPublicKey()).build()
                         .parseSignedClaims(token);
             } catch (Exception e) {
-                throw new BadCredentialsException(e.getMessage(), e);
+                throw new BadCredentialsException(I18n.get("tokenError"));
             }
             Map<String, Object> header = new LinkedHashMap<>(jws.getHeader());
             Map<String, Object> payload = new LinkedHashMap<>(jws.getPayload());
-            UserInfo user = userService.getById((String) payload.get(JwtClaimNames.SUB));
+            String userId = (String) payload.get(JwtClaimNames.SUB);
+            String tokenId = (String) payload.get(JwtClaimNames.JTI);
+            userService.verifyTokenId(userId, tokenId);
+            UserInfo user = userService.getById(userId);
             userService.verifyUser(user);
             payload.put(CLAIM_SCOPE, user.getPermissionIds());
             return new Jwt(token, Instant.ofEpochMilli((Long) payload.get(JwtClaimNames.IAT)),
-                    Instant.ofEpochMilli((Long) payload.get(JwtClaimNames.EXP)), header, payload);
+                    null, header, payload);
         };
     }
 

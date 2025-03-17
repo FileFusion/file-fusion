@@ -2,10 +2,12 @@ package com.github.filefusion.user.service;
 
 import com.github.filefusion.common.HttpException;
 import com.github.filefusion.common.SecurityProperties;
+import com.github.filefusion.constant.RedisAttribute;
 import com.github.filefusion.user.entity.Permission;
 import com.github.filefusion.user.entity.UserInfo;
 import com.github.filefusion.user.entity.UserRole;
 import com.github.filefusion.user.model.UpdateUserModel;
+import com.github.filefusion.user.model.UserTokenModel;
 import com.github.filefusion.user.repository.OrgUserRepository;
 import com.github.filefusion.user.repository.PermissionRepository;
 import com.github.filefusion.user.repository.UserInfoRepository;
@@ -14,8 +16,9 @@ import com.github.filefusion.util.EncryptUtil;
 import com.github.filefusion.util.I18n;
 import com.github.filefusion.util.ULID;
 import io.jsonwebtoken.Jwts;
+import org.redisson.api.RMapCache;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.authentication.*;
@@ -33,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -48,7 +52,7 @@ public class UserService {
     private static final long TOKEN_EXPIRATION = 1000 * 60 * 60 * 24;
     private static final PasswordEncoder PASSWORD_ENCODER = new BCryptPasswordEncoder();
 
-    private final String applicationName;
+    private final RedissonClient redissonClient;
     private final SecurityProperties securityProperties;
     private final UserInfoRepository userRepository;
     private final UserRoleRepository userRoleRepository;
@@ -56,13 +60,13 @@ public class UserService {
     private final PermissionRepository permissionRepository;
 
     @Autowired
-    public UserService(@Value("${spring.application.name}") String applicationName,
+    public UserService(RedissonClient redissonClient,
                        SecurityProperties securityProperties,
                        UserInfoRepository userRepository,
                        UserRoleRepository userRoleRepository,
                        OrgUserRepository orgUserRepository,
                        PermissionRepository permissionRepository) {
-        this.applicationName = applicationName;
+        this.redissonClient = redissonClient;
         this.securityProperties = securityProperties;
         this.userRepository = userRepository;
         this.userRoleRepository = userRoleRepository;
@@ -70,17 +74,20 @@ public class UserService {
         this.permissionRepository = permissionRepository;
     }
 
-    private String getUserToken(String userId) {
-        Date currentTime = new Date();
+    private String getUserToken(String userId, String tokenId, Date currentTime) {
         return TOKEN_HEADER + Jwts.builder()
-                .issuer(applicationName)
-                .issuedAt(currentTime)
-                .notBefore(currentTime)
-                .expiration(new Date(currentTime.getTime() + TOKEN_EXPIRATION))
                 .subject(userId)
-                .id(ULID.randomULID())
+                .id(tokenId)
+                .issuedAt(currentTime)
                 .signWith(securityProperties.getSecret().getPrivateKey(), Jwts.SIG.EdDSA)
                 .compact();
+    }
+
+    public void verifyTokenId(String userId, String tokenId) throws AccountStatusException {
+        RMapCache<String, UserTokenModel> userTokenMap = redissonClient.getMapCache(RedisAttribute.TOKEN_PREFIX + userId);
+        if (userTokenMap.get(tokenId) == null) {
+            throw new CredentialsExpiredException(I18n.get("tokenExpired"));
+        }
     }
 
     public void verifyUser(UserInfo userInfo) throws AccountStatusException {
@@ -98,7 +105,7 @@ public class UserService {
         }
     }
 
-    public String login(UserInfo user) throws AuthenticationException {
+    public String login(UserInfo user, String userAgent, String clientIp) throws AuthenticationException {
         String username = user.getUsername();
         String password = EncryptUtil.blake3(user.getPassword());
         user = userRepository.findByUsername(username)
@@ -107,7 +114,18 @@ public class UserService {
             throw new BadCredentialsException(I18n.get("passwordError"));
         }
         verifyUser(user);
-        return getUserToken(user.getId());
+
+        String tokenId = ULID.randomULID();
+        Date currentTime = new Date();
+        String token = getUserToken(user.getId(), tokenId, currentTime);
+        UserTokenModel userTokenModel = new UserTokenModel();
+        userTokenModel.setUserAgent(userAgent);
+        userTokenModel.setClientIp(clientIp);
+        userTokenModel.setIssuedAt(currentTime);
+        RMapCache<String, UserTokenModel> userTokenMap = redissonClient.getMapCache(RedisAttribute.TOKEN_PREFIX + user.getId());
+        userTokenMap.put(tokenId, userTokenModel, TOKEN_EXPIRATION, TimeUnit.MILLISECONDS);
+
+        return token;
     }
 
     public UserInfo getById(String userId) {
