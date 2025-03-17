@@ -17,12 +17,9 @@ logging:
   file:
     name: ${FF_LOG_DIR:/opt/file_fusion/logs}/log.log
 spring:
-  data:
-    redis:
-      database: ${FF_REDIS_DATABASE:0}
-      host: ${FF_REDIS_HOST:localhost}
-      port: ${FF_REDIS_PORT:6379}
-      password: ${FF_REDIS_PASSWORD:redis}
+  redis:
+    redisson:
+      file: file:${FF_REDIS_CONFIG_FILE:/opt/file_fusion/config/redisson.yml}
   datasource:
     driver-class-name: ${FF_DATASOURCE_DRIVER:org.h2.Driver}
     url: ${FF_DATASOURCE_URL:jdbc:h2:file:/opt/file_fusion/data/db/database;DATABASE_TO_UPPER=FALSE;CASE_INSENSITIVE_IDENTIFIERS=TRUE}
