@@ -19,7 +19,7 @@ logging:
 spring:
   redis:
     redisson:
-      file: file:${FF_REDIS_CONFIG_FILE:/opt/file_fusion/config/redisson.yml}
+      file: ${FF_REDIS_CONFIG_FILE:classpath:config/redisson.yml}
   datasource:
     driver-class-name: ${FF_DATASOURCE_DRIVER:org.h2.Driver}
     url: ${FF_DATASOURCE_URL:jdbc:h2:file:/opt/file_fusion/data/db/database;DATABASE_TO_UPPER=FALSE;CASE_INSENSITIVE_IDENTIFIERS=TRUE}
