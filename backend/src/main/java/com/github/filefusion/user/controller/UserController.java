@@ -13,6 +13,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * UserController
  *
@@ -53,15 +55,26 @@ public class UserController {
     }
 
     /**
+     * get current user permission
+     *
+     * @return user permission
+     */
+    @GetMapping("/current/permission")
+    @PreAuthorize("hasAuthority('user:read')")
+    public List<String> getCurrentUserPermission() {
+        return userService.getUserPermissionIdList(CurrentUser.getId());
+    }
+
+    /**
      * update current user
      *
      * @param user user
      */
     @PutMapping("/current")
     @PreAuthorize("hasAuthority('user:edit')")
-    public void updateCurrentUser(@RequestBody UpdateUserModel user) {
+    public UserInfo updateCurrentUser(@RequestBody UpdateUserModel user) {
         user.setId(CurrentUser.getId());
-        userService.updateCurrentUser(user);
+        return userService.updateCurrentUser(user);
     }
 
     /**
@@ -71,8 +84,8 @@ public class UserController {
      */
     @PutMapping("/current/password")
     @PreAuthorize("hasAuthority('user:edit')")
-    public void updateCurrentUserPassword(@RequestBody UpdateUserPasswordModel updateUserPasswordModel) {
-        userService.updateCurrentUserPassword(CurrentUser.getId(),
+    public UserInfo updateCurrentUserPassword(@RequestBody UpdateUserPasswordModel updateUserPasswordModel) {
+        return userService.updateCurrentUserPassword(CurrentUser.getId(),
                 updateUserPasswordModel.getOriginalPassword(), updateUserPasswordModel.getNewPassword());
     }
 

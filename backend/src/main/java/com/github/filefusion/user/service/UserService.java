@@ -88,7 +88,7 @@ public class UserService {
                 .compact();
     }
 
-    public void verifyUser(UserInfo userInfo) throws AccountStatusException {
+    private void verifyUser(UserInfo userInfo) throws AccountStatusException {
         if (!userInfo.getNonExpired()) {
             throw new AccountExpiredException(I18n.get("userExpired"));
         }
@@ -115,19 +115,16 @@ public class UserService {
         return getUserToken(user.getId(), permissionRepository.findAllByUserId(user.getId()));
     }
 
-    public List<Permission> getUserPermissionList(String userId) {
-        return permissionRepository.findAllByUserId(userId);
-    }
-
     @Cacheable(value = RedisAttribute.CACHE_PREFIX + "users", key = "#userId")
     public UserInfo getById(String userId) {
-        UserInfo user = userRepository.findById(userId).orElseThrow();
-        user.setPermissionIds(permissionRepository.findAllByUserId(user.getId())
-                .stream().map(Permission::getId).toList());
-        return user;
+        return userRepository.findById(userId).orElseThrow();
     }
 
-    public void updateCurrentUser(UpdateUserModel user) {
+    public List<String> getUserPermissionIdList(String userId) {
+        return permissionRepository.findAllByUserId(userId).stream().map(Permission::getId).toList();
+    }
+
+    public UserInfo updateCurrentUser(UpdateUserModel user) {
         UserInfo u = userRepository.findById(user.getId()).orElseThrow();
         u.setId(user.getId());
         u.setName(user.getName());
@@ -143,17 +140,17 @@ public class UserService {
             u.setAreaCode(user.getAreaCode());
             u.setPhone(user.getPhone());
         }
-        userRepository.save(u);
+        return userRepository.save(u);
     }
 
-    public void updateCurrentUserPassword(String userId, String originalPassword, String newPassword) {
+    public UserInfo updateCurrentUserPassword(String userId, String originalPassword, String newPassword) {
         UserInfo u = userRepository.findById(userId).orElseThrow();
         if (!PASSWORD_ENCODER.matches(EncryptUtil.blake3(originalPassword), u.getPassword())) {
             throw new HttpException(I18n.get("originalPasswordError"));
         }
         u.setPassword(PASSWORD_ENCODER.encode(EncryptUtil.blake3(newPassword)));
         u.setEarliestCredentials(LocalDateTime.now());
-        userRepository.save(u);
+        return userRepository.save(u);
     }
 
     public Page<UserInfo> get(PageRequest page, String search) {

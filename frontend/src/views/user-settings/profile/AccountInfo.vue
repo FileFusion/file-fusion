@@ -188,6 +188,7 @@ const { loading: saveProfileLoading, send: doSaveProfile } = useRequest(
     immediate: false
   }
 ).onSuccess(() => {
+  mStore.setUser(profileForm.value);
   window.$msg.success(t('common.saveSuccess'));
 });
 

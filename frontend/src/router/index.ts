@@ -112,6 +112,10 @@ router.beforeEach(async (to: RouteLocationNormalized) => {
   if (!mStore.getUser) {
     const user: any = await window.$http.Get<any>('/user/current');
     mStore.setUser(user);
+    const permissionIds: any = await window.$http.Get<any>(
+      '/user/current/permission'
+    );
+    mStore.setPermissionIds(permissionIds);
   }
   if (
     to.meta.permission &&

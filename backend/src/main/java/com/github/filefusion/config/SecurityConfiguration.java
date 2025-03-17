@@ -96,8 +96,8 @@ public class SecurityConfiguration {
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         Converter<Jwt, Collection<GrantedAuthority>> grantedAuthoritiesConverter = source ->
-                userService.getUserPermissionList(source.getSubject()).stream()
-                        .map(permission -> new SimpleGrantedAuthority(permission.getAuthority()))
+                userService.getUserPermissionIdList(source.getSubject()).stream()
+                        .map(SimpleGrantedAuthority::new)
                         .collect(Collectors.toList());
         JwtAuthenticationConverter authenticationConverter = new JwtAuthenticationConverter();
         authenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
