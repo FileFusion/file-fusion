@@ -6,7 +6,6 @@ import org.springframework.util.StringUtils;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * RequestUtil
@@ -24,25 +23,27 @@ public final class RequestUtil {
             "HTTP_X_FORWARDED_FOR",
             "X-Real-IP"
     );
+    private static final String UNKNOWN = "unknown";
 
     public static String getClientIp(HttpServletRequest request) {
         String ip = IP_HEADERS.stream()
                 .map(request::getHeader)
-                .filter(header -> StringUtils.hasLength(header) && !"unknown".equalsIgnoreCase(header))
+                .filter(header -> StringUtils.hasLength(header) && !UNKNOWN.equalsIgnoreCase(header))
                 .findFirst()
                 .orElse(null);
         if (ip != null && ip.contains(",")) {
             ip = Arrays.stream(ip.split(","))
                     .map(String::trim)
-                    .filter(s -> !s.isEmpty() && !"unknown".equalsIgnoreCase(s))
+                    .filter(s -> !s.isEmpty() && !UNKNOWN.equalsIgnoreCase(s))
                     .findFirst()
                     .orElse(null);
         }
-        return Optional.ofNullable(ip).orElse(request.getRemoteAddr());
+        return ip != null ? ip : request.getRemoteAddr();
     }
 
     public static String getUserAgent(HttpServletRequest request) {
-        return request.getHeader(HttpHeaders.USER_AGENT);
+        String userAgent = request.getHeader(HttpHeaders.USER_AGENT);
+        return userAgent != null ? userAgent : "";
     }
 
 }
