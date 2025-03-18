@@ -8,11 +8,9 @@ import com.github.filefusion.sys_config.entity.SysConfig;
 import com.github.filefusion.sys_config.service.SysConfigService;
 import com.github.filefusion.util.DistributedLock;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -25,17 +23,14 @@ import java.util.List;
 @Component
 public class ClearRecycleBinFileTask {
 
-    private final Duration taskLockTimeout;
     private final DistributedLock distributedLock;
     private final SysConfigService sysConfigService;
     private final FileDataRepository fileDataRepository;
 
     @Autowired
-    public ClearRecycleBinFileTask(@Value("${task.lock-timeout}") Duration taskLockTimeout,
-                                   DistributedLock distributedLock,
+    public ClearRecycleBinFileTask(DistributedLock distributedLock,
                                    SysConfigService sysConfigService,
                                    FileDataRepository fileDataRepository) {
-        this.taskLockTimeout = taskLockTimeout;
         this.distributedLock = distributedLock;
         this.sysConfigService = sysConfigService;
         this.fileDataRepository = fileDataRepository;
@@ -54,7 +49,7 @@ public class ClearRecycleBinFileTask {
             LocalDateTime cutoffDate = LocalDateTime.now().minusDays(recycleBinRetentionDays)
                     .withHour(0).withMinute(0).withSecond(0).withNano(0);
             List<FileData> fileList = fileDataRepository.findAllByDeletedTrueAndDeletedDateBefore(cutoffDate);
-        }, taskLockTimeout);
+        }, null);
     }
 
 }

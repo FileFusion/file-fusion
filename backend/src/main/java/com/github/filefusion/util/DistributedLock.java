@@ -28,31 +28,31 @@ public class DistributedLock {
         this.redissonClient = redissonClient;
     }
 
-    public void tryLock(RedisAttribute.LockType lockType, String key, Runnable task, Duration lockTimeout) {
-        if (lockType == null || !StringUtils.hasLength(key) || lockTimeout == null || lockTimeout.isNegative()) {
+    public void tryLock(RedisAttribute.LockType lockType, String key, Runnable task, Duration waitLockTimeout) {
+        if (lockType == null || !StringUtils.hasLength(key)) {
             return;
         }
         RLock lock = redissonClient.getLock(RedisAttribute.LOCK_PREFIX + lockType + RedisAttribute.SEPARATOR + key);
-        tryLock(lock, task, lockTimeout);
+        tryLock(lock, task, waitLockTimeout);
     }
 
-    public void tryMultiLock(RedisAttribute.LockType lockType, List<String> keyList, Runnable task, Duration lockTimeout) {
-        if (lockType == null || CollectionUtils.isEmpty(keyList) || lockTimeout == null || lockTimeout.isNegative()) {
+    public void tryMultiLock(RedisAttribute.LockType lockType, List<String> keyList, Runnable task, Duration waitLockTimeout) {
+        if (lockType == null || CollectionUtils.isEmpty(keyList)) {
             return;
         }
         RLock[] locks = keyList.stream()
                 .map(k -> RedisAttribute.LOCK_PREFIX + lockType + RedisAttribute.SEPARATOR + k)
                 .map(redissonClient::getLock).toArray(RLock[]::new);
         RLock multiLock = redissonClient.getMultiLock(locks);
-        tryLock(multiLock, task, lockTimeout);
+        tryLock(multiLock, task, waitLockTimeout);
     }
 
-    private void tryLock(RLock lock, Runnable task, Duration lockTimeout) {
+    private void tryLock(RLock lock, Runnable task, Duration waitLockTimeout) {
         boolean isLockAcquired = false;
         try {
-            isLockAcquired = lock.tryLock(lockTimeout.toMillis(), TimeUnit.MILLISECONDS);
+            isLockAcquired = waitLockTimeout == null ? lock.tryLock() : lock.tryLock(waitLockTimeout.toMillis(), TimeUnit.MILLISECONDS);
             if (!isLockAcquired) {
-                throw new RuntimeException();
+                return;
             }
             task.run();
         } catch (InterruptedException e) {

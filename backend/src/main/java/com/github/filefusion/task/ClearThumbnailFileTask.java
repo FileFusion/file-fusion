@@ -9,7 +9,6 @@ import com.github.filefusion.util.DistributedLock;
 import com.github.filefusion.util.file.FileUtil;
 import jakarta.annotation.Nonnull;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -20,7 +19,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,17 +37,14 @@ public class ClearThumbnailFileTask {
 
     private static final int BATCH_FILE_SIZE = 1000;
 
-    private final Duration taskLockTimeout;
     private final DistributedLock distributedLock;
     private final FileProperties fileProperties;
     private final FileDataRepository fileDataRepository;
 
     @Autowired
-    public ClearThumbnailFileTask(@Value("${task.lock-timeout}") Duration taskLockTimeout,
-                                  DistributedLock distributedLock,
+    public ClearThumbnailFileTask(DistributedLock distributedLock,
                                   FileProperties fileProperties,
                                   FileDataRepository fileDataRepository) {
-        this.taskLockTimeout = taskLockTimeout;
         this.distributedLock = distributedLock;
         this.fileProperties = fileProperties;
         this.fileDataRepository = fileDataRepository;
@@ -86,7 +81,7 @@ public class ClearThumbnailFileTask {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        }, taskLockTimeout);
+        }, null);
     }
 
     public void clearThumbnail(Map<String, Path> thumbnailMap) throws IOException {
