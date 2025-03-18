@@ -122,10 +122,9 @@ public class UserService {
 
     public String login(UserInfo user, String userAgent, String clientIp) throws AuthenticationException {
         String username = user.getUsername();
-        String password = EncryptUtil.blake3(user.getPassword());
         user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new BadCredentialsException(I18n.get("invalidUsernamePassword")));
-        if (!PASSWORD_ENCODER.matches(password, user.getPassword())) {
+        if (!PASSWORD_ENCODER.matches(EncryptUtil.blake3(user.getPassword()), user.getPassword())) {
             throw new BadCredentialsException(I18n.get("invalidUsernamePassword"));
         }
         verifyUserStatus(user);
