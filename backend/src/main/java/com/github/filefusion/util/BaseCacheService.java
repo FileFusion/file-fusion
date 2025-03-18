@@ -18,8 +18,8 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public abstract class BaseCacheService<T extends BaseEntity> {
 
-    private static final Duration CACHE_EXPIRATION = Duration.ofMinutes(30);
-    private static final Duration NULL_CACHE_EXPIRATION = Duration.ofSeconds(30);
+    private static final Duration CACHE_EXPIRATION = Duration.ofHours(2);
+    private static final Duration NULL_CACHE_EXPIRATION = Duration.ofMinutes(2);
 
     protected final RedissonClient redissonClient;
     protected final DistributedLock distributedLock;
