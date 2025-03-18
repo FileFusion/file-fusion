@@ -142,7 +142,7 @@ public class SecurityConfiguration {
                     String clientIp = RequestUtil.getClientIp(request);
                     userService.verifyToken(userId, jwt.getId(), userAgent, clientIp);
 
-                    UserInfo user = userService.getById(userId);
+                    UserInfo user = userService.getByIdFromCache(userId);
                     userService.verifyUserStatus(user);
 
                     List<SimpleGrantedAuthority> grantedAuthorityList = user.getPermissionIds().stream().map(SimpleGrantedAuthority::new).toList();

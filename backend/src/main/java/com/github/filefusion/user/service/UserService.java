@@ -3,13 +3,11 @@ package com.github.filefusion.user.service;
 import com.github.filefusion.common.HttpException;
 import com.github.filefusion.common.SecurityProperties;
 import com.github.filefusion.constant.RedisAttribute;
-import com.github.filefusion.user.entity.Permission;
 import com.github.filefusion.user.entity.UserInfo;
 import com.github.filefusion.user.entity.UserRole;
 import com.github.filefusion.user.model.UpdateUserModel;
 import com.github.filefusion.user.model.UserTokenModel;
 import com.github.filefusion.user.repository.OrgUserRepository;
-import com.github.filefusion.user.repository.PermissionRepository;
 import com.github.filefusion.user.repository.UserInfoRepository;
 import com.github.filefusion.user.repository.UserRoleRepository;
 import com.github.filefusion.util.EncryptUtil;
@@ -23,7 +21,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -59,7 +56,7 @@ public class UserService {
     private final UserInfoRepository userRepository;
     private final UserRoleRepository userRoleRepository;
     private final OrgUserRepository orgUserRepository;
-    private final PermissionRepository permissionRepository;
+    private final UserCacheService userCacheService;
 
     @Autowired
     public UserService(RedissonClient redissonClient,
@@ -67,13 +64,13 @@ public class UserService {
                        UserInfoRepository userRepository,
                        UserRoleRepository userRoleRepository,
                        OrgUserRepository orgUserRepository,
-                       PermissionRepository permissionRepository) {
+                       UserCacheService userCacheService) {
         this.redissonClient = redissonClient;
         this.securityProperties = securityProperties;
         this.userRepository = userRepository;
         this.userRoleRepository = userRoleRepository;
         this.orgUserRepository = orgUserRepository;
-        this.permissionRepository = permissionRepository;
+        this.userCacheService = userCacheService;
     }
 
     private String generateUserToken(String userId, String userAgent, String clientIp) {
@@ -132,11 +129,8 @@ public class UserService {
         return generateUserToken(user.getId(), userAgent, clientIp);
     }
 
-    public UserInfo getById(String userId) {
-        UserInfo user = userRepository.findById(userId)
-                .orElseThrow(() -> new UsernameNotFoundException(I18n.get("invalidUsernamePassword")));
-        user.setPermissionIds(permissionRepository.findAllByUserId(userId).stream().map(Permission::getId).toList());
-        return user;
+    public UserInfo getByIdFromCache(String userId) {
+        return userCacheService.getByIdFromCache(userId);
     }
 
     public UserInfo updateCurrentUser(UpdateUserModel user) {
@@ -155,7 +149,9 @@ public class UserService {
             u.setAreaCode(user.getAreaCode());
             u.setPhone(user.getPhone());
         }
-        return userRepository.save(u);
+        userRepository.save(u);
+        userCacheService.deleteCache(u.getId());
+        return u;
     }
 
     public UserInfo updateCurrentUserPassword(String userId, String originalPassword, String newPassword) {
@@ -165,7 +161,9 @@ public class UserService {
         }
         u.setPassword(PASSWORD_ENCODER.encode(EncryptUtil.blake3(newPassword)));
         u.setEarliestCredentials(LocalDateTime.now());
-        return userRepository.save(u);
+        userRepository.save(u);
+        userCacheService.deleteCache(u.getId());
+        return u;
     }
 
     public Page<UserInfo> get(PageRequest page, String search) {
@@ -234,7 +232,9 @@ public class UserService {
             saveUserRoles(oldUser.getId(), user.getRoleIds());
         }
 
-        return userRepository.save(oldUser);
+        userRepository.save(oldUser);
+        userCacheService.deleteCache(oldUser.getId());
+        return oldUser;
     }
 
     private void saveUserRoles(String userId, List<String> roleIds) {
@@ -264,6 +264,7 @@ public class UserService {
         orgUserRepository.deleteAllByUserId(userId);
         userRoleRepository.deleteAllByUserId(userId);
         userRepository.deleteById(userId);
+        userCacheService.deleteCache(userId);
     }
 
 }

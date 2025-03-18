@@ -53,7 +53,7 @@ public class UserController {
     @GetMapping("/current")
     @PreAuthorize("hasAuthority('user:read')")
     public UserInfo getCurrentUser() {
-        return userService.getById(CurrentUser.getId());
+        return userService.getByIdFromCache(CurrentUser.getId());
     }
 
     /**

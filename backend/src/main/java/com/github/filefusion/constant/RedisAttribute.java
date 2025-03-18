@@ -16,7 +16,8 @@ public final class RedisAttribute {
 
     public enum LockType {
         task,
-        file
+        file,
+        cache
     }
 
 }
