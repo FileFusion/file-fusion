@@ -36,8 +36,10 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.util.UrlPathHelper;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -125,6 +127,9 @@ public class SecurityConfiguration {
     }
 
     private final class AdditionalCheckFilter extends OncePerRequestFilter {
+        private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
+        private static final UrlPathHelper PATH_HELPER = new UrlPathHelper();
+
         @Override
         protected void doFilterInternal(@Nonnull HttpServletRequest request, @Nonnull HttpServletResponse response, @Nonnull FilterChain filterChain) throws ServletException, IOException {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -148,6 +153,12 @@ public class SecurityConfiguration {
                 }
             }
             filterChain.doFilter(request, response);
+        }
+
+        @Override
+        protected boolean shouldNotFilter(@Nonnull HttpServletRequest request) {
+            String path = PATH_HELPER.getLookupPathForRequest(request);
+            return !PATH_MATCHER.match(WebConfig.CONTEXT_PATH + "/**", path);
         }
     }
 
