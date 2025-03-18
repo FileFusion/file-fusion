@@ -31,7 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
@@ -77,7 +77,7 @@ public class UserService {
     }
 
     private String generateUserToken(String userId, String userAgent, String clientIp) {
-        Date currentTime = Date.from(Clock.systemUTC().instant());
+        Date currentTime = Date.from(Instant.now());
         String tokenId = ULID.randomULID();
         UserTokenModel userTokenModel = new UserTokenModel();
         userTokenModel.setUserAgent(userAgent);
@@ -122,9 +122,10 @@ public class UserService {
 
     public String login(UserInfo user, String userAgent, String clientIp) throws AuthenticationException {
         String username = user.getUsername();
+        String password = EncryptUtil.blake3(user.getPassword());
         user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new BadCredentialsException(I18n.get("invalidUsernamePassword")));
-        if (!PASSWORD_ENCODER.matches(EncryptUtil.blake3(user.getPassword()), user.getPassword())) {
+        if (!PASSWORD_ENCODER.matches(password, user.getPassword())) {
             throw new BadCredentialsException(I18n.get("invalidUsernamePassword"));
         }
         verifyUserStatus(user);
