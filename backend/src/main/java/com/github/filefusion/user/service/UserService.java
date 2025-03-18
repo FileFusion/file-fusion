@@ -23,7 +23,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -83,10 +82,10 @@ public class UserService {
                 .compact();
     }
 
-    public void verifyTokenId(String userId, String tokenId) throws AccountStatusException {
+    public void verifyToken(String userId, String tokenId) throws AccountStatusException {
         RMapCache<String, UserTokenModel> userTokenMap = redissonClient.getMapCache(RedisAttribute.TOKEN_PREFIX + userId);
-        if (userTokenMap.get(tokenId) == null) {
-            throw new CredentialsExpiredException(I18n.get("tokenExpired"));
+        if (!userTokenMap.containsKey(tokenId)) {
+            throw new CredentialsExpiredException(I18n.get("certificationExpired"));
         }
     }
 
@@ -109,9 +108,9 @@ public class UserService {
         String username = user.getUsername();
         String password = EncryptUtil.blake3(user.getPassword());
         user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException(I18n.get("usernameNotFound")));
+                .orElseThrow(() -> new BadCredentialsException(I18n.get("invalidCredentials")));
         if (!PASSWORD_ENCODER.matches(password, user.getPassword())) {
-            throw new BadCredentialsException(I18n.get("passwordError"));
+            throw new BadCredentialsException(I18n.get("invalidCredentials"));
         }
         verifyUser(user);
 

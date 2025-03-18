@@ -118,13 +118,13 @@ public class SecurityConfiguration {
                         .verifyWith(securityProperties.getSecret().getPublicKey()).build()
                         .parseSignedClaims(token);
             } catch (Exception e) {
-                throw new BadCredentialsException(I18n.get("tokenError"));
+                throw new BadCredentialsException(I18n.get("badCredentials"));
             }
             Map<String, Object> header = new LinkedHashMap<>(jws.getHeader());
             Map<String, Object> payload = new LinkedHashMap<>(jws.getPayload());
             String userId = (String) payload.get(JwtClaimNames.SUB);
             String tokenId = (String) payload.get(JwtClaimNames.JTI);
-            userService.verifyTokenId(userId, tokenId);
+            userService.verifyToken(userId, tokenId);
             UserInfo user = userService.getById(userId);
             userService.verifyUser(user);
             payload.put(CLAIM_SCOPE, user.getPermissionIds());
