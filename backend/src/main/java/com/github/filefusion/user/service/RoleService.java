@@ -4,6 +4,7 @@ import com.github.filefusion.common.HttpException;
 import com.github.filefusion.user.entity.Permission;
 import com.github.filefusion.user.entity.Role;
 import com.github.filefusion.user.entity.RolePermission;
+import com.github.filefusion.user.entity.UserRole;
 import com.github.filefusion.user.repository.PermissionRepository;
 import com.github.filefusion.user.repository.RolePermissionRepository;
 import com.github.filefusion.user.repository.RoleRepository;
@@ -31,16 +32,19 @@ public class RoleService {
     private final RolePermissionRepository rolePermissionRepository;
     private final UserRoleRepository userRoleRepository;
     private final PermissionRepository permissionRepository;
+    private final UserCacheService userCacheService;
 
     @Autowired
     public RoleService(RoleRepository roleRepository,
                        RolePermissionRepository rolePermissionRepository,
                        UserRoleRepository userRoleRepository,
-                       PermissionRepository permissionRepository) {
+                       PermissionRepository permissionRepository,
+                       UserCacheService userCacheService) {
         this.roleRepository = roleRepository;
         this.rolePermissionRepository = rolePermissionRepository;
         this.userRoleRepository = userRoleRepository;
         this.permissionRepository = permissionRepository;
+        this.userCacheService = userCacheService;
     }
 
     public List<Role> get() {
@@ -75,6 +79,7 @@ public class RoleService {
         if (!role.getSystemRole()) {
             saveRolePermission(role.getId(), permissionIds);
         }
+        updateUserCache(role.getId());
         return role;
     }
 
@@ -103,11 +108,19 @@ public class RoleService {
         rolePermissionRepository.deleteAllByRoleId(roleId);
         userRoleRepository.deleteAllByRoleId(roleId);
         roleRepository.deleteById(roleId);
+        updateUserCache(roleId);
     }
 
     public List<String> getRolePermission(String roleId) {
         List<Permission> permissions = permissionRepository.findAllByRoleId(roleId);
         return permissions.stream().map(Permission::getId).toList();
+    }
+
+    private void updateUserCache(String roleId) {
+        List<UserRole> userRoleList = userRoleRepository.findAllByRoleId(roleId);
+        for (UserRole userRole : userRoleList) {
+            userCacheService.deleteCache(userRole.getUserId());
+        }
     }
 
 }

@@ -40,4 +40,12 @@ public interface UserRoleRepository extends JpaRepository<UserRole, String> {
      */
     List<UserRole> findAllByUserIdIn(List<String> userIds);
 
+    /**
+     * findAllByRoleId
+     *
+     * @param roleId role id
+     * @return user role list
+     */
+    List<UserRole> findAllByRoleId(String roleId);
+
 }
