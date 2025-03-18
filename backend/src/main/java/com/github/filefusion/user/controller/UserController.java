@@ -6,11 +6,11 @@ import com.github.filefusion.user.model.UpdateUserModel;
 import com.github.filefusion.user.model.UpdateUserPasswordModel;
 import com.github.filefusion.user.service.UserService;
 import com.github.filefusion.util.CurrentUser;
+import com.github.filefusion.util.RequestUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpHeaders;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
@@ -40,8 +40,9 @@ public class UserController {
      */
     @PostMapping("/_login")
     public String login(@RequestBody UserInfo user, HttpServletRequest request) {
-        String userAgent = request.getHeader(HttpHeaders.USER_AGENT);
-        return userService.login(user, userAgent, userAgent);
+        String userAgent = RequestUtil.getUserAgent(request);
+        String clientIp = RequestUtil.getClientIp(request);
+        return userService.login(user, userAgent, clientIp);
     }
 
     /**

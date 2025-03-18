@@ -4,14 +4,18 @@ import com.github.filefusion.common.SecurityProperties;
 import com.github.filefusion.user.entity.UserInfo;
 import com.github.filefusion.user.service.UserService;
 import com.github.filefusion.util.I18n;
+import com.github.filefusion.util.RequestUtil;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
+import jakarta.annotation.Nonnull;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.convert.converter.Converter;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -19,19 +23,26 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimNames;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.io.IOException;
 import java.time.Instant;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  * SecurityConfiguration
@@ -43,8 +54,6 @@ import java.util.stream.Collectors;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfiguration {
-
-    private static final String CLAIM_SCOPE = "scope";
 
     private final SecurityProperties securityProperties;
     private final WebServerFactory webServerFactory;
@@ -78,7 +87,7 @@ public class SecurityConfiguration {
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
                             throw accessDeniedException;
                         })
-                );
+                ).addFilterAfter(new AdditionalCheckFilter(), BearerTokenAuthenticationFilter.class);
         configureWhitelistAccess(http);
         return http.build();
     }
@@ -99,38 +108,46 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public JwtAuthenticationConverter jwtAuthenticationConverter() {
-        Converter<Jwt, Collection<GrantedAuthority>> grantedAuthoritiesConverter = source -> {
-            List<String> permissionIds = source.getClaim(CLAIM_SCOPE);
-            return permissionIds.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList());
-        };
-        JwtAuthenticationConverter authenticationConverter = new JwtAuthenticationConverter();
-        authenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
-        return authenticationConverter;
-    }
-
-    @Bean
     public JwtDecoder jwtDecoder() {
         return token -> {
-            Jws<Claims> jws;
             try {
-                jws = Jwts.parser()
+                Jws<Claims> jws = Jwts.parser()
                         .verifyWith(securityProperties.getSecret().getPublicKey()).build()
                         .parseSignedClaims(token);
+                Map<String, Object> payload = jws.getPayload();
+                return new Jwt(token, Instant.ofEpochMilli((Long) payload.get(JwtClaimNames.IAT)),
+                        null, jws.getHeader(), payload);
             } catch (Exception e) {
-                throw new BadCredentialsException(I18n.get("badCredentials"));
+                throw new InvalidBearerTokenException(I18n.get("badCredentials"));
             }
-            Map<String, Object> header = new LinkedHashMap<>(jws.getHeader());
-            Map<String, Object> payload = new LinkedHashMap<>(jws.getPayload());
-            String userId = (String) payload.get(JwtClaimNames.SUB);
-            String tokenId = (String) payload.get(JwtClaimNames.JTI);
-            userService.verifyToken(userId, tokenId);
-            UserInfo user = userService.getById(userId);
-            userService.verifyUser(user);
-            payload.put(CLAIM_SCOPE, user.getPermissionIds());
-            return new Jwt(token, Instant.ofEpochMilli((Long) payload.get(JwtClaimNames.IAT)),
-                    null, header, payload);
         };
+    }
+
+    private final class AdditionalCheckFilter extends OncePerRequestFilter {
+        @Override
+        protected void doFilterInternal(@Nonnull HttpServletRequest request, @Nonnull HttpServletResponse response, @Nonnull FilterChain filterChain) throws ServletException, IOException {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.isAuthenticated() && authentication instanceof JwtAuthenticationToken) {
+                try {
+                    Jwt jwt = (Jwt) authentication.getPrincipal();
+                    String userId = jwt.getSubject();
+
+                    String userAgent = RequestUtil.getUserAgent(request);
+                    String clientIp = RequestUtil.getClientIp(request);
+                    userService.verifyToken(userId, jwt.getId(), userAgent, clientIp);
+
+                    UserInfo user = userService.getById(userId);
+                    userService.verifyUserStatus(user);
+
+                    List<SimpleGrantedAuthority> grantedAuthorityList = user.getPermissionIds().stream().map(SimpleGrantedAuthority::new).toList();
+                    SecurityContextHolder.getContext().setAuthentication(new JwtAuthenticationToken(jwt, grantedAuthorityList));
+                } catch (AuthenticationException e) {
+                    SecurityContextHolder.clearContext();
+                    throw e;
+                }
+            }
+            filterChain.doFilter(request, response);
+        }
     }
 
 }

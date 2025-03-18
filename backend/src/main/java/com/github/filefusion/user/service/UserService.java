@@ -23,6 +23,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
@@ -48,7 +50,8 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private static final String TOKEN_HEADER = "Bearer ";
-    private static final long TOKEN_EXPIRATION = 1000 * 60 * 60 * 24;
+    private static final long TOKEN_EXPIRATION = 1000 * 60 * 60 * 24 * 7;
+    private static final long TOKEN_RENEWAL_THRESHOLD = 1000 * 60 * 60 * 24;
     private static final PasswordEncoder PASSWORD_ENCODER = new BCryptPasswordEncoder();
 
     private final RedissonClient redissonClient;
@@ -73,7 +76,15 @@ public class UserService {
         this.permissionRepository = permissionRepository;
     }
 
-    private String getUserToken(String userId, String tokenId, Date currentTime) {
+    private String generateUserToken(String userId, String userAgent, String clientIp) {
+        Date currentTime = Date.from(Clock.systemUTC().instant());
+        String tokenId = ULID.randomULID();
+        UserTokenModel userTokenModel = new UserTokenModel();
+        userTokenModel.setUserAgent(userAgent);
+        userTokenModel.setClientIp(clientIp);
+        userTokenModel.setIssuedAt(currentTime);
+        RMapCache<String, UserTokenModel> userTokenMap = redissonClient.getMapCache(RedisAttribute.TOKEN_PREFIX + userId);
+        userTokenMap.put(tokenId, userTokenModel, TOKEN_EXPIRATION, TimeUnit.MILLISECONDS);
         return TOKEN_HEADER + Jwts.builder()
                 .subject(userId)
                 .id(tokenId)
@@ -82,14 +93,22 @@ public class UserService {
                 .compact();
     }
 
-    public void verifyToken(String userId, String tokenId) throws AccountStatusException {
+    public void verifyToken(String userId, String tokenId, String userAgent, String clientIp) throws AuthenticationException {
         RMapCache<String, UserTokenModel> userTokenMap = redissonClient.getMapCache(RedisAttribute.TOKEN_PREFIX + userId);
-        if (!userTokenMap.containsKey(tokenId)) {
+        UserTokenModel userToken = userTokenMap.get(tokenId);
+        if (userToken == null) {
             throw new CredentialsExpiredException(I18n.get("certificationExpired"));
+        }
+        if (!userToken.getUserAgent().equals(userAgent)) {
+            throw new CredentialsExpiredException(I18n.get("certificationExpired"));
+        }
+        if (userTokenMap.remainTimeToLive(tokenId) < TOKEN_RENEWAL_THRESHOLD) {
+            userToken.setClientIp(clientIp);
+            userTokenMap.put(tokenId, userToken, TOKEN_EXPIRATION, TimeUnit.MILLISECONDS);
         }
     }
 
-    public void verifyUser(UserInfo userInfo) throws AccountStatusException {
+    public void verifyUserStatus(UserInfo userInfo) throws AccountStatusException {
         if (!userInfo.getNonExpired()) {
             throw new AccountExpiredException(I18n.get("userExpired"));
         }
@@ -108,27 +127,17 @@ public class UserService {
         String username = user.getUsername();
         String password = EncryptUtil.blake3(user.getPassword());
         user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new BadCredentialsException(I18n.get("invalidCredentials")));
+                .orElseThrow(() -> new BadCredentialsException(I18n.get("invalidUsernamePassword")));
         if (!PASSWORD_ENCODER.matches(password, user.getPassword())) {
-            throw new BadCredentialsException(I18n.get("invalidCredentials"));
+            throw new BadCredentialsException(I18n.get("invalidUsernamePassword"));
         }
-        verifyUser(user);
-
-        String tokenId = ULID.randomULID();
-        Date currentTime = new Date();
-        String token = getUserToken(user.getId(), tokenId, currentTime);
-        UserTokenModel userTokenModel = new UserTokenModel();
-        userTokenModel.setUserAgent(userAgent);
-        userTokenModel.setClientIp(clientIp);
-        userTokenModel.setIssuedAt(currentTime);
-        RMapCache<String, UserTokenModel> userTokenMap = redissonClient.getMapCache(RedisAttribute.TOKEN_PREFIX + user.getId());
-        userTokenMap.put(tokenId, userTokenModel, TOKEN_EXPIRATION, TimeUnit.MILLISECONDS);
-
-        return token;
+        verifyUserStatus(user);
+        return generateUserToken(user.getId(), userAgent, clientIp);
     }
 
     public UserInfo getById(String userId) {
-        UserInfo user = userRepository.findById(userId).orElseThrow();
+        UserInfo user = userRepository.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException(I18n.get("invalidUsernamePassword")));
         user.setPermissionIds(permissionRepository.findAllByUserId(userId).stream().map(Permission::getId).toList());
         return user;
     }
