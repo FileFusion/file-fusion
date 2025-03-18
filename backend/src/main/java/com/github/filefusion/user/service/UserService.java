@@ -96,10 +96,7 @@ public class UserService {
     public void verifyToken(String userId, String tokenId, String userAgent, String clientIp) throws AuthenticationException {
         RMapCache<String, UserTokenModel> userTokenMap = redissonClient.getMapCache(RedisAttribute.TOKEN_PREFIX + userId);
         UserTokenModel userToken = userTokenMap.get(tokenId);
-        if (userToken == null) {
-            throw new CredentialsExpiredException(I18n.get("certificationExpired"));
-        }
-        if (!userToken.getUserAgent().equals(userAgent)) {
+        if (userToken == null || !userToken.getUserAgent().equals(userAgent)) {
             throw new CredentialsExpiredException(I18n.get("certificationExpired"));
         }
         if (userTokenMap.remainTimeToLive(tokenId) < TOKEN_RENEWAL_THRESHOLD) {

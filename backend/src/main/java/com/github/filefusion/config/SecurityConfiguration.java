@@ -7,6 +7,7 @@ import com.github.filefusion.util.I18n;
 import com.github.filefusion.util.RequestUtil;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import jakarta.annotation.Nonnull;
 import jakarta.servlet.FilterChain;
@@ -58,6 +59,7 @@ public class SecurityConfiguration {
     private final SecurityProperties securityProperties;
     private final WebServerFactory webServerFactory;
     private final UserService userService;
+    private final JwtParser jwtParser;
 
     @Autowired
     public SecurityConfiguration(SecurityProperties securityProperties,
@@ -66,6 +68,7 @@ public class SecurityConfiguration {
         this.securityProperties = securityProperties;
         this.webServerFactory = webServerFactory;
         this.userService = userService;
+        this.jwtParser = Jwts.parser().verifyWith(securityProperties.getSecret().getPublicKey()).build();
     }
 
     private static String buildFullPath(String path) {
@@ -111,9 +114,7 @@ public class SecurityConfiguration {
     public JwtDecoder jwtDecoder() {
         return token -> {
             try {
-                Jws<Claims> jws = Jwts.parser()
-                        .verifyWith(securityProperties.getSecret().getPublicKey()).build()
-                        .parseSignedClaims(token);
+                Jws<Claims> jws = jwtParser.parseSignedClaims(token);
                 Map<String, Object> payload = jws.getPayload();
                 return new Jwt(token, Instant.ofEpochMilli((Long) payload.get(JwtClaimNames.IAT)),
                         null, jws.getHeader(), payload);
