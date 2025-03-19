@@ -343,7 +343,7 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
       sorter: true,
       sortOrder: fileTableSorter.value.size,
       render: (row: any) => {
-        if (row.type === 'FOLDER') {
+        if (row.mimeType === 'custom/folder') {
           return '-';
         }
         return formatFileSize(row.size);
