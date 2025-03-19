@@ -142,9 +142,9 @@ public class FileDataService {
         FileData file = fileDataRepository.findFirstByUserIdAndId(userId, id)
                 .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
         List<FileData> childrenList = findAllChildren(file.getId());
-        List<String> lockKeyList = childrenList.stream()
+        LinkedList<String> lockKeyList = childrenList.stream()
                 .map(child -> userId + RedisAttribute.SEPARATOR + child.getPath())
-                .collect(Collectors.toList());
+                .collect(Collectors.toCollection(LinkedList::new));
         lockKeyList.addFirst(userId + RedisAttribute.SEPARATOR + file.getPath());
         distributedLock.tryMultiLock(RedisAttribute.LockType.file, lockKeyList, () -> {
             SysConfig config = sysConfigService.get(SysConfigKey.RECYCLE_BIN);
@@ -158,31 +158,37 @@ public class FileDataService {
 
     private void batchRecycle(FileData file, List<FileData> childrenList) {
         LocalDateTime deletedDate = LocalDateTime.now();
-        childrenList.forEach(child -> {
-            child.setDeleted(true);
-            child.setDeletedDate(deletedDate);
-        });
         file.setParentId(FileAttribute.RECYCLE_BIN_ROOT);
-        file.setDeleted(true);
-        file.setDeletedDate(deletedDate);
-        childrenList.addFirst(file);
-        fileDataRepository.saveAll(childrenList);
+        List<FileData> allFiles = Stream.concat(Stream.of(file), childrenList.stream())
+                .parallel().peek(f -> {
+                    f.setDeleted(true);
+                    f.setDeletedDate(deletedDate);
+                }).toList();
+        fileDataRepository.saveAll(allFiles);
     }
 
     private void batchDelete(FileData file, List<FileData> childrenList) {
-        childrenList.addFirst(file);
-        List<String> hashList = childrenList.stream().map(FileData::getHashValue)
-                .filter(StringUtils::hasLength).toList();
-        List<FileHashUsageCountModel> fileHashUsageCountList = fileDataRepository.countByHashValueList(hashList);
-        List<Path> deleteHashPathList = fileHashUsageCountList.stream()
-                .filter(hashUsage -> hashUsage.getCount() == null || hashUsage.getCount() <= 1)
-                .map(hashUsage -> FileUtil.getHashPath(fileProperties.getDir(), hashUsage.getHashValue())).toList();
-        try {
-            FileUtil.delete(deleteHashPathList);
-        } catch (FileUtil.FileDeletionFailedException e) {
-            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileDeleteFailed"));
+        List<FileData> allFiles = new ArrayList<>(childrenList.size() + 1);
+        allFiles.add(file);
+        allFiles.addAll(childrenList);
+        fileDataRepository.deleteAllInBatch(allFiles);
+        List<String> hashList = allFiles.stream().map(FileData::getHashValue)
+                .filter(StringUtils::hasLength).distinct().toList();
+        if (!hashList.isEmpty()) {
+            Map<String, Long> hashCounts = fileDataRepository.countByHashValueList(hashList)
+                    .stream().collect(Collectors.toMap(
+                            FileHashUsageCountModel::getHashValue,
+                            FileHashUsageCountModel::getCount
+                    ));
+            List<Path> deletePaths = hashList.parallelStream()
+                    .filter(hash -> hashCounts.getOrDefault(hash, 0L) <= 1)
+                    .map(hash -> FileUtil.getHashPath(fileProperties.getDir(), hash)).toList();
+            try {
+                FileUtil.delete(deletePaths);
+            } catch (FileUtil.FileDeletionFailedException e) {
+                throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileDeleteFailed"));
+            }
         }
-        fileDataRepository.deleteAll(childrenList);
     }
 
     public void createFolder(String userId, String parentId, String name) {
