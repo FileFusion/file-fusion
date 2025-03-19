@@ -23,6 +23,8 @@ import java.util.List;
 @Component
 public class ClearRecycleBinFileTask {
 
+    private static final String LOCK_KEY = "clearRecycleBinFileTask";
+
     private final DistributedLock distributedLock;
     private final SysConfigService sysConfigService;
     private final FileDataRepository fileDataRepository;
@@ -38,7 +40,7 @@ public class ClearRecycleBinFileTask {
 
     @Scheduled(cron = "0 0 * * * ?")
     public void clearRecycleBinFileTask() {
-        distributedLock.tryLock(RedisAttribute.LockType.task, "clearRecycleBinFileTask", () -> {
+        distributedLock.tryLock(RedisAttribute.LockType.task, LOCK_KEY, () -> {
             SysConfig recycleBinConfig = sysConfigService.get(SysConfigKey.RECYCLE_BIN);
             SysConfig recycleBinRetentionDaysConfig = sysConfigService.get(SysConfigKey.RECYCLE_BIN_RETENTION_DAYS);
             boolean recycleBin = Boolean.parseBoolean(recycleBinConfig.getConfigValue());

@@ -11,6 +11,7 @@ import org.springframework.http.MediaType;
 public final class FileAttribute {
 
     public static final String PARENT_ROOT = "root";
+    public static final String RECYCLE_BIN_ROOT = "recycle_bin";
     public static final String SEPARATOR = "/";
     public static final String DOWNLOAD_ZIP_NAME = "download.zip";
     public static final String DOWNLOAD_THUMBNAIL_NAME = "thumbnail.png";

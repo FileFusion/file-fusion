@@ -6,6 +6,7 @@ import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.constant.RedisAttribute;
 import com.github.filefusion.constant.SysConfigKey;
 import com.github.filefusion.file.entity.FileData;
+import com.github.filefusion.file.model.FileHashUsageCountModel;
 import com.github.filefusion.file.repository.FileDataRepository;
 import com.github.filefusion.sys_config.entity.SysConfig;
 import com.github.filefusion.sys_config.service.SysConfigService;
@@ -140,27 +141,48 @@ public class FileDataService {
     public void recycleOrDelete(String userId, String id) {
         FileData file = fileDataRepository.findFirstByUserIdAndId(userId, id)
                 .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
-        List<FileData> allList = findAllChildren(file.getId());
-        allList.addFirst(file);
-        SysConfig config = sysConfigService.get(SysConfigKey.RECYCLE_BIN);
-        if (Boolean.parseBoolean(config.getConfigValue())) {
-            batchRecycle(allList);
-        } else {
-            batchDelete(allList);
-        }
+        List<FileData> childrenList = findAllChildren(file.getId());
+        List<String> lockKeyList = childrenList.stream()
+                .map(child -> userId + RedisAttribute.SEPARATOR + child.getPath())
+                .collect(Collectors.toList());
+        lockKeyList.addFirst(userId + RedisAttribute.SEPARATOR + file.getPath());
+        distributedLock.tryMultiLock(RedisAttribute.LockType.file, lockKeyList, () -> {
+            SysConfig config = sysConfigService.get(SysConfigKey.RECYCLE_BIN);
+            if (Boolean.parseBoolean(config.getConfigValue())) {
+                batchRecycle(file, childrenList);
+            } else {
+                batchDelete(file, childrenList);
+            }
+        }, fileProperties.getLockTimeout());
     }
 
-    private void batchRecycle(List<FileData> fileList) {
+    private void batchRecycle(FileData file, List<FileData> childrenList) {
         LocalDateTime deletedDate = LocalDateTime.now();
-        fileList.forEach(file -> {
-            file.setDeleted(true);
-            file.setDeletedDate(deletedDate);
+        childrenList.forEach(child -> {
+            child.setDeleted(true);
+            child.setDeletedDate(deletedDate);
         });
-        fileDataRepository.saveAll(fileList);
+        file.setParentId(FileAttribute.RECYCLE_BIN_ROOT);
+        file.setDeleted(true);
+        file.setDeletedDate(deletedDate);
+        childrenList.addFirst(file);
+        fileDataRepository.saveAll(childrenList);
     }
 
-    private void batchDelete(List<FileData> fileList) {
-        fileDataRepository.deleteAll(fileList);
+    private void batchDelete(FileData file, List<FileData> childrenList) {
+        childrenList.addFirst(file);
+        List<String> hashList = childrenList.stream().map(FileData::getHashValue)
+                .filter(StringUtils::hasLength).toList();
+        List<FileHashUsageCountModel> fileHashUsageCountList = fileDataRepository.countByHashValueList(hashList);
+        List<Path> deleteHashPathList = fileHashUsageCountList.stream()
+                .filter(hashUsage -> hashUsage.getCount() == null || hashUsage.getCount() <= 1)
+                .map(hashUsage -> FileUtil.getHashPath(fileProperties.getDir(), hashUsage.getHashValue())).toList();
+        try {
+            FileUtil.delete(deleteHashPathList);
+        } catch (FileUtil.FileDeletionFailedException e) {
+            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileDeleteFailed"));
+        }
+        fileDataRepository.deleteAll(childrenList);
     }
 
     public void createFolder(String userId, String parentId, String name) {

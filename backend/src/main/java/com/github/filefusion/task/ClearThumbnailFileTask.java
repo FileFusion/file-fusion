@@ -3,7 +3,7 @@ package com.github.filefusion.task;
 import com.github.filefusion.common.FileProperties;
 import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.constant.RedisAttribute;
-import com.github.filefusion.file.model.FileHashUsageCount;
+import com.github.filefusion.file.model.FileHashUsageCountModel;
 import com.github.filefusion.file.repository.FileDataRepository;
 import com.github.filefusion.util.DistributedLock;
 import com.github.filefusion.util.file.FileUtil;
@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 @Component
 public class ClearThumbnailFileTask {
 
+    private static final String LOCK_KEY = "clearThumbnailFileTask";
     private static final int BATCH_FILE_SIZE = 1000;
 
     private final DistributedLock distributedLock;
@@ -52,7 +53,7 @@ public class ClearThumbnailFileTask {
 
     @Scheduled(cron = "${task.clear-thumbnail-file}")
     public void clearThumbnailFileTask() {
-        distributedLock.tryLock(RedisAttribute.LockType.task, "clearThumbnailFileTask", () -> {
+        distributedLock.tryLock(RedisAttribute.LockType.task, LOCK_KEY, () -> {
             try {
                 Map<String, Path> thumbnailMap = new HashMap<>();
                 Files.walkFileTree(fileProperties.getThumbnailDir(), new SimpleFileVisitor<>() {
@@ -86,11 +87,11 @@ public class ClearThumbnailFileTask {
 
     public void clearThumbnail(Map<String, Path> thumbnailMap) throws IOException {
         List<String> hashList = new ArrayList<>(thumbnailMap.keySet());
-        Map<String, FileHashUsageCount> hashUsageCountMap = fileDataRepository.countByHashValueList(hashList)
-                .stream().collect(Collectors.toMap(FileHashUsageCount::getHashValue, Function.identity()));
+        Map<String, FileHashUsageCountModel> hashUsageCountMap = fileDataRepository.countByHashValueList(hashList)
+                .stream().collect(Collectors.toMap(FileHashUsageCountModel::getHashValue, Function.identity()));
         List<String> filterHashList = hashList.stream()
                 .filter(hash -> {
-                    FileHashUsageCount hashUsageCount = hashUsageCountMap.get(hash);
+                    FileHashUsageCountModel hashUsageCount = hashUsageCountMap.get(hash);
                     return hashUsageCount == null
                             || hashUsageCount.getCount() == null || hashUsageCount.getCount() == 0L
                             || !StringUtils.hasLength(hashUsageCount.getMimeType())

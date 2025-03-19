@@ -1,7 +1,7 @@
 package com.github.filefusion.file.repository;
 
 import com.github.filefusion.file.entity.FileData;
-import com.github.filefusion.file.model.FileHashUsageCount;
+import com.github.filefusion.file.model.FileHashUsageCountModel;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -92,8 +92,8 @@ public interface FileDataRepository extends JpaRepository<FileData, String> {
      * @param hashList hash list
      * @return hash count list
      */
-    @Query("SELECT new com.github.filefusion.file.model.FileHashUsageCount(f.hashValue, f.mimeType, COUNT(f.id)) FROM file_data f WHERE f.hashValue IN :hashList GROUP BY f.hashValue, f.mimeType")
-    List<FileHashUsageCount> countByHashValueList(@Param("hashList") List<String> hashList);
+    @Query("SELECT new com.github.filefusion.file.model.FileHashUsageCountModel(f.hashValue, f.mimeType, COUNT(f.id)) FROM file_data f WHERE f.hashValue IN :hashList GROUP BY f.hashValue, f.mimeType")
+    List<FileHashUsageCountModel> countByHashValueList(@Param("hashList") List<String> hashList);
 
     /**
      * findAllByDeletedTrueAndDeletedDateBefore

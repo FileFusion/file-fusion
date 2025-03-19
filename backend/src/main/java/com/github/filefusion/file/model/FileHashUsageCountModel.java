@@ -6,14 +6,14 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * FileHashUsageCount
+ * FileHashUsageCountModel
  *
  * @author hackyo
  * @since 2022/4/1
  */
 @Data
 @AllArgsConstructor
-public class FileHashUsageCount implements Serializable {
+public class FileHashUsageCountModel implements Serializable {
 
     /**
      * hash
