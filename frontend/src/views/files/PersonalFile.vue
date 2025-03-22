@@ -271,30 +271,32 @@ const videoFileId = ref<string | null>(null);
 const showImageFile = ref<boolean>(false);
 const imageFileId = ref<string | null>(null);
 
-const moreFileActionOptions = ref<any[]>([
-  {
-    icon: renderIconMethod(IconShareOne),
-    key: 'share',
-    label: t('files.personal.share'),
-    props: {
-      onClick: () => {
-        shareFiles(fileTableCheck.value);
-      }
+const moreFileActionOptions = computed(() => {
+  return [
+    {
+      icon: renderIconMethod(IconShareOne),
+      key: 'share',
+      label: t('files.personal.share'),
+      props: {
+        onClick: () => {
+          shareFiles(fileTableCheck.value);
+        }
+      },
+      show: permission.value.personalFileShare
     },
-    show: permission.value.personalFileShare
-  },
-  {
-    icon: renderIconMethod(IconTransferData),
-    key: 'move',
-    label: t('files.personal.move'),
-    props: {
-      onClick: () => {
-        moveFiles(fileTableCheck.value);
-      }
-    },
-    show: permission.value.personalFileMove
-  }
-]);
+    {
+      icon: renderIconMethod(IconTransferData),
+      key: 'move',
+      label: t('files.personal.move'),
+      props: {
+        onClick: () => {
+          moveFiles(fileTableCheck.value);
+        }
+      },
+      show: permission.value.personalFileMove
+    }
+  ];
+});
 
 function switchFileShowType(value: string) {
   mStore.setFileShowType(value);
