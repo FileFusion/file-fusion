@@ -42,6 +42,7 @@ public class FileDataController {
      * @param page        page
      * @param pageSize    page size
      * @param parentId    parent id
+     * @param name        name
      * @param sorter      sorter
      * @param sorterOrder sorter order
      * @return file list
@@ -50,6 +51,7 @@ public class FileDataController {
     @PreAuthorize("hasAuthority('personal_file:read')")
     public Page<FileData> get(@PathVariable Integer page, @PathVariable Integer pageSize,
                               @RequestParam(required = false) String parentId,
+                              @RequestParam(required = false) String name,
                               @RequestParam(required = false) String sorter,
                               @RequestParam(required = false) SorterOrder sorterOrder) {
         if (!StringUtils.hasLength(sorter)) {
@@ -59,7 +61,7 @@ public class FileDataController {
             sorterOrder = SorterOrder.ascend;
         }
         return fileDataService.get(PageRequest.of(page - 1, pageSize, sorterOrder.order(), sorter),
-                CurrentUser.getId(), parentId, false);
+                CurrentUser.getId(), parentId, name, false);
     }
 
     /**

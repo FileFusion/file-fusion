@@ -535,7 +535,9 @@ const {
         page +
         '/' +
         pageSize +
-        '?parentId=' +
+        '?name=' +
+        fileNamePattern.value +
+        '&parentId=' +
         fileParentIdPattern.value +
         (sorter ? '&' + sorter : '')
     );

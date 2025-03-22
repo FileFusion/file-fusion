@@ -34,6 +34,7 @@ public class RecycleBinController {
      *
      * @param page        page
      * @param pageSize    page size
+     * @param name        name
      * @param sorter      sorter
      * @param sorterOrder sorter order
      * @return recycle bin file list
@@ -41,6 +42,7 @@ public class RecycleBinController {
     @GetMapping("/{page}/{pageSize}")
     @PreAuthorize("hasAuthority('recycle_bin_file:read')")
     public Page<FileData> get(@PathVariable Integer page, @PathVariable Integer pageSize,
+                              @RequestParam(required = false) String name,
                               @RequestParam(required = false) String sorter,
                               @RequestParam(required = false) SorterOrder sorterOrder) {
         if (!StringUtils.hasLength(sorter)) {
@@ -50,7 +52,7 @@ public class RecycleBinController {
             sorterOrder = SorterOrder.ascend;
         }
         return fileDataService.get(PageRequest.of(page - 1, pageSize, sorterOrder.order(), sorter),
-                CurrentUser.getId(), FileAttribute.RECYCLE_BIN_ROOT, true);
+                CurrentUser.getId(), FileAttribute.RECYCLE_BIN_ROOT, name, true);
     }
 
 }
