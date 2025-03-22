@@ -27,10 +27,11 @@ public interface FileDataRepository extends JpaRepository<FileData, String> {
      *
      * @param userId   user id
      * @param parentId parent id
+     * @param deleted  deleted
      * @param page     page
      * @return file list
      */
-    Page<FileData> findAllByUserIdAndParentIdAndDeletedFalse(String userId, String parentId, Pageable page);
+    Page<FileData> findAllByUserIdAndParentIdAndDeleted(String userId, String parentId, boolean deleted, Pageable page);
 
     /**
      * findFirstByUserIdAndId

@@ -86,9 +86,9 @@
               @mouseenter="fileData.showOperate = true"
               @mouseleave="fileData.showOperate = false">
               <n-checkbox
-                v-if="fileData.showOperate || fileGridIsCheck(fileData.path)"
+                v-if="fileData.showOperate || fileGridIsCheck(fileData.id)"
                 class="absolute left-2 top-2 z-1"
-                :value="fileData.path"
+                :value="fileData.id"
                 @click.stop="" />
               <n-dropdown
                 v-if="fileData.showOperate || fileData.showOperateMenu"
@@ -111,9 +111,9 @@
               <div class="relative pb-2 pl-1 pr-1 pt-4 text-center">
                 <div>
                   <file-thumbnail
-                    :path="fileData.path"
+                    :id="fileData.id"
                     :thumbnail="fileData.hasThumbnail"
-                    :type="fileData.mimeType" />
+                    :mime-type="fileData.mimeType" />
                 </div>
                 <div class="mt-3">
                   <n-ellipsis :line-clamp="2">
@@ -141,7 +141,7 @@
         :columns="fileTableColumns"
         :data="fileTableData"
         :loading="fileTableLoading"
-        :row-key="(row: any) => row.path"
+        :row-key="(row: any) => row.id"
         remote
         class="mt-3"
         @update:sorter="fileTableHandleSorter"
@@ -243,9 +243,9 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
           {
             icon: () =>
               h(FileThumbnail, {
-                path: row.path,
+                id: row.id,
                 thumbnail: row.hasThumbnail,
-                type: row.mimeType,
+                mimeType: row.mimeType,
                 size: 18
               }),
             default: () => row.name
@@ -468,8 +468,7 @@ const {
 );
 
 const { loading: deleteFileLoading, send: doDeleteFile } = useRequest(
-  (filePathList: string[]) =>
-    http.Post('/recycle_bin/_batch_delete', filePathList),
+  (id: string) => http.Delete('/file_data/' + id),
   {
     immediate: false
   }
@@ -496,7 +495,7 @@ function fileGridHandleCheck(allIsCheck: boolean) {
   if (!allIsCheck) {
     fileTableCheck.value = [];
   } else {
-    fileTableCheck.value = fileTableData.value.map((f: any) => f.path);
+    fileTableCheck.value = fileTableData.value.map((f: any) => f.id);
   }
 }
 
@@ -540,16 +539,18 @@ function deleteFile(file: any) {
     positiveText: t('common.confirm'),
     negativeText: t('common.cancel'),
     onPositiveClick: () => {
-      deleteFiles([file.path]);
+      deleteFiles([file.id]);
     }
   });
 }
 
-function deleteFiles(filePathList: string[]) {
-  if (!filePathList || filePathList.length === 0) {
+function deleteFiles(fileIdList: string[]) {
+  if (!fileIdList || fileIdList.length === 0) {
     window.$msg.warning(t('files.personal.fileDeleteSelectCheck'));
     return;
   }
-  doDeleteFile(filePathList);
+  for (const fileId of fileIdList) {
+    doDeleteFile(fileId);
+  }
 }
 </script>

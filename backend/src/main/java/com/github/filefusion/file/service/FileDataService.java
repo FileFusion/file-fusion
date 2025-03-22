@@ -122,12 +122,12 @@ public class FileDataService {
         return children;
     }
 
-    public Page<FileData> get(PageRequest page, String userId, String parentId) {
+    public Page<FileData> get(PageRequest page, String userId, String parentId, boolean deleted) {
         if (!StringUtils.hasLength(parentId)) {
             parentId = FileAttribute.PARENT_ROOT;
         }
-        Page<FileData> fileDataPage = fileDataRepository.findAllByUserIdAndParentIdAndDeletedFalse(
-                userId, parentId, page);
+        Page<FileData> fileDataPage = fileDataRepository.findAllByUserIdAndParentIdAndDeleted(
+                userId, parentId, deleted, page);
         fileDataPage.getContent().forEach(fileData ->
                 fileData.setHasThumbnail(ThumbnailUtil.hasThumbnail(fileData.getMimeType(),
                         fileProperties.getThumbnailImageMimeType(),

@@ -59,7 +59,7 @@ public class FileDataController {
             sorterOrder = SorterOrder.ascend;
         }
         return fileDataService.get(PageRequest.of(page - 1, pageSize, sorterOrder.order(), sorter),
-                CurrentUser.getId(), parentId);
+                CurrentUser.getId(), parentId, false);
     }
 
     /**
