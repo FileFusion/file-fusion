@@ -701,7 +701,7 @@ function renameFile(file: any) {
 
 function downloadFiles(fileIdList: string[]) {
   if (!fileIdList || fileIdList.length === 0) {
-    window.$msg.warning(t('files.personal.fileDownloadSelectCheck'));
+    window.$msg.warning(t('files.personal.fileSelectCheck'));
     return;
   }
   doDownloadFile(fileIdList);
@@ -721,7 +721,7 @@ function deleteFile(file: any) {
 
 function deleteFiles(fileIdList: string[]) {
   if (!fileIdList || fileIdList.length === 0) {
-    window.$msg.warning(t('files.personal.fileDeleteSelectCheck'));
+    window.$msg.warning(t('files.personal.fileSelectCheck'));
     return;
   }
   for (const fileId of fileIdList) {
@@ -730,10 +730,18 @@ function deleteFiles(fileIdList: string[]) {
 }
 
 function shareFiles(fileIdList: string[]) {
+  if (!fileIdList || fileIdList.length === 0) {
+    window.$msg.warning(t('files.personal.fileSelectCheck'));
+    return;
+  }
   console.log(fileIdList);
 }
 
 function moveFiles(fileIdList: string[]) {
+  if (!fileIdList || fileIdList.length === 0) {
+    window.$msg.warning(t('files.personal.fileSelectCheck'));
+    return;
+  }
   console.log(fileIdList);
 }
 
