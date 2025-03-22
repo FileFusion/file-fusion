@@ -184,7 +184,7 @@ public class FileDataService {
                         FileHashUsageCountModel::getCount
                 ));
         List<Path> deletePaths = hashList.stream()
-                .filter(hash -> hashCounts.getOrDefault(hash, 0L) <= 1)
+                .filter(hash -> hashCounts.getOrDefault(hash, 0L) == 0)
                 .map(hash -> FileUtil.getHashPath(fileProperties.getDir(), hash)).toList();
         try {
             FileUtil.delete(deletePaths);
