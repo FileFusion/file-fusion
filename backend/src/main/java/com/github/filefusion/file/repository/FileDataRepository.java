@@ -23,6 +23,14 @@ import java.util.Optional;
 public interface FileDataRepository extends JpaRepository<FileData, String> {
 
     /**
+     * findAllByIdInAndDeletedFalse
+     *
+     * @param idList id list
+     * @return file list
+     */
+    List<FileData> findAllByIdInAndDeletedFalse(List<String> idList);
+
+    /**
      * findAllByUserIdAndParentIdAndDeletedFalse
      *
      * @param userId   user id
@@ -43,49 +51,58 @@ public interface FileDataRepository extends JpaRepository<FileData, String> {
     Optional<FileData> findFirstByUserIdAndId(String userId, String id);
 
     /**
-     * exitsByUserIdAndId
+     * findFirstByUserIdAndIdAndDeletedFalse
+     *
+     * @param userId user id
+     * @param id     id
+     * @return file
+     */
+    Optional<FileData> findFirstByUserIdAndIdAndDeletedFalse(String userId, String id);
+
+    /**
+     * existsByUserIdAndIdAndDeletedFalse
      *
      * @param userId user id
      * @param id     id
      * @return exists
      */
-    boolean existsByUserIdAndId(String userId, String id);
+    boolean existsByUserIdAndIdAndDeletedFalse(String userId, String id);
 
     /**
-     * findAllByParentIdIn
+     * findAllByParentIdInAndDeletedFalse
      *
      * @param parentIdList parent id list
      * @return file list
      */
-    List<FileData> findAllByParentIdIn(List<String> parentIdList);
+    List<FileData> findAllByParentIdInAndDeletedFalse(List<String> parentIdList);
 
     /**
-     * findAllByUserIdAndPathIn
+     * findAllByUserIdAndPathInAndDeletedFalse
      *
      * @param userId   user id
      * @param pathList path list
      * @return file
      */
-    List<FileData> findAllByUserIdAndPathIn(String userId, List<String> pathList);
+    List<FileData> findAllByUserIdAndPathInAndDeletedFalse(String userId, List<String> pathList);
 
     /**
-     * existsByUserIdAndParentIdAndName
+     * existsByUserIdAndParentIdAndNameAndDeletedFalse
      *
      * @param userId   user id
      * @param parentId parent id
      * @param name     name
      * @return exists
      */
-    boolean existsByUserIdAndParentIdAndName(String userId, String parentId, String name);
+    boolean existsByUserIdAndParentIdAndNameAndDeletedFalse(String userId, String parentId, String name);
 
     /**
-     * findAllByUserIdAndIdIn
+     * findAllByUserIdAndIdInAndDeletedFalse
      *
      * @param userId user id
      * @param idList id list
      * @return file list
      */
-    List<FileData> findAllByUserIdAndIdIn(String userId, List<String> idList);
+    List<FileData> findAllByUserIdAndIdInAndDeletedFalse(String userId, List<String> idList);
 
     /**
      * countByHashValueList

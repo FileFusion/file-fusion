@@ -113,7 +113,7 @@ public class FileDataService {
             for (int i = 0; i < levelSize; i++) {
                 currentLevelParentIds.add(queue.poll());
             }
-            List<FileData> currentChildren = fileDataRepository.findAllByParentIdIn(currentLevelParentIds);
+            List<FileData> currentChildren = fileDataRepository.findAllByParentIdInAndDeletedFalse(currentLevelParentIds);
             children.addAll(currentChildren);
             currentChildren.stream()
                     .filter(child -> FileAttribute.MimeType.FOLDER.value().toString().equals(child.getMimeType()))
@@ -139,7 +139,7 @@ public class FileDataService {
 
     @Transactional(rollbackFor = HttpException.class)
     public void recycleOrDelete(String userId, String id) {
-        FileData file = fileDataRepository.findFirstByUserIdAndId(userId, id)
+        FileData file = fileDataRepository.findFirstByUserIdAndIdAndDeletedFalse(userId, id)
                 .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
         List<FileData> childrenList = findAllChildren(file.getId());
         List<String> lockKeyList = new ArrayList<>(Collections.singletonList(
@@ -196,7 +196,7 @@ public class FileDataService {
     public void createFolder(String userId, String parentId, String name) {
         nameFormatCheck(name);
         parentId = StringUtils.hasLength(parentId) ? parentId : FileAttribute.PARENT_ROOT;
-        if (fileDataRepository.existsByUserIdAndParentIdAndName(userId, parentId, name)) {
+        if (fileDataRepository.existsByUserIdAndParentIdAndNameAndDeletedFalse(userId, parentId, name)) {
             throw new HttpException(I18n.get("fileExits", name));
         }
         createHierarchicalFolders(userId, parentId, name, LocalDateTime.now());
@@ -208,7 +208,7 @@ public class FileDataService {
         if (FileAttribute.PARENT_ROOT.equals(parentId)) {
             parentPath = new StringBuilder();
         } else {
-            parentPath = new StringBuilder(fileDataRepository.findFirstByUserIdAndId(userId, parentId)
+            parentPath = new StringBuilder(fileDataRepository.findFirstByUserIdAndIdAndDeletedFalse(userId, parentId)
                     .map(FileData::getPath)
                     .orElseThrow(() -> new HttpException(I18n.get("fileNotExist"))));
         }
@@ -229,7 +229,7 @@ public class FileDataService {
         AtomicReference<FileData> lastCreatedFile = new AtomicReference<>();
         distributedLock.tryMultiLock(RedisAttribute.LockType.file,
                 pathList.stream().map(rp -> userId + RedisAttribute.SEPARATOR + rp).toList(), () -> {
-                    Map<String, FileData> existsFileMap = fileDataRepository.findAllByUserIdAndPathIn(userId, pathList)
+                    Map<String, FileData> existsFileMap = fileDataRepository.findAllByUserIdAndPathInAndDeletedFalse(userId, pathList)
                             .stream().collect(Collectors.toMap(FileData::getPath, Function.identity()));
                     for (String path : pathList) {
                         FileData file = existsFileMap.get(path);
@@ -267,7 +267,7 @@ public class FileDataService {
             pId = parentFile.getId();
             path = parentFile.getPath() + FileAttribute.SEPARATOR + name;
         } else {
-            if (!FileAttribute.PARENT_ROOT.equals(parentId) && !fileDataRepository.existsByUserIdAndId(userId, parentId)) {
+            if (!FileAttribute.PARENT_ROOT.equals(parentId) && !fileDataRepository.existsByUserIdAndIdAndDeletedFalse(userId, parentId)) {
                 throw new HttpException(I18n.get("fileNotExist"));
             }
             pId = parentId;
@@ -275,7 +275,7 @@ public class FileDataService {
         }
         AtomicBoolean uploadStatus = new AtomicBoolean(false);
         distributedLock.tryMultiLock(RedisAttribute.LockType.file, List.of(hashValue, userId + RedisAttribute.SEPARATOR + path), () -> {
-            if (fileDataRepository.existsByUserIdAndParentIdAndName(userId, pId, name)) {
+            if (fileDataRepository.existsByUserIdAndParentIdAndNameAndDeletedFalse(userId, pId, name)) {
                 throw new HttpException(I18n.get("fileExits", name));
             }
             try {
@@ -357,7 +357,7 @@ public class FileDataService {
     public void rename(String userId, String id, String name) {
         nameFormatCheck(name);
 
-        FileData file = fileDataRepository.findFirstByUserIdAndId(userId, id)
+        FileData file = fileDataRepository.findFirstByUserIdAndIdAndDeletedFalse(userId, id)
                 .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
         file.setName(name);
         String sourcePath = file.getPath();
@@ -381,7 +381,7 @@ public class FileDataService {
     }
 
     public String submitDownload(String userId, List<String> idList) {
-        List<FileData> fileList = fileDataRepository.findAllByUserIdAndIdIn(userId, idList);
+        List<FileData> fileList = fileDataRepository.findAllByUserIdAndIdInAndDeletedFalse(userId, idList);
         if (fileList.isEmpty() || fileList.size() != idList.size()) {
             throw new HttpException(I18n.get("fileNotExist"));
         }
@@ -400,7 +400,7 @@ public class FileDataService {
         if (CollectionUtils.isEmpty(idList)) {
             throw new HttpException(I18n.get("downloadLinkExpired"));
         }
-        List<FileData> fileList = fileDataRepository.findAllById(idList);
+        List<FileData> fileList = fileDataRepository.findAllByIdInAndDeletedFalse(idList);
         if (fileList.isEmpty()) {
             throw new HttpException(I18n.get("fileNotExist"));
         }
@@ -413,7 +413,7 @@ public class FileDataService {
     }
 
     public ResponseEntity<StreamingResponseBody> downloadChunked(String userId, String id, String range) {
-        FileData file = fileDataRepository.findFirstByUserIdAndId(userId, id)
+        FileData file = fileDataRepository.findFirstByUserIdAndIdAndDeletedFalse(userId, id)
                 .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
         String[] ranges = range.replace("bytes=", "").split("-");
         long start = 0L;
