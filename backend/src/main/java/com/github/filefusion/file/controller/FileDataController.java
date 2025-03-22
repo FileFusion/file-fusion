@@ -76,6 +76,18 @@ public class FileDataController {
     }
 
     /**
+     * get folder list
+     *
+     * @param parentId parent id
+     * @return folder list
+     */
+    @GetMapping("/folder")
+    @PreAuthorize("hasAuthority('personal_file:read')")
+    public List<FileData> getFolderList(@RequestParam(required = false) String parentId) {
+        return fileDataService.getFolderList(CurrentUser.getId(), parentId);
+    }
+
+    /**
      * create folder
      *
      * @param createFolderModel create folder info
@@ -131,7 +143,7 @@ public class FileDataController {
      * @param renameFileModel rename file info
      */
     @PutMapping("/_rename")
-    @PreAuthorize("hasAuthority('personal_file:edit')")
+    @PreAuthorize("hasAuthority('personal_file:rename')")
     public void rename(@RequestBody RenameFileModel renameFileModel) {
         fileDataService.rename(CurrentUser.getId(), renameFileModel.getId(), renameFileModel.getName());
     }

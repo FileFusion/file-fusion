@@ -43,6 +43,16 @@ public interface FileDataRepository extends JpaRepository<FileData, String> {
     Page<FileData> findAllByUserIdAndParentIdAndNameLikeAndDeleted(String userId, String parentId, String name, boolean deleted, Pageable page);
 
     /**
+     * findAllByUserIdAndParentIdAndMimeTypeAndDeletedFalse
+     *
+     * @param userId   user id
+     * @param parentId parent id
+     * @param mimeType mime type
+     * @return file list
+     */
+    List<FileData> findAllByUserIdAndParentIdAndMimeTypeAndDeletedFalse(String userId, String parentId, String mimeType);
+
+    /**
      * findFirstByUserIdAndId
      *
      * @param userId user id

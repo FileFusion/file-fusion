@@ -74,7 +74,11 @@ VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'personal_file');
 INSERT INTO role_permission
 VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'personal_file:read');
 INSERT INTO role_permission
-VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'personal_file:edit');
+VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'personal_file:rename');
+INSERT INTO role_permission
+VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'personal_file:share');
+INSERT INTO role_permission
+VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'personal_file:move');
 INSERT INTO role_permission
 VALUES ('01JJK6FQS1BSXW6VBVS1ZXGT0W', 'personal_file:delete');
 INSERT INTO role_permission

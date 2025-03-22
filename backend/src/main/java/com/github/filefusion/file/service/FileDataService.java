@@ -198,6 +198,14 @@ public class FileDataService {
         }
     }
 
+    public List<FileData> getFolderList(String userId, String parentId) {
+        if (!StringUtils.hasLength(parentId)) {
+            parentId = FileAttribute.PARENT_ROOT;
+        }
+        return fileDataRepository.findAllByUserIdAndParentIdAndMimeTypeAndDeletedFalse(
+                userId, parentId, FileAttribute.MimeType.FOLDER.value().toString());
+    }
+
     public void createFolder(String userId, String parentId, String name) {
         nameFormatCheck(name);
         parentId = StringUtils.hasLength(parentId) ? parentId : FileAttribute.PARENT_ROOT;

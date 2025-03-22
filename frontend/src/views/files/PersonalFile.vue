@@ -28,6 +28,15 @@
             </template>
             {{ $t('common.batchDeleteConfirm') }}
           </n-popconfirm>
+          <n-dropdown
+            :options="moreFileActionOptions"
+            :show-arrow="true"
+            trigger="hover">
+            <n-button
+              v-permission-or="['personal_file:share', 'personal_file:move']">
+              {{ $t('common.more') }}
+            </n-button>
+          </n-dropdown>
         </n-flex>
         <n-flex :wrap="false" justify="end" align="center">
           <n-dropdown
@@ -199,6 +208,8 @@ import IconCheck from '~icons/icon-park-outline/check';
 import IconDown from '~icons/icon-park-outline/down';
 import IconDownload from '~icons/icon-park-outline/download';
 import IconEditTwo from '~icons/icon-park-outline/edit-two';
+import IconShareOne from '~icons/icon-park-outline/share-one';
+import IconTransferData from '~icons/icon-park-outline/transfer-data';
 import IconDelete from '~icons/icon-park-outline/delete';
 import { useRequest, usePagination } from 'alova/client';
 import { hasPermission } from '@/commons/permission';
@@ -224,7 +235,9 @@ const mStore = mainStore();
 const permission = ref({
   personalFileDownload: hasPermission('personal_file:download'),
   personalFilePreview: hasPermission('personal_file:preview'),
-  personalFileEdit: hasPermission('personal_file:edit'),
+  personalFileRename: hasPermission('personal_file:rename'),
+  personalFileShare: hasPermission('personal_file:share'),
+  personalFileMove: hasPermission('personal_file:move'),
   personalFileDelete: hasPermission('personal_file:delete')
 });
 
@@ -258,6 +271,31 @@ const videoFileId = ref<string | null>(null);
 const showImageFile = ref<boolean>(false);
 const imageFileId = ref<string | null>(null);
 
+const moreFileActionOptions = ref<any[]>([
+  {
+    icon: renderIconMethod(IconShareOne),
+    key: 'share',
+    label: t('files.personal.share'),
+    props: {
+      onClick: () => {
+        shareFiles(fileTableCheck.value);
+      }
+    },
+    show: permission.value.personalFileShare
+  },
+  {
+    icon: renderIconMethod(IconTransferData),
+    key: 'move',
+    label: t('files.personal.move'),
+    props: {
+      onClick: () => {
+        moveFiles(fileTableCheck.value);
+      }
+    },
+    show: permission.value.personalFileMove
+  }
+]);
+
 function switchFileShowType(value: string) {
   mStore.setFileShowType(value);
 }
@@ -278,7 +316,7 @@ function getFileDropdownOptions(file: any) {
     },
     {
       icon: renderIconMethod(IconEditTwo),
-      key: 'edit',
+      key: 'rename',
       label: t('files.personal.rename'),
       props: {
         onClick: () => {
@@ -286,7 +324,31 @@ function getFileDropdownOptions(file: any) {
           renameFile(file);
         }
       },
-      show: permission.value.personalFileEdit
+      show: permission.value.personalFileRename
+    },
+    {
+      icon: renderIconMethod(IconShareOne),
+      key: 'share',
+      label: t('files.personal.share'),
+      props: {
+        onClick: () => {
+          file.showOperateMenu = false;
+          shareFiles([file.id]);
+        }
+      },
+      show: permission.value.personalFileShare
+    },
+    {
+      icon: renderIconMethod(IconTransferData),
+      key: 'move',
+      label: t('files.personal.move'),
+      props: {
+        onClick: () => {
+          file.showOperateMenu = false;
+          moveFiles([file.id]);
+        }
+      },
+      show: permission.value.personalFileMove
     },
     {
       icon: renderIconMethod(IconDelete),
@@ -366,7 +428,9 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
   ];
   if (
     permission.value.personalFileDownload ||
-    permission.value.personalFileEdit ||
+    permission.value.personalFileRename ||
+    permission.value.personalFileShare ||
+    permission.value.personalFileMove ||
     permission.value.personalFileDelete
   ) {
     tableColumn.push({
@@ -661,6 +725,14 @@ function deleteFiles(fileIdList: string[]) {
   for (const fileId of fileIdList) {
     doDeleteFile(fileId);
   }
+}
+
+function shareFiles(fileIdList: string[]) {
+  console.log(fileIdList);
+}
+
+function moveFiles(fileIdList: string[]) {
+  console.log(fileIdList);
 }
 
 function clickFile(file: any) {

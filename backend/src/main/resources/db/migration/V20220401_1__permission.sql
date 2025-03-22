@@ -99,7 +99,13 @@ INSERT INTO permission
 VALUES ('personal_file:read', 'personal_file', 'Personal file read', 'Read personal file', false,
         '01JJK6FQS0K3N6K4JAEAP5ZC7P', '2022-04-01 00:00:00', null, null);
 INSERT INTO permission
-VALUES ('personal_file:edit', 'personal_file', 'Personal file edit', 'Edit personal file', false,
+VALUES ('personal_file:rename', 'personal_file', 'Personal file rename', 'Rename personal file', false,
+        '01JJK6FQS0K3N6K4JAEAP5ZC7P', '2022-04-01 00:00:00', null, null);
+INSERT INTO permission
+VALUES ('personal_file:share', 'personal_file', 'Personal file share', 'Share personal file', false,
+        '01JJK6FQS0K3N6K4JAEAP5ZC7P', '2022-04-01 00:00:00', null, null);
+INSERT INTO permission
+VALUES ('personal_file:move', 'personal_file', 'Personal file move', 'Move personal file', false,
         '01JJK6FQS0K3N6K4JAEAP5ZC7P', '2022-04-01 00:00:00', null, null);
 INSERT INTO permission
 VALUES ('personal_file:delete', 'personal_file', 'Personal file delete', 'Delete personal file', false,
