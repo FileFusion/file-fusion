@@ -399,8 +399,7 @@ public class FileDataService {
         }
         List<FileData> childrenList = findAllChildren(sourceFile.getId());
         for (FileData children : childrenList) {
-            String childrenPath = children.getPath().substring(sourcePath.length());
-            children.setPath(targetPath + childrenPath);
+            children.setPath(targetPath + children.getPath().substring(sourcePath.length()));
         }
         sourceFile.setParentId(targetId);
         sourceFile.setName(name);
