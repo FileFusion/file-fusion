@@ -18,7 +18,7 @@ export default [
     name: 'files-recycle-bin',
     meta: {
       requiresAuth: true,
-      title: 'files.recycleBin',
+      title: 'files.recycleBinFile',
       icon: IconDeleteThemes,
       permission: 'recycle_bin_file:read'
     },

@@ -2,7 +2,7 @@
   <n-card hoverable>
     <n-tabs :value="routeName" animated type="line" @update:value="switchTab">
       <n-tab
-        :tab="$t('files.recycleBin')"
+        :tab="$t('files.recycleBinFile')"
         name="system-settings-sys-config-recycle-bin"></n-tab>
     </n-tabs>
     <div class="mt-6">

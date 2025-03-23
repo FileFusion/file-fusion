@@ -8,6 +8,17 @@
             :checked="fileGridAllIsCheck"
             :indeterminate="fileGridAllIsIndeterminate"
             @update:checked="fileGridHandleCheck" />
+          <n-dropdown
+            :options="restoreActionOptions"
+            :show-arrow="true"
+            trigger="hover">
+            <n-button
+              v-permission="'recycle_bin_file:restore'"
+              type="primary"
+              @click="restoreFiles(fileTableCheck)">
+              {{ $t('files.recycleBin.restore') }}
+            </n-button>
+          </n-dropdown>
           <n-popconfirm
             :positive-button-props="{ type: 'error' }"
             @positive-click="deleteFiles(fileTableCheck)">
@@ -16,10 +27,22 @@
                 v-permission="'recycle_bin_file:delete'"
                 :loading="deleteFileLoading"
                 type="error">
-                {{ $t('common.delete') }}
+                {{ $t('files.recycleBin.completelyDelete') }}
               </n-button>
             </template>
-            {{ $t('common.batchDeleteConfirm') }}
+            {{ $t('files.recycleBin.completelyDeleteConfirm') }}
+          </n-popconfirm>
+          <n-popconfirm
+            :positive-button-props="{ type: 'error' }"
+            @positive-click="doDeleteAllFile">
+            <template #trigger>
+              <n-button
+                v-permission="'recycle_bin_file:delete'"
+                :loading="deleteAllFileLoading">
+                {{ $t('files.recycleBin.deleteAll') }}
+              </n-button>
+            </template>
+            {{ $t('files.recycleBin.deleteAllConfirm') }}
           </n-popconfirm>
         </n-flex>
         <n-flex :wrap="false" justify="end" align="center">
@@ -176,6 +199,8 @@ import { computed, h, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import IconCheck from '~icons/icon-park-outline/check';
 import IconDown from '~icons/icon-park-outline/down';
+import IconReturn from '~icons/icon-park-outline/return';
+import IconBackOne from '~icons/icon-park-outline/back-one';
 import IconDelete from '~icons/icon-park-outline/delete';
 import { useRequest, usePagination } from 'alova/client';
 import { hasPermission } from '@/commons/permission';
@@ -189,6 +214,7 @@ const http = window.$http;
 const mStore = mainStore();
 
 const permission = ref({
+  recycleBinFileRestore: hasPermission('recycle_bin_file:restore'),
   recycleBinFileDelete: hasPermission('recycle_bin_file:delete')
 });
 
@@ -201,12 +227,52 @@ const fileTableSorter = ref<any>({
   lastModifiedDate: <any>false
 });
 
+const restoreActionOptions = computed(() => {
+  return [
+    {
+      icon: renderIconMethod(IconBackOne),
+      key: 'restoreTo',
+      label: t('files.recycleBin.restoreTo'),
+      props: {
+        onClick: () => {
+          restoreToFiles(fileTableCheck.value);
+        }
+      },
+      show: permission.value.recycleBinFileRestore
+    }
+  ];
+});
+
 function switchFileShowType(value: string) {
   mStore.setFileShowType(value);
 }
 
 function getFileDropdownOptions(file: any) {
   return [
+    {
+      icon: renderIconMethod(IconReturn),
+      key: 'restore',
+      label: t('files.recycleBin.restore'),
+      props: {
+        onClick: () => {
+          file.showOperateMenu = false;
+          restoreFiles([file.id]);
+        }
+      },
+      show: permission.value.recycleBinFileRestore
+    },
+    {
+      icon: renderIconMethod(IconBackOne),
+      key: 'restoreTo',
+      label: t('files.recycleBin.restoreTo'),
+      props: {
+        onClick: () => {
+          file.showOperateMenu = false;
+          restoreToFiles([file.id]);
+        }
+      },
+      show: permission.value.recycleBinFileRestore
+    },
     {
       icon: renderIconMethod(IconDelete),
       key: 'delete',
@@ -296,7 +362,10 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
       }
     }
   ];
-  if (permission.value.recycleBinFileDelete) {
+  if (
+    permission.value.recycleBinFileDelete ||
+    permission.value.recycleBinFileRestore
+  ) {
     tableColumn.push({
       title: t('common.options'),
       key: 'options',
@@ -468,7 +537,17 @@ const {
 );
 
 const { loading: deleteFileLoading, send: doDeleteFile } = useRequest(
-  (id: string) => http.Delete('/file_data/' + id),
+  (id: string) => http.Delete('/recycle_bin/' + id),
+  {
+    immediate: false
+  }
+).onSuccess(() => {
+  window.$msg.success(t('common.deleteSuccess'));
+  fileTableReload();
+});
+
+const { loading: deleteAllFileLoading, send: doDeleteAllFile } = useRequest(
+  () => http.Delete('/recycle_bin/all'),
   {
     immediate: false
   }
@@ -530,6 +609,22 @@ function fileTablePageChange(page: number) {
 function fileTableReload() {
   fileTableCheck.value = [];
   fileTableReloadEvent();
+}
+
+function restoreFiles(fileIdList: string[]) {
+  if (!fileIdList || fileIdList.length === 0) {
+    window.$msg.warning(t('files.personal.fileSelectCheck'));
+    return;
+  }
+  console.log(fileIdList);
+}
+
+function restoreToFiles(fileIdList: string[]) {
+  if (!fileIdList || fileIdList.length === 0) {
+    window.$msg.warning(t('files.personal.fileSelectCheck'));
+    return;
+  }
+  console.log(fileIdList);
 }
 
 function deleteFile(file: any) {

@@ -127,8 +127,8 @@ INSERT INTO permission
 VALUES ('recycle_bin_file:read', 'recycle_bin_file', 'Recycle bin file read', 'Read recycle bin file', false,
         '01JJK6FQS0K3N6K4JAEAP5ZC7P', '2022-04-01 00:00:00', null, null);
 INSERT INTO permission
-VALUES ('recycle_bin_file:delete', 'recycle_bin_file', 'Recycle bin file delete', 'Delete recycle bin file', false,
+VALUES ('recycle_bin_file:restore', 'recycle_bin_file', 'Recycle bin file restore', 'Restore recycle bin file', false,
         '01JJK6FQS0K3N6K4JAEAP5ZC7P', '2022-04-01 00:00:00', null, null);
 INSERT INTO permission
-VALUES ('recycle_bin_file:restore', 'recycle_bin_file', 'Recycle bin file restore', 'Restore recycle bin file', false,
+VALUES ('recycle_bin_file:delete', 'recycle_bin_file', 'Recycle bin file delete', 'Delete recycle bin file', false,
         '01JJK6FQS0K3N6K4JAEAP5ZC7P', '2022-04-01 00:00:00', null, null);

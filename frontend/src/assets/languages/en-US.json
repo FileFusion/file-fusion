@@ -168,6 +168,14 @@
       "folderSelectCheck": "Please select a folder",
       "rootDirectory": "Root directory"
     },
-    "recycleBin": "Recycle bin"
+    "recycleBinFile": "Recycle bin",
+    "recycleBin": {
+      "restore": "Restore",
+      "restoreTo": "Restore to...",
+      "completelyDelete": "Completely Delete",
+      "completelyDeleteConfirm": "It will be unrecoverable after complete deletion, confirmed?",
+      "deleteAll": "Delete all",
+      "deleteAllConfirm": "Deleting all of them will be unrecoverable, confirmed?"
+    }
   }
 }

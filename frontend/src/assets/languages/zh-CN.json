@@ -168,6 +168,14 @@
       "folderSelectCheck": "请选择文件夹",
       "rootDirectory": "根目录"
     },
-    "recycleBin": "回收站"
+    "recycleBinFile": "回收站",
+    "recycleBin": {
+      "restore": "还原",
+      "restoreTo": "还原至...",
+      "completelyDelete": "彻底删除",
+      "completelyDeleteConfirm": "彻底删除后将无法恢复，确认吗？",
+      "deleteAll": "清空",
+      "deleteAllConfirm": "清空后将无法恢复，确认吗？"
+    }
   }
 }

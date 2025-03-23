@@ -55,7 +55,7 @@ export default [
         name: 'system-settings-sys-config-recycle-bin',
         meta: {
           requiresAuth: true,
-          title: 'files.recycleBin',
+          title: 'files.recycleBinFile',
           icon: IconDeleteThemes,
           permission: 'sys_config:recycle_bin_read'
         },

@@ -55,4 +55,24 @@ public class RecycleBinController {
                 CurrentUser.getId(), FileAttribute.RECYCLE_BIN_ROOT, name, true);
     }
 
+    /**
+     * delete recycle bin file
+     *
+     * @param id id
+     */
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('recycle_bin_file:delete')")
+    public void delete(@PathVariable String id) {
+        //todo
+    }
+
+    /**
+     * delete all recycle bin file
+     */
+    @DeleteMapping("/all")
+    @PreAuthorize("hasAuthority('recycle_bin_file:delete')")
+    public void deleteAll() {
+        //todo
+    }
+
 }
