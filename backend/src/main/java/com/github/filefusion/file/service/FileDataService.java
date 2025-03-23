@@ -374,29 +374,37 @@ public class FileDataService {
 
     @Transactional(rollbackFor = HttpException.class)
     public void move(String userId, String sourceId, String targetId, String name) {
+        if (sourceId.equals(targetId)) {
+            throw new HttpException(I18n.get("fileCannotMoveItself"));
+        }
         FileData sourceFile = fileDataRepository.findFirstByUserIdAndIdAndDeletedFalse(userId, sourceId)
                 .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
-        if (StringUtils.hasLength(targetId)) {
-            sourceFile.setParentId(targetId);
+        if (!StringUtils.hasLength(targetId)) {
+            targetId = sourceFile.getParentId();
         }
-        if (StringUtils.hasLength(name)) {
-            sourceFile.setName(name);
+        if (!StringUtils.hasLength(name)) {
+            name = sourceFile.getName();
+        }
+        if (fileDataRepository.existsByUserIdAndParentIdAndNameAndDeletedFalse(userId, targetId, name)) {
+            throw new HttpException(I18n.get("fileExits", sourceFile.getName()));
         }
         String sourcePath = sourceFile.getPath();
         String targetPath;
-        if (FileAttribute.PARENT_ROOT.equals(sourceFile.getParentId())) {
-            targetPath = sourceFile.getName();
+        if (FileAttribute.PARENT_ROOT.equals(targetId)) {
+            targetPath = name;
         } else {
-            FileData targetFile = fileDataRepository.findFirstByUserIdAndIdAndDeletedFalse(userId, sourceFile.getParentId())
+            FileData targetFile = fileDataRepository.findFirstByUserIdAndIdAndDeletedFalse(userId, targetId)
                     .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
-            targetPath = Paths.get(targetFile.getPath()).resolve(sourceFile.getName()).toString();
+            targetPath = Paths.get(targetFile.getPath()).resolve(name).toString();
         }
-        sourceFile.setPath(targetPath);
         List<FileData> childrenList = findAllChildren(sourceFile.getId());
         for (FileData children : childrenList) {
             String childrenPath = children.getPath().substring(sourcePath.length());
             children.setPath(targetPath + childrenPath);
         }
+        sourceFile.setParentId(targetId);
+        sourceFile.setName(name);
+        sourceFile.setPath(targetPath);
         childrenList.add(sourceFile);
         fileDataRepository.saveAll(childrenList);
     }
