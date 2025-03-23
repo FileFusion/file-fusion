@@ -3,6 +3,7 @@ package com.github.filefusion.file.controller;
 import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.constant.SorterOrder;
 import com.github.filefusion.file.entity.FileData;
+import com.github.filefusion.file.model.MoveFileModel;
 import com.github.filefusion.file.service.FileDataService;
 import com.github.filefusion.util.CurrentUser;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +57,17 @@ public class RecycleBinController {
     }
 
     /**
+     * restore file
+     *
+     * @param restoreFileModel restore file info
+     */
+    @PutMapping("/_restore")
+    @PreAuthorize("hasAuthority('recycle_bin_file:restore')")
+    public void restore(@RequestBody MoveFileModel restoreFileModel) {
+        // todo
+    }
+
+    /**
      * delete recycle bin file
      *
      * @param id id
@@ -63,7 +75,7 @@ public class RecycleBinController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('recycle_bin_file:delete')")
     public void delete(@PathVariable String id) {
-        //todo
+        // todo
     }
 
     /**
@@ -72,7 +84,7 @@ public class RecycleBinController {
     @DeleteMapping("/all")
     @PreAuthorize("hasAuthority('recycle_bin_file:delete')")
     public void deleteAll() {
-        //todo
+        // todo
     }
 
 }

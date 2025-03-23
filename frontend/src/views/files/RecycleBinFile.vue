@@ -14,6 +14,7 @@
             trigger="hover">
             <n-button
               v-permission="'recycle_bin_file:restore'"
+              :loading="restoreFileLoading"
               type="primary"
               @click="restoreFiles(fileTableCheck)">
               {{ $t('files.recycleBin.restore') }}
@@ -185,6 +186,7 @@
         @update:page="fileTablePageChange"
         @update:page-size="fileTablePageSizeChange" />
     </n-card>
+    <folder-select v-model="showFolderSelect" @submit="submitRestoreFiles" />
   </div>
 </template>
 
@@ -208,6 +210,7 @@ import { formatFileSize } from '@/commons/file';
 import { renderIconMethod } from '@/commons/utils';
 import { mainStore } from '@/store';
 import FileThumbnail from '@/views/files/components/FileThumbnail.vue';
+import FolderSelect from '@/views/files/components/FolderSelect.vue';
 
 const { t } = useI18n();
 const http = window.$http;
@@ -226,6 +229,9 @@ const fileTableSorter = ref<any>({
   size: <any>false,
   lastModifiedDate: <any>false
 });
+
+const showFolderSelect = ref<boolean>(false);
+const restoreFileIds = ref<string[]>([]);
 
 const restoreActionOptions = computed(() => {
   return [
@@ -536,6 +542,14 @@ const {
   }
 );
 
+const { loading: restoreFileLoading, send: doRestoreFile } = useRequest(
+  (restoreFileModel: any) =>
+    http.Put('/recycle_bin/_restore', restoreFileModel),
+  {
+    immediate: false
+  }
+);
+
 const { loading: deleteFileLoading, send: doDeleteFile } = useRequest(
   (id: string) => http.Delete('/recycle_bin/' + id),
   {
@@ -611,12 +625,18 @@ function fileTableReload() {
   fileTableReloadEvent();
 }
 
-function restoreFiles(fileIdList: string[]) {
+async function restoreFiles(fileIdList: string[]) {
   if (!fileIdList || fileIdList.length === 0) {
     window.$msg.warning(t('files.personal.fileSelectCheck'));
     return;
   }
-  console.log(fileIdList);
+  for (const fileId of fileIdList) {
+    await doRestoreFile({
+      sourceId: fileId
+    });
+  }
+  window.$msg.success(t('files.personal.moveSuccess'));
+  fileTableReload();
 }
 
 function restoreToFiles(fileIdList: string[]) {
@@ -624,7 +644,19 @@ function restoreToFiles(fileIdList: string[]) {
     window.$msg.warning(t('files.personal.fileSelectCheck'));
     return;
   }
-  console.log(fileIdList);
+  restoreFileIds.value = fileIdList;
+  showFolderSelect.value = true;
+}
+
+async function submitRestoreFiles(targetFileId: string) {
+  for (const sourceId of restoreFileIds.value) {
+    await doRestoreFile({
+      sourceId: sourceId,
+      targetId: targetFileId
+    });
+  }
+  window.$msg.success(t('files.personal.moveSuccess'));
+  fileTableReload();
 }
 
 function deleteFile(file: any) {
