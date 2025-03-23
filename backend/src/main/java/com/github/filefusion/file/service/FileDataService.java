@@ -369,32 +369,36 @@ public class FileDataService {
     @Transactional(rollbackFor = HttpException.class)
     public void rename(String userId, String id, String name) {
         nameFormatCheck(name);
+        move(userId, id, null, name);
+    }
 
-        FileData file = fileDataRepository.findFirstByUserIdAndIdAndDeletedFalse(userId, id)
+    @Transactional(rollbackFor = HttpException.class)
+    public void move(String userId, String sourceId, String targetId, String name) {
+        FileData sourceFile = fileDataRepository.findFirstByUserIdAndIdAndDeletedFalse(userId, sourceId)
                 .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
-        file.setName(name);
-        String sourcePath = file.getPath();
-        Path parentPath = Paths.get(sourcePath).getParent();
-        String targetPath;
-        if (parentPath == null) {
-            targetPath = name;
-        } else {
-            targetPath = parentPath.resolve(name).toString();
+        if (StringUtils.hasLength(targetId)) {
+            sourceFile.setParentId(targetId);
         }
-        file.setPath(targetPath);
-
-        List<FileData> childrenList = findAllChildren(file.getId());
+        if (StringUtils.hasLength(name)) {
+            sourceFile.setName(name);
+        }
+        String sourcePath = sourceFile.getPath();
+        String targetPath;
+        if (FileAttribute.PARENT_ROOT.equals(sourceFile.getParentId())) {
+            targetPath = sourceFile.getName();
+        } else {
+            FileData targetFile = fileDataRepository.findFirstByUserIdAndIdAndDeletedFalse(userId, sourceFile.getParentId())
+                    .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
+            targetPath = Paths.get(targetFile.getPath()).resolve(sourceFile.getName()).toString();
+        }
+        sourceFile.setPath(targetPath);
+        List<FileData> childrenList = findAllChildren(sourceFile.getId());
         for (FileData children : childrenList) {
             String childrenPath = children.getPath().substring(sourcePath.length());
             children.setPath(targetPath + childrenPath);
         }
-        childrenList.add(file);
-
+        childrenList.add(sourceFile);
         fileDataRepository.saveAll(childrenList);
-    }
-
-    @Transactional(rollbackFor = HttpException.class)
-    public void move(String userId, String sourceId, String targetId) {
     }
 
     public String submitDownload(String userId, List<String> idList) {

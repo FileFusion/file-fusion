@@ -157,7 +157,7 @@ public class FileDataController {
     @PutMapping("/_move")
     @PreAuthorize("hasAuthority('personal_file:move')")
     public void move(@RequestBody MoveFileModel moveFileModel) {
-        fileDataService.move(CurrentUser.getId(), moveFileModel.getSourceId(), moveFileModel.getTargetId());
+        fileDataService.move(CurrentUser.getId(), moveFileModel.getSourceId(), moveFileModel.getTargetId(), null);
     }
 
     /**
