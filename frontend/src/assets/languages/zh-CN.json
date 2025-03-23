@@ -153,6 +153,7 @@
       "rename": "重命名",
       "share": "分享",
       "move": "移动",
+      "moveSuccess": "移动成功",
       "fileSelectCheck": "请选择需要操作的文件",
       "uploadFile": "上传文件",
       "uploadFolder": "上传文件夹",
@@ -163,7 +164,9 @@
       "fileNameEmpty": "请输入文件名",
       "fileNameError": "文件名称需要小于255个字符且不能包含'/'",
       "fileNotSupportPreview": "该文件不支持在线预览",
-      "noPermissionPreviewFile": "没有预览文件的权限"
+      "noPermissionPreviewFile": "没有预览文件的权限",
+      "folderSelectCheck": "请选择文件夹",
+      "rootDirectory": "根目录"
     },
     "recycleBin": "回收站"
   }

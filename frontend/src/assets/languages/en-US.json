@@ -153,6 +153,7 @@
       "rename": "Rename",
       "share": "Share",
       "move": "Move",
+      "moveSuccess": "Move success",
       "fileSelectCheck": "Please select the file you want to work on",
       "uploadFile": "Upload file",
       "uploadFolder": "Upload folder",
@@ -163,7 +164,9 @@
       "fileNameEmpty": "Please enter file name",
       "fileNameError": "The file name needs to be less than 255 characters and cannot contain '/'",
       "fileNotSupportPreview": "This file does not support online preview",
-      "noPermissionPreviewFile": "No permission to preview file"
+      "noPermissionPreviewFile": "No permission to preview file",
+      "folderSelectCheck": "Please select a folder",
+      "rootDirectory": "Root directory"
     },
     "recycleBin": "Recycle bin"
   }

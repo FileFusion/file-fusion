@@ -33,7 +33,8 @@
             :show-arrow="true"
             trigger="hover">
             <n-button
-              v-permission-or="['personal_file:share', 'personal_file:move']">
+              v-permission-or="['personal_file:share', 'personal_file:move']"
+              :loading="moveFileLoading">
               {{ $t('common.more') }}
             </n-button>
           </n-dropdown>
@@ -192,6 +193,7 @@
       v-model:id="imageFileId"
       @preview-prev="imagePreviewPrevNext(true)"
       @preview-next="imagePreviewPrevNext(false)" />
+    <folder-select v-model="showFolderSelect" @submit="submitMoveFiles" />
   </div>
 </template>
 
@@ -225,6 +227,7 @@ import FileRename from '@/views/files/components/FileRename.vue';
 import FileThumbnail from '@/views/files/components/FileThumbnail.vue';
 import VideoPreview from '@/views/files/components/VideoPreview.vue';
 import ImagePreview from '@/views/files/components/ImagePreview.vue';
+import FolderSelect from '@/views/files/components/FolderSelect.vue';
 
 const { t } = useI18n();
 const http = window.$http;
@@ -270,6 +273,9 @@ const videoFileId = ref<string | null>(null);
 
 const showImageFile = ref<boolean>(false);
 const imageFileId = ref<string | null>(null);
+
+const showFolderSelect = ref<boolean>(false);
+const moveFileIds = ref<string[]>([]);
 
 const moreFileActionOptions = computed(() => {
   return [
@@ -638,6 +644,13 @@ const { loading: deleteFileLoading, send: doDeleteFile } = useRequest(
   fileTableReload();
 });
 
+const { loading: moveFileLoading, send: doMoveFile } = useRequest(
+  (moveFileModel: any) => http.Put('/file_data/_move', moveFileModel),
+  {
+    immediate: false
+  }
+);
+
 const fileGridAllIsCheck = computed(() => {
   return (
     fileTableData.value.length !== 0 &&
@@ -742,7 +755,19 @@ function moveFiles(fileIdList: string[]) {
     window.$msg.warning(t('files.personal.fileSelectCheck'));
     return;
   }
-  console.log(fileIdList);
+  moveFileIds.value = fileIdList;
+  showFolderSelect.value = true;
+}
+
+async function submitMoveFiles(targetFileId: string) {
+  for (const sourceId of moveFileIds.value) {
+    await doMoveFile({
+      sourceId: sourceId,
+      targetId: targetFileId
+    });
+  }
+  window.$msg.success(t('files.personal.moveSuccess'));
+  fileTableReload();
 }
 
 function clickFile(file: any) {

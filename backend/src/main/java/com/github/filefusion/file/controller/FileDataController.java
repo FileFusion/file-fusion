@@ -3,6 +3,7 @@ package com.github.filefusion.file.controller;
 import com.github.filefusion.constant.SorterOrder;
 import com.github.filefusion.file.entity.FileData;
 import com.github.filefusion.file.model.CreateFolderModel;
+import com.github.filefusion.file.model.MoveFileModel;
 import com.github.filefusion.file.model.RenameFileModel;
 import com.github.filefusion.file.service.FileDataService;
 import com.github.filefusion.util.CurrentUser;
@@ -146,6 +147,17 @@ public class FileDataController {
     @PreAuthorize("hasAuthority('personal_file:rename')")
     public void rename(@RequestBody RenameFileModel renameFileModel) {
         fileDataService.rename(CurrentUser.getId(), renameFileModel.getId(), renameFileModel.getName());
+    }
+
+    /**
+     * move file
+     *
+     * @param moveFileModel move file info
+     */
+    @PutMapping("/_move")
+    @PreAuthorize("hasAuthority('personal_file:move')")
+    public void move(@RequestBody MoveFileModel moveFileModel) {
+        fileDataService.move(CurrentUser.getId(), moveFileModel.getSourceId(), moveFileModel.getTargetId());
     }
 
     /**

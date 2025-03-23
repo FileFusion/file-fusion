@@ -393,6 +393,10 @@ public class FileDataService {
         fileDataRepository.saveAll(childrenList);
     }
 
+    @Transactional(rollbackFor = HttpException.class)
+    public void move(String userId, String sourceId, String targetId) {
+    }
+
     public String submitDownload(String userId, List<String> idList) {
         List<FileData> fileList = fileDataRepository.findAllByUserIdAndIdInAndDeletedFalse(userId, idList);
         if (fileList.isEmpty() || fileList.size() != idList.size()) {
