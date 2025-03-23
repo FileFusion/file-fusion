@@ -641,10 +641,7 @@ const { loading: deleteFileLoading, send: doDeleteFile } = useRequest(
   {
     immediate: false
   }
-).onSuccess(() => {
-  window.$msg.success(t('common.deleteSuccess'));
-  fileTableReload();
-});
+);
 
 const { loading: moveFileLoading, send: doMoveFile } = useRequest(
   (moveFileModel: any) => http.Put('/file_data/_move', moveFileModel),
@@ -734,14 +731,16 @@ function deleteFile(file: any) {
   });
 }
 
-function deleteFiles(fileIdList: string[]) {
+async function deleteFiles(fileIdList: string[]) {
   if (!fileIdList || fileIdList.length === 0) {
     window.$msg.warning(t('files.personal.fileSelectCheck'));
     return;
   }
   for (const fileId of fileIdList) {
-    doDeleteFile(fileId);
+    await doDeleteFile(fileId);
   }
+  window.$msg.success(t('common.deleteSuccess'));
+  fileTableReload();
 }
 
 function shareFiles(fileIdList: string[]) {
