@@ -26,7 +26,6 @@ public class FileProperties {
     private Duration thumbnailGenerateTimeout;
     private Path dir;
     private Path tmpDir;
-    private Path recycleBinDir;
     private Path thumbnailDir;
     private List<String> thumbnailImageMimeType;
     private List<String> thumbnailVideoMimeType;
@@ -43,13 +42,6 @@ public class FileProperties {
             Files.createDirectories(tmpDir);
         }
         this.tmpDir = tmpDir;
-    }
-
-    public void setRecycleBinDir(Path recycleBinDir) throws IOException {
-        if (!Files.exists(recycleBinDir)) {
-            Files.createDirectories(recycleBinDir);
-        }
-        this.recycleBinDir = recycleBinDir;
     }
 
     public void setThumbnailDir(Path thumbnailDir) throws IOException {

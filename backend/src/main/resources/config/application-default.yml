@@ -37,7 +37,6 @@ file:
   thumbnail-generate-timeout: ${FF_FILE_THUMBNAIL_GENERATE_TIMEOUT:60s}
   dir: ${FF_FILE_DIR:/opt/file_fusion/data/file}
   tmp-dir: ${FF_FILE_TMP_DIR:/opt/file_fusion/data/tmp}
-  recycle-bin-dir: ${FF_FILE_RECYCLE_BIN_DIR:/opt/file_fusion/data/recycle_bin}
   thumbnail-dir: ${FF_FILE_THUMBNAIL_DIR:/opt/file_fusion/data/thumbnail}
   thumbnail-image-mime-type: "${FF_FILE_THUMBNAIL_IMAGE_MIME_TYPE:application/pdf,\
     application/postscript,\
