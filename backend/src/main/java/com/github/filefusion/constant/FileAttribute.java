@@ -14,13 +14,14 @@ public final class FileAttribute {
     public static final String RECYCLE_BIN_ROOT = "recycle_bin";
     public static final String SEPARATOR = "/";
     public static final String DOWNLOAD_ZIP_NAME = "download.zip";
-    public static final String DOWNLOAD_THUMBNAIL_NAME = "thumbnail.png";
-    public static final String THUMBNAIL_FILE_MIME_TYPE = MediaType.IMAGE_PNG_VALUE;
-    public static final String THUMBNAIL_FILE_SUFFIX = ".png";
+    public static final String DOWNLOAD_THUMBNAIL_NAME = "thumbnail.webp";
+    public static final String THUMBNAIL_FILE_MIME_TYPE = MimeType.WEBP.value.toString();
+    public static final String THUMBNAIL_FILE_SUFFIX = ".webp";
 
     public enum MimeType {
         FOLDER(MediaType.parseMediaType("custom/folder")),
-        ZIP(MediaType.parseMediaType("application/zip"));
+        ZIP(MediaType.parseMediaType("application/zip")),
+        WEBP(MediaType.parseMediaType("image/webp"));
 
         private final MediaType value;
 
