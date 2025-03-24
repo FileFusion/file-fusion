@@ -18,6 +18,7 @@
 *.json            text
 *.txt             text
 *.png             binary
+*.webp            binary
 *.svg             binary
 *.ico             binary
 *.woff2           binary
