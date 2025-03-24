@@ -99,7 +99,7 @@ const fileIcon = computed(() => {
     iconType = fileIcons.includes(category) ? category : 'default';
   }
   return new URL(
-    `/src/assets/images/file-icons/${theme.value}/${iconType}.png`,
+    `/src/assets/images/file-icons/${theme.value}/${iconType}.webp`,
     import.meta.url
   ).href;
 });

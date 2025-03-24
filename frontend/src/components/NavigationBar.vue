@@ -111,8 +111,8 @@ import { useRouter } from 'vue-router';
 import { useRequest } from 'alova/client';
 import { mainStore } from '@/store';
 import { renderIconMethod } from '@/commons/utils';
-import logoTitle from '@/assets/images/logo-title.png';
-import logoTitleWhite from '@/assets/images/logo-title-white.png';
+import logoTitle from '@/assets/images/logo-title.webp';
+import logoTitleWhite from '@/assets/images/logo-title-white.webp';
 import packageInfo from '../../package.json';
 import { SUPPORT_THEMES } from '@/commons/theme.ts';
 

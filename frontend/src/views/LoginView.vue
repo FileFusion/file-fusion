@@ -97,9 +97,9 @@ import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useRequest } from 'alova/client';
 import { mainStore } from '@/store';
-import loginSide from '@/assets/images/login-side.png';
-import logoTitle from '@/assets/images/logo-title.png';
-import logoTitleWhite from '@/assets/images/logo-title-white.png';
+import loginSide from '@/assets/images/login-side.webp';
+import logoTitle from '@/assets/images/logo-title.webp';
+import logoTitleWhite from '@/assets/images/logo-title-white.webp';
 import { SUPPORT_THEMES } from '@/commons/theme.ts';
 
 const mStore = mainStore();
