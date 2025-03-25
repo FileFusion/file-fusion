@@ -35,6 +35,11 @@ async function getFileHash(file: File | Blob): Promise<string> {
   return hashInstance.digest('hex');
 }
 
+const supportVideoPreviewType = ['video/mp4'];
+function supportVideoPreview(mimeType: string): boolean {
+  return supportVideoPreviewType.includes(mimeType);
+}
+
 const supportImagePreviewType = [
   'image/apng',
   'image/avif',
@@ -50,9 +55,14 @@ function supportImagePreview(mimeType: string): boolean {
   return supportImagePreviewType.includes(mimeType);
 }
 
-const supportVideoPreviewType = ['video/mp4'];
-function supportVideoPreview(mimeType: string): boolean {
-  return supportVideoPreviewType.includes(mimeType);
+const supportOfficePreviewType = [
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/pdf'
+];
+function supportOfficePreview(mimeType: string): boolean {
+  return supportOfficePreviewType.includes(mimeType);
 }
 
 interface Chunk {
@@ -79,7 +89,8 @@ export {
   formatFileSize,
   getFileRelativePath,
   getFileHash,
-  supportImagePreview,
   supportVideoPreview,
+  supportImagePreview,
+  supportOfficePreview,
   getFileChunks
 };

@@ -194,6 +194,10 @@
       v-model:id="imageFileId"
       @preview-prev="imagePreviewPrevNext(true)"
       @preview-next="imagePreviewPrevNext(false)" />
+    <office-preview
+      v-model:show="showOfficeFile"
+      v-model:id="officeFileId"
+      v-model:mime-type="officeFileMimeType" />
     <folder-select v-model="showFolderSelect" @submit="submitMoveFiles" />
   </div>
 </template>
@@ -218,8 +222,9 @@ import { useRequest, usePagination } from 'alova/client';
 import { hasPermission } from '@/commons/permission';
 import {
   formatFileSize,
+  supportVideoPreview,
   supportImagePreview,
-  supportVideoPreview
+  supportOfficePreview
 } from '@/commons/file';
 import { renderIconMethod } from '@/commons/utils';
 import { useRouter, useRoute } from 'vue-router';
@@ -229,6 +234,7 @@ import FileThumbnail from '@/views/files/components/FileThumbnail.vue';
 import VideoPreview from '@/views/files/components/VideoPreview.vue';
 import ImagePreview from '@/views/files/components/ImagePreview.vue';
 import FolderSelect from '@/views/files/components/FolderSelect.vue';
+import OfficePreview from '@/views/files/components/OfficePreview.vue';
 
 const { t } = useI18n();
 const http = window.$http;
@@ -274,6 +280,10 @@ const videoFileId = ref<string | null>(null);
 
 const showImageFile = ref<boolean>(false);
 const imageFileId = ref<string | null>(null);
+
+const showOfficeFile = ref<boolean>(false);
+const officeFileId = ref<string | null>(null);
+const officeFileMimeType = ref<string | null>(null);
 
 const showFolderSelect = ref<boolean>(false);
 const moveFileIds = ref<string[]>([]);
@@ -789,6 +799,10 @@ function clickFile(file: any) {
   } else if (supportImagePreview(file.mimeType)) {
     showImageFile.value = true;
     imageFileId.value = file.id;
+  } else if (supportOfficePreview(file.mimeType)) {
+    showOfficeFile.value = true;
+    officeFileId.value = file.id;
+    officeFileMimeType.value = file.mimeType;
   } else {
     window.$msg.info(t('files.personal.fileNotSupportPreview'));
   }
