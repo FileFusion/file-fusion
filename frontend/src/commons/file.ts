@@ -36,7 +36,11 @@ async function getFileHash(file: File | Blob): Promise<string> {
 }
 
 const supportImagePreviewType = [
+  'image/apng',
+  'image/avif',
+  'image/bmp',
   'image/gif',
+  'image/vnd.microsoft.icon',
   'image/jpeg',
   'image/png',
   'image/svg+xml',
