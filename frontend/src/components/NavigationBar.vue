@@ -42,8 +42,8 @@
         <n-spin :show="getLicenseLoading">
           <n-card
             class="w-128"
-            closable
             hoverable
+            closable
             :title="$t('navigationBar.about')"
             @close="handleClose()">
             <template #cover>
