@@ -166,7 +166,8 @@
       "fileNotSupportPreview": "This file does not support online preview",
       "noPermissionPreviewFile": "No permission to preview file",
       "folderSelectCheck": "Please select a folder",
-      "rootDirectory": "Root directory"
+      "rootDirectory": "Root directory",
+      "fileReadFailure": "File read failure"
     },
     "recycleBinFile": "Recycle bin",
     "recycleBin": {

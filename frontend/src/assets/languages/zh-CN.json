@@ -166,7 +166,8 @@
       "fileNotSupportPreview": "该文件不支持在线预览",
       "noPermissionPreviewFile": "没有预览文件的权限",
       "folderSelectCheck": "请选择文件夹",
-      "rootDirectory": "根目录"
+      "rootDirectory": "根目录",
+      "fileReadFailure": "文件读取失败"
     },
     "recycleBinFile": "回收站",
     "recycleBin": {

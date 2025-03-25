@@ -44,6 +44,7 @@
 <script lang="ts" setup>
 import { ref, watch } from 'vue';
 import { useRequest } from 'alova/client';
+import { useI18n } from 'vue-i18n';
 import VueOfficeDocx from '@vue-office/docx';
 import '@vue-office/docx/lib/index.css';
 import VueOfficeExcel from '@vue-office/excel';
@@ -51,6 +52,7 @@ import '@vue-office/excel/lib/index.css';
 import VueOfficePdf from '@vue-office/pdf';
 import VueOfficePptx from '@vue-office/pptx';
 
+const { t } = useI18n();
 const http = window.$http;
 
 const show = defineModel<boolean>('show');
@@ -60,7 +62,7 @@ const mimeType = defineModel<string | null>('mimeType');
 const fileUrl = ref<string | null>(null);
 const fileLoading = ref<boolean>(true);
 
-const { data: imagePreviewUrl, send: doGetImagePreviewFile } = useRequest(
+const { data: previewUrl, send: doGetPreviewFile } = useRequest(
   () => http.Post<any>('/file_data/_submit_download', [id.value]),
   { immediate: false }
 );
@@ -71,17 +73,19 @@ const renderedHandler = () => {
 
 const errorHandler = () => {
   fileLoading.value = false;
+  window.$msg.error(t('files.personal.fileReadFailure'));
 };
 
 watch(show, async (newShow) => {
   if (newShow) {
     fileLoading.value = true;
     try {
-      await doGetImagePreviewFile();
+      await doGetPreviewFile();
       fileUrl.value =
-        http.options.baseURL + '/file_data/_download/' + imagePreviewUrl.value;
+        http.options.baseURL + '/file_data/_download/' + previewUrl.value;
     } catch {
       fileLoading.value = false;
+      window.$msg.error(t('files.personal.fileReadFailure'));
     }
   } else {
     fileUrl.value = null;

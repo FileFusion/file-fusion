@@ -198,6 +198,10 @@
       v-model:show="showOfficeFile"
       v-model:id="officeFileId"
       v-model:mime-type="officeFileMimeType" />
+    <audio-preview
+      v-model:show="showAudioFile"
+      v-model:id="audioFileId"
+      v-model:mime-type="audioFileMimeType" />
     <folder-select v-model="showFolderSelect" @submit="submitMoveFiles" />
   </div>
 </template>
@@ -224,7 +228,8 @@ import {
   formatFileSize,
   supportVideoPreview,
   supportImagePreview,
-  supportOfficePreview
+  supportOfficePreview,
+  supportAudioPreview
 } from '@/commons/file';
 import { renderIconMethod } from '@/commons/utils';
 import { useRouter, useRoute } from 'vue-router';
@@ -233,8 +238,9 @@ import FileRename from '@/views/files/components/FileRename.vue';
 import FileThumbnail from '@/views/files/components/FileThumbnail.vue';
 import VideoPreview from '@/views/files/components/VideoPreview.vue';
 import ImagePreview from '@/views/files/components/ImagePreview.vue';
-import FolderSelect from '@/views/files/components/FolderSelect.vue';
 import OfficePreview from '@/views/files/components/OfficePreview.vue';
+import AudioPreview from '@/views/files/components/AudioPreview.vue';
+import FolderSelect from '@/views/files/components/FolderSelect.vue';
 
 const { t } = useI18n();
 const http = window.$http;
@@ -284,6 +290,10 @@ const imageFileId = ref<string | null>(null);
 const showOfficeFile = ref<boolean>(false);
 const officeFileId = ref<string | null>(null);
 const officeFileMimeType = ref<string | null>(null);
+
+const showAudioFile = ref<boolean>(false);
+const audioFileId = ref<string | null>(null);
+const audioFileMimeType = ref<string | null>(null);
 
 const showFolderSelect = ref<boolean>(false);
 const moveFileIds = ref<string[]>([]);
@@ -803,6 +813,10 @@ function clickFile(file: any) {
     showOfficeFile.value = true;
     officeFileId.value = file.id;
     officeFileMimeType.value = file.mimeType;
+  } else if (supportAudioPreview(file.mimeType)) {
+    showAudioFile.value = true;
+    audioFileId.value = file.id;
+    audioFileMimeType.value = file.mimeType;
   } else {
     window.$msg.info(t('files.personal.fileNotSupportPreview'));
   }

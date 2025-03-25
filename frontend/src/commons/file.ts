@@ -65,6 +65,16 @@ function supportOfficePreview(mimeType: string): boolean {
   return supportOfficePreviewType.includes(mimeType);
 }
 
+const supportAudioPreviewType = [
+  'application/ogg',
+  'audio/ogg',
+  'audio/x-m4a',
+  'audio/mpeg'
+];
+function supportAudioPreview(mimeType: string): boolean {
+  return supportAudioPreviewType.includes(mimeType);
+}
+
 interface Chunk {
   index: number;
   start: number;
@@ -92,5 +102,6 @@ export {
   supportVideoPreview,
   supportImagePreview,
   supportOfficePreview,
+  supportAudioPreview,
   getFileChunks
 };
