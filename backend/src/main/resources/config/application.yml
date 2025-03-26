@@ -51,3 +51,4 @@ security:
       - /user/_login
     GET:
       - /file_data/_download/*
+      - /file_data/_download_chunked/*
