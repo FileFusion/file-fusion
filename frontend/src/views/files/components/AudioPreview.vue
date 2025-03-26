@@ -1,30 +1,26 @@
 <template>
   <n-modal v-model:show="show">
-    <n-spin :show="previewFileLoading">
-      <audio v-if="fileUrl && mimeType" controls preload="metadata">
-        <source :src="fileUrl" :type="mimeType" />
-      </audio>
-    </n-spin>
+    <media-player :title="<string>name" :src="<string>fileUrl">
+      <media-provider></media-provider>
+      <media-audio-layout></media-audio-layout>
+    </media-player>
   </n-modal>
 </template>
 
 <script lang="ts" setup>
 import { ref, watch } from 'vue';
 import { useRequest } from 'alova/client';
+import 'vidstack/bundle';
 
 const http = window.$http;
 
 const show = defineModel<boolean>('show');
 const id = defineModel<string | null>('id');
-const mimeType = defineModel<string | null>('mimeType');
+const name = defineModel<string | null>('name');
 
 const fileUrl = ref<string | null>(null);
 
-const {
-  loading: previewFileLoading,
-  data: previewUrl,
-  send: doGetPreviewFile
-} = useRequest(
+const { data: previewUrl, send: doGetPreviewFile } = useRequest(
   () => http.Post<any>('/file_data/_submit_download', [id.value]),
   { immediate: false }
 );

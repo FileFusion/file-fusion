@@ -1,100 +1,37 @@
 <template>
-  <n-modal v-model:show="model" :bordered="false" content-style="padding: 0;">
-    <div ref="playerContainer"></div>
+  <n-modal v-model:show="show">
+    <media-player :title="<string>name" :src="<string>fileUrl" playsInline>
+      <media-provider></media-provider>
+      <media-video-layout></media-video-layout>
+    </media-player>
   </n-modal>
 </template>
 
 <script lang="ts" setup>
-import type PresetPlayer from 'xgplayer';
-import Player from 'xgplayer';
-import Mp4Plugin from 'xgplayer-mp4';
-import 'xgplayer/dist/index.min.css';
-import { ref, onBeforeUnmount, computed, watch, nextTick } from 'vue';
-import { useThemeVars } from 'naive-ui';
-import { mainStore } from '@/store';
-import { SUPPORT_LANGUAGES } from '@/commons/i18n.ts';
+import { ref, watch } from 'vue';
+import { useRequest } from 'alova/client';
+import 'vidstack/bundle';
 
-const themeVars = useThemeVars();
 const http = window.$http;
-const mStore = mainStore();
-const language = computed(() => mStore.getLanguage);
-const token = computed(() => mStore.getToken);
 
-const model = defineModel<boolean>();
+const show = defineModel<boolean>('show');
 const id = defineModel<string | null>('id');
+const name = defineModel<string | null>('name');
 
-const playerContainer = ref<HTMLElement | null>(null);
-const playerInstance = ref<PresetPlayer | null>(null);
-const playerLanguage = computed(() => {
-  if (language.value === SUPPORT_LANGUAGES.ZH_CN) {
-    return 'zh-cn';
-  }
-  return 'en';
-});
+const fileUrl = ref<string | null>(null);
 
-function initPlayer() {
-  if (!playerContainer.value) {
-    return;
-  }
-  if (playerInstance.value) {
-    destroyPlayer();
-  }
-  playerInstance.value = new Player({
-    el: playerContainer.value,
-    url: http.options.baseURL + '/file_data/_download_chunked/' + id.value,
-    height: '75vh',
-    width: '75vw',
-    videoFillMode: 'contain',
-    lang: playerLanguage.value,
-    pip: true,
-    commonStyle: {
-      playedColor: themeVars.value.primaryColor,
-      volumeColor: themeVars.value.primaryColor
-    },
-    plugins: [Mp4Plugin],
-    mp4plugin: {
-      reqOptions: {
-        mode: 'cors',
-        method: 'GET',
-        headers: {
-          'Accept-Language': language.value,
-          Authorization: token.value,
-          'Content-Type': 'application/json'
-        }
-      }
-    }
-  });
-}
+const { data: previewUrl, send: doGetPreviewFile } = useRequest(
+  () => http.Post<any>('/file_data/_submit_download', [id.value]),
+  { immediate: false }
+);
 
-function destroyPlayer() {
-  if (playerInstance.value) {
-    playerInstance.value.destroy();
-    playerInstance.value = null;
-  }
-}
-
-watch(model, async (newValue) => {
-  if (newValue) {
-    await nextTick();
-    initPlayer();
+watch(show, async (newShow) => {
+  if (newShow) {
+    await doGetPreviewFile();
+    fileUrl.value =
+      http.options.baseURL + '/file_data/_download/' + previewUrl.value;
   } else {
-    destroyPlayer();
+    fileUrl.value = null;
   }
-});
-
-watch(language, (newValue) => {
-  if (playerInstance.value) {
-    playerInstance.value.lang = newValue;
-  }
-});
-
-onBeforeUnmount(() => {
-  destroyPlayer();
 });
 </script>
-
-<style>
-.xgplayer .xg-options-list li.selected {
-  color: var(--primary-color);
-}
-</style>

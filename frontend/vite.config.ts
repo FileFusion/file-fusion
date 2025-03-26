@@ -8,6 +8,7 @@ import Icons from 'unplugin-icons/vite';
 import IconsResolver from 'unplugin-icons/resolver';
 import { NaiveUiResolver } from 'unplugin-vue-components/resolvers';
 import checker from 'vite-plugin-checker';
+import { vite as vidstack } from 'vidstack/plugins';
 
 export default defineConfig({
   server: {
@@ -29,7 +30,13 @@ export default defineConfig({
     outDir: './target/classes/static'
   },
   plugins: [
-    vue(),
+    vue({
+      template: {
+        compilerOptions: {
+          isCustomElement: (tag) => tag.startsWith('media-')
+        }
+      }
+    }),
     Components({
       dirs: ['./src/components'],
       resolvers: [
@@ -58,6 +65,7 @@ export default defineConfig({
       stylelint: {
         lintCommand: 'stylelint **/*.{css,vue}'
       }
-    })
+    }),
+    vidstack({ include: /AudioPreview/ })
   ]
 });

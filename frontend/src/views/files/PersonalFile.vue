@@ -188,7 +188,10 @@
       v-model="showRenameFile"
       :name="renameFileName"
       @submit="fileTableReload" />
-    <video-preview v-model="showVideoFile" v-model:id="videoFileId" />
+    <video-preview
+      v-model="showVideoFile"
+      v-model:id="videoFileId"
+      v-model:name="videoFileName" />
     <image-preview
       v-model:show="showImageFile"
       v-model:id="imageFileId"
@@ -201,7 +204,7 @@
     <audio-preview
       v-model:show="showAudioFile"
       v-model:id="audioFileId"
-      v-model:mime-type="audioFileMimeType" />
+      v-model:name="audioFileName" />
     <folder-select v-model="showFolderSelect" @submit="submitMoveFiles" />
   </div>
 </template>
@@ -283,6 +286,7 @@ const renameFileName = ref<string>('');
 
 const showVideoFile = ref<boolean>(false);
 const videoFileId = ref<string | null>(null);
+const videoFileName = ref<string | null>(null);
 
 const showImageFile = ref<boolean>(false);
 const imageFileId = ref<string | null>(null);
@@ -293,7 +297,7 @@ const officeFileMimeType = ref<string | null>(null);
 
 const showAudioFile = ref<boolean>(false);
 const audioFileId = ref<string | null>(null);
-const audioFileMimeType = ref<string | null>(null);
+const audioFileName = ref<string | null>(null);
 
 const showFolderSelect = ref<boolean>(false);
 const moveFileIds = ref<string[]>([]);
@@ -806,6 +810,7 @@ function clickFile(file: any) {
   if (supportVideoPreview(file.mimeType)) {
     showVideoFile.value = true;
     videoFileId.value = file.id;
+    videoFileName.value = file.name;
   } else if (supportImagePreview(file.mimeType)) {
     showImageFile.value = true;
     imageFileId.value = file.id;
@@ -816,7 +821,7 @@ function clickFile(file: any) {
   } else if (supportAudioPreview(file.mimeType)) {
     showAudioFile.value = true;
     audioFileId.value = file.id;
-    audioFileMimeType.value = file.mimeType;
+    audioFileName.value = file.name;
   } else {
     window.$msg.info(t('files.personal.fileNotSupportPreview'));
   }
