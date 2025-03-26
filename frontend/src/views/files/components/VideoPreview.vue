@@ -1,6 +1,6 @@
 <template>
   <n-modal v-model:show="show">
-    <media-player :title="<string>name" :src="<string>fileUrl" playsInline>
+    <media-player plays-inline :title="<string>name" :src="<string>fileUrl">
       <media-provider></media-provider>
       <media-video-layout></media-video-layout>
     </media-player>
