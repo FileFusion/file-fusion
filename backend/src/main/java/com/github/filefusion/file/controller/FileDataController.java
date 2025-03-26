@@ -184,16 +184,15 @@ public class FileDataController {
     }
 
     /**
-     * download chunked
+     * download file chunked
      *
-     * @param id    id
-     * @param range chunked range
+     * @param downloadId download id
+     * @param range      file chunked range
      * @return file chunked
      */
-    @GetMapping("/_download_chunked/{id}")
-    @PreAuthorize("hasAnyAuthority('personal_file:download','personal_file:preview')")
-    public ResponseEntity<StreamingResponseBody> downloadChunked(@PathVariable String id, @RequestHeader String range) {
-        return fileDataService.downloadChunked(CurrentUser.getId(), id, range);
+    @GetMapping("/_download_chunked/{downloadId}")
+    public ResponseEntity<StreamingResponseBody> downloadChunked(@PathVariable String downloadId, @RequestHeader String range) {
+        return fileDataService.downloadChunked(downloadId, range);
     }
 
     /**

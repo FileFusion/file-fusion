@@ -413,24 +413,20 @@ public class FileDataService {
         if (fileList.isEmpty() || fileList.size() != idList.size()) {
             throw new HttpException(I18n.get("fileNotExist"));
         }
-        List<FileData> allList = fileList.stream()
+        fileList = fileList.stream()
                 .flatMap(file -> Stream.concat(Stream.of(file), findAllChildren(file.getId()).stream()))
                 .toList();
         String downloadId = ULID.randomULID();
-        RList<String> downloadIdList = redissonClient.getList(RedisAttribute.DOWNLOAD_ID_PREFIX + downloadId);
-        downloadIdList.addAll(allList.stream().map(FileData::getId).toList());
-        downloadIdList.expire(fileProperties.getDownloadLinkTimeout());
+        RList<FileData> downloadFileList = redissonClient.getList(RedisAttribute.DOWNLOAD_ID_PREFIX + downloadId);
+        downloadFileList.addAll(fileList);
+        downloadFileList.expire(fileProperties.getDownloadLinkTimeout());
         return downloadId;
     }
 
     public ResponseEntity<StreamingResponseBody> download(String downloadId) {
-        RList<String> idList = redissonClient.getList(RedisAttribute.DOWNLOAD_ID_PREFIX + downloadId);
-        if (CollectionUtils.isEmpty(idList)) {
+        RList<FileData> fileList = redissonClient.getList(RedisAttribute.DOWNLOAD_ID_PREFIX + downloadId);
+        if (CollectionUtils.isEmpty(fileList)) {
             throw new HttpException(I18n.get("downloadLinkExpired"));
-        }
-        List<FileData> fileList = fileDataRepository.findAllByIdInAndDeletedFalse(idList);
-        if (fileList.isEmpty()) {
-            throw new HttpException(I18n.get("fileNotExist"));
         }
         FileData file = fileList.getFirst();
         if (fileList.size() == 1 && !FileAttribute.MimeType.FOLDER.value().toString().equals(file.getMimeType())) {
@@ -440,9 +436,15 @@ public class FileDataService {
         return DownloadUtil.downloadZip(fileProperties.getDir(), fileList);
     }
 
-    public ResponseEntity<StreamingResponseBody> downloadChunked(String userId, String id, String range) {
-        FileData file = fileDataRepository.findFirstByUserIdAndIdAndDeletedFalse(userId, id)
-                .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
+    public ResponseEntity<StreamingResponseBody> downloadChunked(String downloadId, String range) {
+        RList<FileData> fileList = redissonClient.getList(RedisAttribute.DOWNLOAD_ID_PREFIX + downloadId);
+        if (CollectionUtils.isEmpty(fileList)) {
+            throw new HttpException(I18n.get("downloadLinkExpired"));
+        }
+        FileData file = fileList.getFirst();
+        if (fileList.size() != 1 || FileAttribute.MimeType.FOLDER.value().toString().equals(file.getMimeType())) {
+            throw new HttpException(I18n.get("SegmentedDownloadOnlySupportSingle"));
+        }
         String[] ranges = range.replace("bytes=", "").split("-");
         long start = 0L;
         long end = Long.MAX_VALUE;
@@ -452,9 +454,15 @@ public class FileDataService {
         if (ranges.length > 1) {
             end = Long.parseLong(ranges[1]);
         }
+        Path path = FileUtil.getHashPath(fileProperties.getDir(), file.getHashValue());
         try {
-            return DownloadUtil.downloadChunked(file.getName(), file.getMimeType(),
-                    FileUtil.getHashPath(fileProperties.getDir(), file.getHashValue()), start, end);
+            long size = Files.size(path);
+            start = Math.max(start, 0);
+            end = Math.min(end, size - 1);
+            if (start > end) {
+                throw new HttpException(I18n.get("fileDownloadFailed"));
+            }
+            return DownloadUtil.downloadChunked(file.getName(), file.getMimeType(), path, start, end, size);
         } catch (IOException e) {
             throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileDownloadFailed"));
         }

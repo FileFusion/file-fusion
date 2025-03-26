@@ -5,11 +5,9 @@ import com.github.filefusion.file.entity.FileData;
 import org.springframework.http.*;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import java.io.IOException;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -49,16 +47,14 @@ public final class DownloadUtil {
     }
 
     public static ResponseEntity<StreamingResponseBody> downloadChunked(
-            String name, String mimeType, Path path, long start, long end) throws IOException {
-        long size = Files.size(path);
-        long endReal = Math.min(end, size - 1);
+            String name, String mimeType, Path path, long start, long end, long size) {
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.ACCEPT_RANGES, "bytes");
-        headers.add(HttpHeaders.CONTENT_RANGE, String.format("bytes %d-%d/%d", start, endReal, size));
-        headers.add(HttpHeaders.CONTENT_LENGTH, String.valueOf(endReal - start + 1));
+        headers.add(HttpHeaders.CONTENT_RANGE, String.format("bytes %d-%d/%d", start, end, size));
+        headers.add(HttpHeaders.CONTENT_LENGTH, String.valueOf(end - start + 1));
         return downloadResponse(name, MediaType.valueOf(mimeType),
                 HttpStatus.PARTIAL_CONTENT,
-                out -> FileUtil.transferTo(path, Channels.newChannel(out), true, start, endReal + 1),
+                out -> FileUtil.transferTo(path, Channels.newChannel(out), true, start, end + 1),
                 headers);
     }
 

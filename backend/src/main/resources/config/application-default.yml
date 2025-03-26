@@ -33,7 +33,7 @@ task:
   clear-thumbnail-file: ${FF_TASK_CLEAR_THUMBNAIL_FILE:0 0 1 * * ?}
 file:
   lock-timeout: ${FF_FILE_LOCK_TIMEOUT:60s}
-  download-link-timeout: ${FF_FILE_DOWNLOAD_LINK_TIMEOUT:60s}
+  download-link-timeout: ${FF_FILE_DOWNLOAD_LINK_TIMEOUT:30m}
   thumbnail-generate-timeout: ${FF_FILE_THUMBNAIL_GENERATE_TIMEOUT:60s}
   dir: ${FF_FILE_DIR:/opt/file_fusion/data/file}
   tmp-dir: ${FF_FILE_TMP_DIR:/opt/file_fusion/data/tmp}
