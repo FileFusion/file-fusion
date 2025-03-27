@@ -5,6 +5,7 @@ import com.github.filefusion.file.entity.FileData;
 import org.springframework.http.*;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.io.OutputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 import java.nio.charset.StandardCharsets;
@@ -50,8 +51,9 @@ public final class DownloadUtil {
         return downloadResponse(name, mimeType,
                 HttpStatus.OK,
                 out -> {
-                    out.write(content.getBytes(StandardCharsets.UTF_8));
-                    out.close();
+                    try (OutputStream outputStream = out) {
+                        outputStream.write(content.getBytes(StandardCharsets.UTF_8));
+                    }
                 },
                 new HttpHeaders());
     }
