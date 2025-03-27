@@ -1,35 +1,56 @@
 <template>
-  <n-modal v-model:show="show">
-    <media-player :title="<string>name" :src="<string>fileUrl">
+  <n-modal v-model:show="show" class="!h-80vh !w-80vw">
+    <media-player
+      :plays-inline="true"
+      :cross-origin="true"
+      :title="name"
+      :src="<string>fileUrl"
+      @provider-change="onProviderChange">
       <media-provider></media-provider>
-      <media-audio-layout></media-audio-layout>
+      <media-video-layout></media-video-layout>
     </media-player>
   </n-modal>
 </template>
 
 <script lang="ts" setup>
-import { ref, watch } from 'vue';
-import { useRequest } from 'alova/client';
-import 'vidstack/bundle';
+import type { MediaProviderChangeEvent } from 'vidstack';
+import { computed, ref, watch } from 'vue';
+import { isHLSProvider } from 'vidstack';
+import 'vidstack/player/styles/default/theme.css';
+import 'vidstack/player/styles/default/layouts/audio.css';
+import 'vidstack/player/styles/default/layouts/video.css';
+import 'vidstack/player';
+import 'vidstack/player/layouts';
+import 'vidstack/player/ui';
+import { mainStore } from '@/store';
 
 const http = window.$http;
+const mStore = mainStore();
 
 const show = defineModel<boolean>('show');
-const id = defineModel<string | null>('id');
-const name = defineModel<string | null>('name');
+const props = defineProps({
+  id: { type: String, required: true },
+  name: { type: String, required: true }
+});
 
+const token = computed(() => mStore.getToken);
 const fileUrl = ref<string | null>(null);
 
-const { data: previewUrl, send: doGetPreviewFile } = useRequest(
-  () => http.Post<any>('/file_data/_submit_download', [id.value]),
-  { immediate: false }
-);
+function onProviderChange(event: MediaProviderChangeEvent) {
+  const provider = event.detail;
+  if (isHLSProvider(provider)) {
+    provider.config = {
+      xhrSetup(xhr) {
+        xhr.setRequestHeader('Authorization', <string>token.value);
+      }
+    };
+  }
+}
 
 watch(show, async (newShow) => {
   if (newShow) {
-    await doGetPreviewFile();
     fileUrl.value =
-      http.options.baseURL + '/file_data/_download/' + previewUrl.value;
+      http.options.baseURL + '/file_data/' + props.id + '/master.m3u8';
   } else {
     fileUrl.value = null;
   }

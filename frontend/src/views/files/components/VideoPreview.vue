@@ -3,7 +3,7 @@
     <media-player
       :plays-inline="true"
       :cross-origin="true"
-      :title="<string>name"
+      :title="name"
       :src="<string>fileUrl"
       @provider-change="onProviderChange">
       <media-provider></media-provider>
@@ -28,8 +28,10 @@ const http = window.$http;
 const mStore = mainStore();
 
 const show = defineModel<boolean>('show');
-const id = defineModel<string | null>('id');
-const name = defineModel<string | null>('name');
+const props = defineProps({
+  id: { type: String, required: true },
+  name: { type: String, required: true }
+});
 
 const token = computed(() => mStore.getToken);
 const fileUrl = ref<string | null>(null);
@@ -48,7 +50,7 @@ function onProviderChange(event: MediaProviderChangeEvent) {
 watch(show, async (newShow) => {
   if (newShow) {
     fileUrl.value =
-      http.options.baseURL + '/file_data/' + id.value + '/master.m3u8';
+      http.options.baseURL + '/file_data/' + props.id + '/master.m3u8';
   } else {
     fileUrl.value = null;
   }

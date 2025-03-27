@@ -188,24 +188,24 @@
       v-model="showRenameFile"
       :name="renameFileName"
       @submit="fileTableReload" />
-    <video-preview
-      v-model:show="showVideoFile"
-      v-model:id="videoFileId"
-      v-model:name="videoFileName" />
+    <folder-select v-model="showFolderSelect" @submit="submitMoveFiles" />
     <image-preview
       v-model:show="showImageFile"
       v-model:id="imageFileId"
       @preview-prev="imagePreviewPrevNext(true)"
       @preview-next="imagePreviewPrevNext(false)" />
+    <video-preview
+      :id="videoFileId"
+      v-model:show="showVideoFile"
+      :name="videoFileName" />
+    <audio-preview
+      :id="audioFileId"
+      v-model:show="showAudioFile"
+      :name="audioFileName" />
     <office-preview
       v-model:show="showOfficeFile"
       v-model:id="officeFileId"
       v-model:mime-type="officeFileMimeType" />
-    <audio-preview
-      v-model:show="showAudioFile"
-      v-model:id="audioFileId"
-      v-model:name="audioFileName" />
-    <folder-select v-model="showFolderSelect" @submit="submitMoveFiles" />
   </div>
 </template>
 
@@ -284,23 +284,23 @@ const showRenameFile = ref<boolean>(false);
 const renameFileId = ref<string>('');
 const renameFileName = ref<string>('');
 
-const showVideoFile = ref<boolean>(false);
-const videoFileId = ref<string | null>(null);
-const videoFileName = ref<string | null>(null);
+const showFolderSelect = ref<boolean>(false);
+const moveFileIds = ref<string[]>([]);
 
 const showImageFile = ref<boolean>(false);
 const imageFileId = ref<string | null>(null);
 
+const showVideoFile = ref<boolean>(false);
+const videoFileId = ref<string>('');
+const videoFileName = ref<string>('');
+
+const showAudioFile = ref<boolean>(false);
+const audioFileId = ref<string>('');
+const audioFileName = ref<string>('');
+
 const showOfficeFile = ref<boolean>(false);
 const officeFileId = ref<string | null>(null);
 const officeFileMimeType = ref<string | null>(null);
-
-const showAudioFile = ref<boolean>(false);
-const audioFileId = ref<string | null>(null);
-const audioFileName = ref<string | null>(null);
-
-const showFolderSelect = ref<boolean>(false);
-const moveFileIds = ref<string[]>([]);
 
 const moreFileActionOptions = computed(() => {
   return [
@@ -807,21 +807,21 @@ function clickFile(file: any) {
     window.$msg.warning(t('files.personal.noPermissionPreviewFile'));
     return;
   }
-  if (supportVideoPreview(file.mimeType)) {
+  if (supportImagePreview(file.mimeType)) {
+    showImageFile.value = true;
+    imageFileId.value = file.id;
+  } else if (supportVideoPreview(file.mimeType)) {
     showVideoFile.value = true;
     videoFileId.value = file.id;
     videoFileName.value = file.name;
-  } else if (supportImagePreview(file.mimeType)) {
-    showImageFile.value = true;
-    imageFileId.value = file.id;
-  } else if (supportOfficePreview(file.mimeType)) {
-    showOfficeFile.value = true;
-    officeFileId.value = file.id;
-    officeFileMimeType.value = file.mimeType;
   } else if (supportAudioPreview(file.mimeType)) {
     showAudioFile.value = true;
     audioFileId.value = file.id;
     audioFileName.value = file.name;
+  } else if (supportOfficePreview(file.mimeType)) {
+    showOfficeFile.value = true;
+    officeFileId.value = file.id;
+    officeFileMimeType.value = file.mimeType;
   } else {
     window.$msg.info(t('files.personal.fileNotSupportPreview'));
   }
