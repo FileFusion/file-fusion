@@ -4,7 +4,6 @@ import com.github.filefusion.common.BaseEntity;
 import jakarta.persistence.Entity;
 import lombok.Data;
 import lombok.experimental.FieldNameConstants;
-import org.springframework.security.core.GrantedAuthority;
 
 /**
  * Permission
@@ -15,7 +14,7 @@ import org.springframework.security.core.GrantedAuthority;
 @Data
 @Entity(name = "permission")
 @FieldNameConstants
-public class Permission extends BaseEntity implements GrantedAuthority {
+public class Permission extends BaseEntity {
 
     /**
      * parent id
@@ -36,10 +35,5 @@ public class Permission extends BaseEntity implements GrantedAuthority {
      * is basics
      */
     private Boolean basics;
-
-    @Override
-    public String getAuthority() {
-        return this.getId();
-    }
 
 }
