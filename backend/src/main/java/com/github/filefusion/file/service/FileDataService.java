@@ -15,6 +15,7 @@ import com.github.filefusion.util.I18n;
 import com.github.filefusion.util.ULID;
 import com.github.filefusion.util.file.DownloadUtil;
 import com.github.filefusion.util.file.FileUtil;
+import com.github.filefusion.util.file.M3u8Util;
 import com.github.filefusion.util.file.ThumbnailUtil;
 import org.redisson.api.RList;
 import org.redisson.api.RedissonClient;
@@ -477,7 +478,7 @@ public class FileDataService {
             throw new HttpException(I18n.get("fileNotSupportThumbnail"));
         }
         try {
-            return DownloadUtil.download(FileAttribute.DOWNLOAD_THUMBNAIL_NAME, FileAttribute.THUMBNAIL_FILE_MIME_TYPE,
+            return DownloadUtil.download(FileAttribute.DOWNLOAD_THUMBNAIL_NAME, FileAttribute.MimeType.WEBP.value().toString(),
                     ThumbnailUtil.generateThumbnail(mimeType,
                             FileUtil.getHashPath(fileProperties.getDir(), file.getHashValue()),
                             FileUtil.getHashPath(fileProperties.getThumbnailDir(), file.getHashValue(), FileAttribute.THUMBNAIL_FILE_SUFFIX),
@@ -488,6 +489,24 @@ public class FileDataService {
         } catch (ThumbnailUtil.ThumbnailGenerationFailedException | IOException e) {
             throw new HttpException(I18n.get("thumbnailGenerationFailed"));
         }
+    }
+
+    public String getM3u8MasterPlaylist(String userId, String id) {
+        FileData file = fileDataRepository.findFirstByUserIdAndId(userId, id)
+                .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
+        if (M3u8Util.notSupportM3u8(file.getMimeType())) {
+            throw new HttpException(I18n.get("fileNotSupportPlay"));
+        }
+        return M3u8Util.getM3u8MasterPlaylist(id);
+    }
+
+    public String getM3u8MediaPlaylist(String userId, String id) {
+        FileData file = fileDataRepository.findFirstByUserIdAndId(userId, id)
+                .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
+        if (M3u8Util.notSupportM3u8(file.getMimeType())) {
+            throw new HttpException(I18n.get("fileNotSupportPlay"));
+        }
+        return M3u8Util.getM3u8MediaPlaylist(id);
     }
 
 }

@@ -1,5 +1,6 @@
 package com.github.filefusion.file.controller;
 
+import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.constant.SorterOrder;
 import com.github.filefusion.file.entity.FileData;
 import com.github.filefusion.file.model.CreateFolderModel;
@@ -201,10 +202,34 @@ public class FileDataController {
      * @param id id
      * @return file thumbnail
      */
-    @GetMapping("/thumbnail/{id}")
+    @GetMapping("/{id}/" + FileAttribute.DOWNLOAD_THUMBNAIL_NAME)
     @PreAuthorize("hasAnyAuthority('personal_file:read','recycle_bin_file:read')")
     public ResponseEntity<StreamingResponseBody> thumbnail(@PathVariable String id) {
         return fileDataService.thumbnail(CurrentUser.getId(), id);
+    }
+
+    /**
+     * get video file m3u8 master playlist
+     *
+     * @param id id
+     * @return m3u8 master playlist
+     */
+    @GetMapping("/{id}/master.m3u8")
+    @PreAuthorize("hasAnyAuthority('personal_file:read')")
+    public String getM3u8MasterPlaylist(@PathVariable String id) {
+        return fileDataService.getM3u8MasterPlaylist(CurrentUser.getId(), id);
+    }
+
+    /**
+     * get video file m3u8 media playlist
+     *
+     * @param id id
+     * @return m3u8 media playlist
+     */
+    @GetMapping("/{id}/media.m3u8")
+    @PreAuthorize("hasAnyAuthority('personal_file:read')")
+    public String getM3u8MediaPlaylist(@PathVariable String id) {
+        return fileDataService.getM3u8MediaPlaylist(CurrentUser.getId(), id);
     }
 
 }

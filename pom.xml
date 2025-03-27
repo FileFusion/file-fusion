@@ -26,6 +26,7 @@
         <ulid.version>8.3.0</ulid.version>
         <jjwt.version>0.12.6</jjwt.version>
         <bouncycastle.version>1.80</bouncycastle.version>
+        <m3u8-parser.version>0.28</m3u8-parser.version>
         <commons-exec.version>1.4.0</commons-exec.version>
         <redisson.version>3.45.0</redisson.version>
         <hikaricp.version>6.2.1</hikaricp.version>

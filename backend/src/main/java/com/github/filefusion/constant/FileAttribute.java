@@ -15,8 +15,8 @@ public final class FileAttribute {
     public static final String SEPARATOR = "/";
     public static final String DOWNLOAD_ZIP_NAME = "download.zip";
     public static final String DOWNLOAD_THUMBNAIL_NAME = "thumbnail.webp";
-    public static final String THUMBNAIL_FILE_MIME_TYPE = MimeType.WEBP.value.toString();
     public static final String THUMBNAIL_FILE_SUFFIX = ".webp";
+    public static final String VIDEO_MIME_TYPE_PREFIX = "video/";
 
     public enum MimeType {
         FOLDER(MediaType.parseMediaType("custom/folder")),
