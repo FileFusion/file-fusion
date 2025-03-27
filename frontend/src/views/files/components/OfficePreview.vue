@@ -56,14 +56,16 @@ const { t } = useI18n();
 const http = window.$http;
 
 const show = defineModel<boolean>('show');
-const id = defineModel<string | null>('id');
-const mimeType = defineModel<string | null>('mimeType');
+const props = defineProps({
+  id: { type: String, required: true },
+  mimeType: { type: String, required: true }
+});
 
 const fileUrl = ref<string | null>(null);
 const fileLoading = ref<boolean>(true);
 
 const { data: previewUrl, send: doGetPreviewFile } = useRequest(
-  () => http.Post<any>('/file_data/_submit_download', [id.value]),
+  () => http.Post<any>('/file_data/_submit_download', [props.id]),
   { immediate: false }
 );
 

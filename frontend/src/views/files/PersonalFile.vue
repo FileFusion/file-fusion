@@ -203,9 +203,9 @@
       v-model:show="showAudioFile"
       :name="audioFileName" />
     <office-preview
+      :id="officeFileId"
       v-model:show="showOfficeFile"
-      v-model:id="officeFileId"
-      v-model:mime-type="officeFileMimeType" />
+      :mime-type="officeFileMimeType" />
   </div>
 </template>
 
@@ -299,8 +299,8 @@ const audioFileId = ref<string>('');
 const audioFileName = ref<string>('');
 
 const showOfficeFile = ref<boolean>(false);
-const officeFileId = ref<string | null>(null);
-const officeFileMimeType = ref<string | null>(null);
+const officeFileId = ref<string>('');
+const officeFileMimeType = ref<string>('');
 
 const moreFileActionOptions = computed(() => {
   return [
