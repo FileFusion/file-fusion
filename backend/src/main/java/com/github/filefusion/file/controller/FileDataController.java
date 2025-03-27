@@ -235,4 +235,19 @@ public class FileDataController {
         return fileDataService.getMediaPlaylist(CurrentUser.getId(), id);
     }
 
+    /**
+     * get video file media segment
+     *
+     * @param id         id
+     * @param resolution resolution
+     * @param segment    segment
+     * @return media segment
+     */
+    @GetMapping("/{id}/{resolution}/{segment}/" + VideoAttribute.MEDIA_SEGMENT_NAME)
+    @PreAuthorize("hasAnyAuthority('personal_file:read')")
+    public ResponseEntity<StreamingResponseBody> getMediaSegment(
+            @PathVariable String id, @PathVariable String resolution, @PathVariable Integer segment) {
+        return fileDataService.getMediaSegment(CurrentUser.getId(), id, resolution, segment);
+    }
+
 }

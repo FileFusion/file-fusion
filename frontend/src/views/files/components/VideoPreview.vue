@@ -1,5 +1,5 @@
 <template>
-  <n-modal v-model:show="show">
+  <n-modal v-model:show="show" class="!h-80vh !w-80vw">
     <media-player
       :plays-inline="true"
       :cross-origin="true"
