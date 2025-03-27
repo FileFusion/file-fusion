@@ -10,7 +10,6 @@ public final class VideoAttribute {
 
     public static final String MASTER_PLAYLIST_NAME = "master.m3u8";
     public static final String MEDIA_PLAYLIST_NAME = "media.m3u8";
-    public static final String MEDIA_PLAY_NAME = "stream.m3u8";
     public static final String MEDIA_SEGMENT_NAME = "segment.ts";
     public static final int MEDIA_SEGMENT_DURATION = 5;
 

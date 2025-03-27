@@ -78,17 +78,16 @@ public final class VideoUtil {
         return !mimeType.startsWith(FileAttribute.VIDEO_MIME_TYPE_PREFIX);
     }
 
-    public static String getMasterPlaylist(Path path, String id, Duration videoPlayTimeout)
+    public static String getMasterPlaylist(Path path, Duration videoPlayTimeout)
             throws VideoReadWidthHeightException, IOException {
         int[] videoWidthHeight = getVideoWidthHeight(path, videoPlayTimeout);
-        String baseUri = id + URL_SEPARATOR;
         List<Variant> variantList = Arrays.stream(VideoAttribute.Resolution.values())
                 .map(resolution -> {
                     int[] videoScaleWidthHeight = getVideoScaleWidthHeight(videoWidthHeight, resolution);
                     return Variant.builder()
                             .bandwidth(resolution.bandwidth())
                             .resolution(videoScaleWidthHeight[0], videoScaleWidthHeight[1])
-                            .uri(baseUri + resolution.alias() + URL_SEPARATOR + VideoAttribute.MEDIA_PLAY_NAME)
+                            .uri(resolution.alias() + URL_SEPARATOR + VideoAttribute.MEDIA_PLAYLIST_NAME)
                             .build();
                 }).toList();
         return MASTER_PLAYLIST_PARSER.writePlaylistAsString(MasterPlaylist.builder()
@@ -97,17 +96,16 @@ public final class VideoUtil {
                 .build());
     }
 
-    public static String getMediaPlaylist(Path path, String id, String resolution, Duration videoPlayTimeout)
+    public static String getMediaPlaylist(Path path, Duration videoPlayTimeout)
             throws VideoReadDurationException, IOException {
         double videoDuration = getVideoDuration(path, videoPlayTimeout);
         int segmentCount = (int) (videoDuration + VideoAttribute.MEDIA_SEGMENT_DURATION - 1) / VideoAttribute.MEDIA_SEGMENT_DURATION;
-        String baseUri = id + URL_SEPARATOR + resolution + URL_SEPARATOR;
         MediaSegment[] mediaSegmentList = new MediaSegment[segmentCount];
         for (int i = 0; i < segmentCount; i++) {
             double duration = Math.min(videoDuration, VideoAttribute.MEDIA_SEGMENT_DURATION);
             mediaSegmentList[i] = MediaSegment.builder()
                     .duration(duration)
-                    .uri(baseUri + i + URL_SEPARATOR + VideoAttribute.MEDIA_SEGMENT_NAME)
+                    .uri(i + URL_SEPARATOR + VideoAttribute.MEDIA_SEGMENT_NAME)
                     .build();
             videoDuration -= VideoAttribute.MEDIA_SEGMENT_DURATION;
         }

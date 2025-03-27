@@ -46,6 +46,16 @@ public final class DownloadUtil {
                 new HttpHeaders());
     }
 
+    public static ResponseEntity<StreamingResponseBody> download(String name, MediaType mimeType, String content) {
+        return downloadResponse(name, mimeType,
+                HttpStatus.OK,
+                out -> {
+                    out.write(content.getBytes(StandardCharsets.UTF_8));
+                    out.close();
+                },
+                new HttpHeaders());
+    }
+
     public static ResponseEntity<StreamingResponseBody> downloadChunked(
             String name, String mimeType, Path path, long start, long end, long size) {
         HttpHeaders headers = new HttpHeaders();

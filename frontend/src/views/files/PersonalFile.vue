@@ -189,7 +189,7 @@
       :name="renameFileName"
       @submit="fileTableReload" />
     <video-preview
-      v-model="showVideoFile"
+      v-model:show="showVideoFile"
       v-model:id="videoFileId"
       v-model:name="videoFileName" />
     <image-preview

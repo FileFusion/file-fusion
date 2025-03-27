@@ -21,7 +21,8 @@ public final class FileAttribute {
     public enum MimeType {
         FOLDER(MediaType.parseMediaType("custom/folder")),
         ZIP(MediaType.parseMediaType("application/zip")),
-        WEBP(MediaType.parseMediaType("image/webp"));
+        WEBP(MediaType.parseMediaType("image/webp")),
+        M3U8(MediaType.parseMediaType("application/vnd.apple.mpegurl"));
 
         private final MediaType value;
 

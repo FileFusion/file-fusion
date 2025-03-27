@@ -217,21 +217,22 @@ public class FileDataController {
      */
     @GetMapping("/{id}/" + VideoAttribute.MASTER_PLAYLIST_NAME)
     @PreAuthorize("hasAnyAuthority('personal_file:read')")
-    public String getMasterPlaylist(@PathVariable String id) {
+    public ResponseEntity<StreamingResponseBody> getMasterPlaylist(@PathVariable String id) {
         return fileDataService.getMasterPlaylist(CurrentUser.getId(), id);
     }
 
     /**
      * get video file media playlist
      *
-     * @param id         id
-     * @param resolution resolution
+     * @param id                id
+     * @param ignoredResolution resolution
      * @return media playlist
      */
     @GetMapping("/{id}/{resolution}/" + VideoAttribute.MEDIA_PLAYLIST_NAME)
     @PreAuthorize("hasAnyAuthority('personal_file:read')")
-    public String getMediaPlaylist(@PathVariable String id, @PathVariable String resolution) {
-        return fileDataService.getMediaPlaylist(CurrentUser.getId(), id, resolution);
+    public ResponseEntity<StreamingResponseBody> getMediaPlaylist(
+            @PathVariable String id, @PathVariable("resolution") String ignoredResolution) {
+        return fileDataService.getMediaPlaylist(CurrentUser.getId(), id);
     }
 
 }
