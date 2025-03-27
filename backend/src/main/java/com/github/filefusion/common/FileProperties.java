@@ -24,6 +24,7 @@ public class FileProperties {
     private Duration lockTimeout;
     private Duration downloadLinkTimeout;
     private Duration thumbnailGenerateTimeout;
+    private Duration videoPlayTimeout;
     private Path dir;
     private Path tmpDir;
     private Path thumbnailDir;

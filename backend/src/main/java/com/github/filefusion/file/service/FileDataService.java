@@ -15,8 +15,8 @@ import com.github.filefusion.util.I18n;
 import com.github.filefusion.util.ULID;
 import com.github.filefusion.util.file.DownloadUtil;
 import com.github.filefusion.util.file.FileUtil;
-import com.github.filefusion.util.file.M3u8Util;
 import com.github.filefusion.util.file.ThumbnailUtil;
+import com.github.filefusion.util.file.VideoUtil;
 import org.redisson.api.RList;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -487,26 +487,36 @@ public class FileDataService {
         } catch (ThumbnailUtil.FileNotSupportThumbnailException e) {
             throw new HttpException(I18n.get("fileNotSupportThumbnail"));
         } catch (ThumbnailUtil.ThumbnailGenerationFailedException | IOException e) {
-            throw new HttpException(I18n.get("thumbnailGenerationFailed"));
+            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("thumbnailGenerationFailed"));
         }
     }
 
-    public String getM3u8MasterPlaylist(String userId, String id) {
+    public String getMasterPlaylist(String userId, String id) {
         FileData file = fileDataRepository.findFirstByUserIdAndId(userId, id)
                 .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
-        if (M3u8Util.notSupportM3u8(file.getMimeType())) {
+        if (VideoUtil.notSupportM3u8(file.getMimeType())) {
             throw new HttpException(I18n.get("fileNotSupportPlay"));
         }
-        return M3u8Util.getM3u8MasterPlaylist(id);
+        try {
+            return VideoUtil.getMasterPlaylist(FileUtil.getHashPath(fileProperties.getDir(),
+                    file.getHashValue()), id, fileProperties.getVideoPlayTimeout());
+        } catch (VideoUtil.VideoReadWidthHeightException | IOException e) {
+            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("filePlayFailed"));
+        }
     }
 
-    public String getM3u8MediaPlaylist(String userId, String id) {
+    public String getMediaPlaylist(String userId, String id, String resolution) {
         FileData file = fileDataRepository.findFirstByUserIdAndId(userId, id)
                 .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
-        if (M3u8Util.notSupportM3u8(file.getMimeType())) {
+        if (VideoUtil.notSupportM3u8(file.getMimeType())) {
             throw new HttpException(I18n.get("fileNotSupportPlay"));
         }
-        return M3u8Util.getM3u8MediaPlaylist(id);
+        try {
+            return VideoUtil.getMediaPlaylist(FileUtil.getHashPath(fileProperties.getDir(), file.getHashValue()),
+                    id, resolution, fileProperties.getVideoPlayTimeout());
+        } catch (VideoUtil.VideoReadDurationException | IOException e) {
+            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("filePlayFailed"));
+        }
     }
 
 }

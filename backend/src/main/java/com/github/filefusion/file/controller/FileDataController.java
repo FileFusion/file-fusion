@@ -2,6 +2,7 @@ package com.github.filefusion.file.controller;
 
 import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.constant.SorterOrder;
+import com.github.filefusion.constant.VideoAttribute;
 import com.github.filefusion.file.entity.FileData;
 import com.github.filefusion.file.model.CreateFolderModel;
 import com.github.filefusion.file.model.MoveFileModel;
@@ -209,27 +210,28 @@ public class FileDataController {
     }
 
     /**
-     * get video file m3u8 master playlist
+     * get video file master playlist
      *
      * @param id id
-     * @return m3u8 master playlist
+     * @return master playlist
      */
-    @GetMapping("/{id}/master.m3u8")
+    @GetMapping("/{id}/" + VideoAttribute.MASTER_PLAYLIST_NAME)
     @PreAuthorize("hasAnyAuthority('personal_file:read')")
-    public String getM3u8MasterPlaylist(@PathVariable String id) {
-        return fileDataService.getM3u8MasterPlaylist(CurrentUser.getId(), id);
+    public String getMasterPlaylist(@PathVariable String id) {
+        return fileDataService.getMasterPlaylist(CurrentUser.getId(), id);
     }
 
     /**
-     * get video file m3u8 media playlist
+     * get video file media playlist
      *
-     * @param id id
-     * @return m3u8 media playlist
+     * @param id         id
+     * @param resolution resolution
+     * @return media playlist
      */
-    @GetMapping("/{id}/media.m3u8")
+    @GetMapping("/{id}/{resolution}/" + VideoAttribute.MEDIA_PLAYLIST_NAME)
     @PreAuthorize("hasAnyAuthority('personal_file:read')")
-    public String getM3u8MediaPlaylist(@PathVariable String id) {
-        return fileDataService.getM3u8MediaPlaylist(CurrentUser.getId(), id);
+    public String getMediaPlaylist(@PathVariable String id, @PathVariable String resolution) {
+        return fileDataService.getMediaPlaylist(CurrentUser.getId(), id, resolution);
     }
 
 }
