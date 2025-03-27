@@ -1,14 +1,15 @@
 package com.github.filefusion.util;
 
-import org.apache.commons.exec.CommandLine;
-import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.exec.ExecuteWatchdog;
-import org.apache.commons.exec.Executor;
+import lombok.Data;
+import org.apache.commons.exec.*;
 import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * ExecUtil
@@ -18,23 +19,65 @@ import java.util.List;
  */
 public final class ExecUtil {
 
-    public static boolean exec(List<String> commandLineList, Duration execTimeout) throws IOException {
+    public static ExecResult exec(List<String> commandLineList, Duration execTimeout) throws IOException {
         if (CollectionUtils.isEmpty(commandLineList)) {
-            return false;
+            return ExecResult.fail();
         }
         if (execTimeout == null || execTimeout.isNegative()) {
-            return false;
+            return ExecResult.fail();
         }
 
         CommandLine commandLine = new CommandLine(commandLineList.getFirst());
-        if (commandLineList.size() > 1) {
-            commandLine.addArguments(commandLineList.subList(1, commandLineList.size()).toArray(new String[0]));
-        }
+        commandLineList.stream().skip(1).forEach(commandLine::addArgument);
 
         ExecuteWatchdog watchdog = ExecuteWatchdog.builder().setTimeout(execTimeout).get();
         Executor executor = DefaultExecutor.builder().get();
         executor.setWatchdog(watchdog);
-        return executor.execute(commandLine) == 0;
+
+        LinkedBlockingQueue<String> stdoutQueue = new LinkedBlockingQueue<>();
+        LinkedBlockingQueue<String> stderrQueue = new LinkedBlockingQueue<>();
+        executor.setStreamHandler(new PumpStreamHandler(
+                new CollectingLogOutputStream(stdoutQueue),
+                new CollectingLogOutputStream(stderrQueue)
+        ));
+
+        ExecResult result = new ExecResult();
+        try {
+            result.setSuccess(executor.execute(commandLine) == 0);
+        } catch (ExecuteException e) {
+            result.setSuccess(false);
+            watchdog.killedProcess();
+        } finally {
+            result.setStdout(new ArrayList<>(stdoutQueue));
+            result.setStderr(new ArrayList<>(stderrQueue));
+        }
+        return result;
+    }
+
+    @Data
+    public static class ExecResult implements Serializable {
+        private boolean success;
+        private List<String> stdout;
+        private List<String> stderr;
+
+        public static ExecResult fail() {
+            ExecResult result = new ExecResult();
+            result.setSuccess(false);
+            return result;
+        }
+    }
+
+    private static class CollectingLogOutputStream extends LogOutputStream {
+        private final LinkedBlockingQueue<String> queue;
+
+        CollectingLogOutputStream(LinkedBlockingQueue<String> queue) {
+            this.queue = queue;
+        }
+
+        @Override
+        protected void processLine(String line, int logLevel) {
+            queue.offer(line);
+        }
     }
 
 }

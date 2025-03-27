@@ -47,8 +47,8 @@ public final class ThumbnailUtil {
             throw new FileNotSupportThumbnailException();
         }
         Files.createDirectories(targetPath.getParent());
-        boolean execResult = ExecUtil.exec(Arrays.asList(exec.split(" ")), thumbnailGenerateTimeout);
-        if (!execResult || !Files.exists(targetPath)) {
+        ExecUtil.ExecResult execResult = ExecUtil.exec(Arrays.asList(exec.split(" ")), thumbnailGenerateTimeout);
+        if (!execResult.isSuccess() || !Files.exists(targetPath)) {
             throw new ThumbnailGenerationFailedException();
         }
         return targetPath;
