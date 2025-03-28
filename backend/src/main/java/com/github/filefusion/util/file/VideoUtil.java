@@ -67,10 +67,12 @@ public final class VideoUtil {
         double heightRatio = (double) maxHeight / originalHeight;
         double scale = Math.min(widthRatio, heightRatio);
 
-        return new int[]{
-                (int) Math.round(originalWidth * scale),
-                (int) Math.round(originalHeight * scale)
-        };
+        int scaledWidth = (int) Math.round(originalWidth * scale);
+        int scaledHeight = (int) Math.round(originalHeight * scale);
+        scaledWidth = scaledWidth % 2 != 0 ? scaledWidth + 1 : scaledWidth;
+        scaledHeight = scaledHeight % 2 != 0 ? scaledHeight + 1 : scaledHeight;
+
+        return new int[]{scaledWidth, scaledHeight};
     }
 
     public static boolean notSupportM3u8(String mimeType) {
@@ -139,7 +141,7 @@ public final class VideoUtil {
         if (segmentDuration <= 0) {
             throw new SegmentDurationException();
         }
-        String exec = GENERATE_VIDEO_SEGMENT_EXEC.formatted(path, startTime, segmentDuration, width, height, bandwidth, audioBandwidth);
+        String exec = GENERATE_VIDEO_SEGMENT_EXEC.formatted(path, startTime, segmentDuration, width, height, bandwidth / 1000, audioBandwidth / 1000);
         PipedOutputStream pos = new PipedOutputStream();
         ExecUtil.exec(Arrays.asList(exec.split(" ")), pos, pos, videoPlayTimeout);
         return outputStream -> {
