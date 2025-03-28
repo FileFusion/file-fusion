@@ -23,7 +23,6 @@ public final class ExecUtil {
     private static final ExecutorService EXECUTOR = Executors.newVirtualThreadPerTaskExecutor();
 
     public static void shutdown() {
-        // todo close
         EXECUTOR.close();
     }
 
