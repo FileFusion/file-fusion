@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
  * ThumbnailUtil
@@ -34,7 +35,7 @@ public final class ThumbnailUtil {
                                          Path originalPath, Path targetPath,
                                          List<String> thumbnailImageMimeType,
                                          List<String> thumbnailVideoMimeType, Duration thumbnailGenerateTimeout)
-            throws FileNotSupportThumbnailException, ThumbnailGenerationFailedException, IOException {
+            throws FileNotSupportThumbnailException, ThumbnailGenerationFailedException, IOException, ExecutionException, InterruptedException {
         if (Files.isRegularFile(targetPath)) {
             return targetPath;
         }
@@ -48,7 +49,7 @@ public final class ThumbnailUtil {
         }
         Files.createDirectories(targetPath.getParent());
         ExecUtil.ExecResult execResult = ExecUtil.exec(Arrays.asList(exec.split(" ")), thumbnailGenerateTimeout);
-        if (!execResult.isSuccess() || !Files.exists(targetPath)) {
+        if (!execResult.success() || !Files.exists(targetPath)) {
             throw new ThumbnailGenerationFailedException();
         }
         return targetPath;

@@ -9,13 +9,18 @@ import io.lindstrom.m3u8.parser.MasterPlaylistParser;
 import io.lindstrom.m3u8.parser.MediaPlaylistParser;
 import lombok.Data;
 import org.springframework.util.StringUtils;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.io.IOException;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.io.Serializable;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 /**
  * M3u8Util
@@ -41,13 +46,14 @@ public final class VideoUtil {
     private static final MasterPlaylistParser MASTER_PLAYLIST_PARSER = new MasterPlaylistParser();
     private static final MediaPlaylistParser MEDIA_PLAYLIST_PARSER = new MediaPlaylistParser();
 
-    private static GetVideoInfoResult getVideoInfo(Path path, String exec, Duration videoPlayTimeout) throws ReadVideoInfoException, IOException {
+    private static GetVideoInfoResult getVideoInfo(Path path, String exec, Duration videoPlayTimeout)
+            throws ReadVideoInfoException, IOException, ExecutionException, InterruptedException {
         exec = exec.formatted(path);
         ExecUtil.ExecResult execResult = ExecUtil.exec(Arrays.asList(exec.split(" ")), videoPlayTimeout);
-        if (!execResult.isSuccess()) {
+        if (!execResult.success()) {
             throw new ReadVideoInfoException();
         }
-        return Json.parseObject(String.join("\n", execResult.getStdout()), GetVideoInfoResult.class);
+        return Json.parseObject(String.join("\n", execResult.stdout()), GetVideoInfoResult.class);
     }
 
     private static int[] getVideoScaleDimensions(int[] originalDimensions, VideoAttribute.Resolution resolution) {
@@ -76,7 +82,7 @@ public final class VideoUtil {
     }
 
     public static String getMasterPlaylist(Path path, Duration videoPlayTimeout)
-            throws ReadVideoInfoException, IOException {
+            throws ReadVideoInfoException, IOException, ExecutionException, InterruptedException {
         GetVideoInfoResult videoInfo = getVideoInfo(path, GET_VIDEO_DIMENSIONS_EXEC, videoPlayTimeout);
         int[] originalDimensions = new int[]{videoInfo.getStreams().getFirst().getWidth(), videoInfo.getStreams().getFirst().getHeight()};
         List<Variant> variantList = Arrays.stream(VideoAttribute.Resolution.values())
@@ -95,7 +101,7 @@ public final class VideoUtil {
     }
 
     public static String getMediaPlaylist(Path path, Duration videoPlayTimeout)
-            throws ReadVideoInfoException, IOException {
+            throws ReadVideoInfoException, IOException, ExecutionException, InterruptedException {
         GetVideoInfoResult videoInfo = getVideoInfo(path, GET_VIDEO_DURATION_EXEC, videoPlayTimeout);
         double videoDuration = videoInfo.getFormat().getDuration();
         int segmentCount = (int) (videoDuration + VideoAttribute.MEDIA_SEGMENT_DURATION - 1) / VideoAttribute.MEDIA_SEGMENT_DURATION;
@@ -118,8 +124,8 @@ public final class VideoUtil {
                 .build());
     }
 
-    public static String getMediaSegment(Path path, VideoAttribute.Resolution resolution, int segment, Duration videoPlayTimeout)
-            throws ReadVideoInfoException, SegmentDurationException, IOException {
+    public static StreamingResponseBody getMediaSegment(Path path, VideoAttribute.Resolution resolution, int segment, Duration videoPlayTimeout)
+            throws ReadVideoInfoException, SegmentDurationException, IOException, ExecutionException, InterruptedException {
         GetVideoInfoResult videoInfo = getVideoInfo(path, GET_VIDEO_DIMENSIONS_DURATION_EXEC, videoPlayTimeout);
         int[] originalDimensions = new int[]{videoInfo.getStreams().getFirst().getWidth(), videoInfo.getStreams().getFirst().getHeight()};
         int[] targetDimensions = getVideoScaleDimensions(originalDimensions, resolution);
@@ -135,11 +141,18 @@ public final class VideoUtil {
             throw new SegmentDurationException();
         }
         String exec = GENERATE_VIDEO_SEGMENT_EXEC.formatted(path, startTime, segmentDuration, width, height, bandwidth, audioBandwidth);
-        ExecUtil.ExecResult execResult = ExecUtil.exec(Arrays.asList(exec.split(" ")), videoPlayTimeout);
-        if (!execResult.isSuccess()) {
-            throw new ReadVideoInfoException();
-        }
-        return null;
+        PipedOutputStream pos = new PipedOutputStream();
+        ExecUtil.exec(Arrays.asList(exec.split(" ")), pos, pos, videoPlayTimeout);
+        return outputStream -> {
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            try (PipedInputStream pis = new PipedInputStream(pos)) {
+                while ((bytesRead = pis.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
+                    outputStream.flush();
+                }
+            }
+        };
     }
 
     @Data

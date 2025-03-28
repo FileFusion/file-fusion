@@ -28,7 +28,7 @@ public final class ExecUtil {
     }
 
     public static ExecResult exec(List<String> commandLineList, Duration execTimeout)
-            throws InterruptedException, ExecutionException, IOException {
+            throws IOException, ExecutionException, InterruptedException {
         ConcurrentLinkedQueue<String> stdoutQueue = new ConcurrentLinkedQueue<>();
         ConcurrentLinkedQueue<String> stderrQueue = new ConcurrentLinkedQueue<>();
         CompletableFuture<Integer> completable;
