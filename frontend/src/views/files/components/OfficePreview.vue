@@ -91,6 +91,8 @@ watch(show, async (newShow) => {
     }
   } else {
     fileUrl.value = null;
+    fileLoading.value = false;
+    previewUrl.value = null;
   }
 });
 </script>

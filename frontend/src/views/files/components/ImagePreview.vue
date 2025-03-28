@@ -100,6 +100,8 @@ const renderToolbar = computed(() => ({ nodes }: ImageRenderToolbarProps) => [
 function destroyImage() {
   show.value = false;
   id.value = null;
+  imagePreviewUrl.value = null;
+  submitDownloadRes.value = null;
 }
 
 watch([show, id], async ([newShow, newId], [oldShow, oldId]) => {
