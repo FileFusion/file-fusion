@@ -14,7 +14,7 @@ public final class VideoAttribute {
     public static final String MASTER_PLAYLIST_NAME = "master.m3u8";
     public static final String MEDIA_PLAYLIST_NAME = "media.m3u8";
     public static final String MEDIA_SEGMENT_NAME = "segment.ts";
-    public static final int MEDIA_SEGMENT_DURATION = 5;
+    public static final int MEDIA_SEGMENT_DURATION = 3;
     public static final String VIDEO_CODEC = "libx264";
     public static final String VIDEO_FORMAT = "mpegts";
     public static final String AUDIO_CODEC = "aac";

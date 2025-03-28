@@ -5,13 +5,8 @@
 </template>
 
 <script lang="ts" setup>
-import type { MediaProviderChangeEvent } from 'vidstack';
+import type { MediaProviderChangeEvent, HLSProvider } from 'vidstack';
 import type { MediaPlayerElement } from 'vidstack/elements';
-import 'vidstack/player/styles/base.css';
-import 'vidstack/player/styles/plyr/theme.css';
-import HLS from 'hls.js';
-import { VidstackPlayer, PlyrLayout } from 'vidstack/global/player';
-import { isHLSProvider } from 'vidstack';
 import { computed, nextTick, ref, watch } from 'vue';
 import { mainStore } from '@/store';
 
@@ -28,11 +23,11 @@ const token = computed(() => mStore.getToken);
 const player = ref<MediaPlayerElement>();
 
 function onProviderChange(event: MediaProviderChangeEvent) {
-  const provider = event.detail;
-  if (isHLSProvider(provider)) {
-    provider.library = HLS;
+  if (event.detail?.type === 'hls') {
+    const provider = <HLSProvider>event.detail;
+    provider.library = () => import('hls.js');
     provider.config = {
-      xhrSetup(xhr) {
+      xhrSetup(xhr: any) {
         xhr.setRequestHeader('Authorization', <string>token.value);
       }
     };
@@ -42,6 +37,11 @@ function onProviderChange(event: MediaProviderChangeEvent) {
 watch(show, async (newShow) => {
   if (newShow) {
     await nextTick();
+    const { VidstackPlayer, PlyrLayout } = await import(
+      'vidstack/global/player'
+    );
+    await import('vidstack/player/styles/base.css');
+    await import('vidstack/player/styles/plyr/theme.css');
     player.value = await VidstackPlayer.create({
       target: '#player',
       title: props.name,
