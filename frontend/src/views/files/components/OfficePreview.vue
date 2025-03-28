@@ -1,38 +1,9 @@
 <template>
   <n-modal v-model:show="show">
     <n-spin :show="fileLoading">
-      <vue-office-docx
-        v-if="
-          fileUrl &&
-          mimeType ===
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        "
-        :src="fileUrl"
-        class="!h-80vh !w-80vw"
-        @rendered="renderedHandler"
-        @error="errorHandler" />
-      <vue-office-excel
-        v-if="
-          fileUrl &&
-          mimeType ===
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        "
-        :src="fileUrl"
-        class="!h-80vh !w-80vw"
-        @rendered="renderedHandler"
-        @error="errorHandler" />
-      <vue-office-pptx
-        v-if="
-          fileUrl &&
-          mimeType ===
-            'application/vnd.openxmlformats-officedocument.presentationml.presentation'
-        "
-        :src="fileUrl"
-        class="!h-80vh !w-80vw"
-        @rendered="renderedHandler"
-        @error="errorHandler" />
-      <vue-office-pdf
-        v-if="fileUrl && mimeType === 'application/pdf'"
+      <component
+        :is="currentComponent"
+        v-if="fileUrl && currentComponent"
         :src="fileUrl"
         class="!h-80vh !w-80vw"
         @rendered="renderedHandler"
@@ -42,24 +13,43 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed, defineAsyncComponent } from 'vue';
 import { useRequest } from 'alova/client';
 import { useI18n } from 'vue-i18n';
-import VueOfficeDocx from '@vue-office/docx';
-import '@vue-office/docx/lib/index.css';
-import VueOfficeExcel from '@vue-office/excel';
-import '@vue-office/excel/lib/index.css';
-import VueOfficePdf from '@vue-office/pdf';
-import VueOfficePptx from '@vue-office/pptx';
 
 const { t } = useI18n();
 const http = window.$http;
+
+const componentsMap: any = {
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+    defineAsyncComponent({
+      loader: () =>
+        import('@vue-office/docx').then((m) => {
+          import('@vue-office/docx/lib/index.css');
+          return m.default;
+        })
+    }),
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+    defineAsyncComponent({
+      loader: () =>
+        import('@vue-office/excel').then((m) => {
+          import('@vue-office/excel/lib/index.css');
+          return m.default;
+        })
+    }),
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation':
+    defineAsyncComponent(() => import('@vue-office/pptx')),
+  'application/pdf': defineAsyncComponent(() => import('@vue-office/pdf'))
+};
 
 const show = defineModel<boolean>('show');
 const props = defineProps({
   id: { type: String, required: true },
   mimeType: { type: String, required: true }
 });
+const currentComponent = computed(() =>
+  props.mimeType ? componentsMap[props.mimeType] : null
+);
 
 const fileUrl = ref<string | null>(null);
 const fileLoading = ref<boolean>(true);
