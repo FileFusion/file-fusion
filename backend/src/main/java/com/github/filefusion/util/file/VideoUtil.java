@@ -25,9 +25,16 @@ import java.util.List;
  */
 public final class VideoUtil {
 
-    private static final String GET_VIDEO_WIDTH_HEIGHT_EXEC = "ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of json %s";
+    // params: input
+    private static final String GET_VIDEO_DIMENSIONS_EXEC = "ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of json %s";
+    // params: input
     private static final String GET_VIDEO_DURATION_EXEC = "ffprobe -v error -show_entries format=duration -of json %s";
-    private static final String GET_VIDEO_WIDTH_HEIGHT_DURATION_EXEC = "ffprobe -v error -select_streams v:0 -show_entries stream=width,height -show_entries format=duration -of json %s";
+    // params: input
+    private static final String GET_VIDEO_DIMENSIONS_DURATION_EXEC = "ffprobe -v error -select_streams v:0 -show_entries stream=width,height -show_entries format=duration -of json %s";
+    // params: input/startTime/segmentDuration/width/height/bandwidth/audioBandwidth
+    private static final String GENERATE_VIDEO_SEGMENT_EXEC = "ffmpeg -i %s -ss %s -t %s -vf scale=%s:%s -c:v "
+            + VideoAttribute.VIDEO_CODEC + " -b:v %sk -c:a " + VideoAttribute.AUDIO_CODEC + " -b:a %sk -preset "
+            + VideoAttribute.VIDEO_CODEC_PRESET + " -f " + VideoAttribute.VIDEO_FORMAT + " -y pipe:1";
 
     private static final int M3U8_VERSION = 3;
     private static final String URL_SEPARATOR = "/";
@@ -43,9 +50,9 @@ public final class VideoUtil {
         return Json.parseObject(String.join("\n", execResult.getStdout()), GetVideoInfoResult.class);
     }
 
-    private static int[] getVideoScaleWidthHeight(int[] originalWidthHeight, VideoAttribute.Resolution resolution) {
-        int originalWidth = originalWidthHeight[0];
-        int originalHeight = originalWidthHeight[1];
+    private static int[] getVideoScaleDimensions(int[] originalDimensions, VideoAttribute.Resolution resolution) {
+        int originalWidth = originalDimensions[0];
+        int originalHeight = originalDimensions[1];
         boolean isPortrait = originalHeight > originalWidth;
 
         int maxWidth = isPortrait ? resolution.height() : resolution.width();
@@ -70,14 +77,14 @@ public final class VideoUtil {
 
     public static String getMasterPlaylist(Path path, Duration videoPlayTimeout)
             throws ReadVideoInfoException, IOException {
-        GetVideoInfoResult videoInfo = getVideoInfo(path, GET_VIDEO_WIDTH_HEIGHT_EXEC, videoPlayTimeout);
-        int[] videoWidthHeight = new int[]{videoInfo.getStreams().getFirst().getWidth(), videoInfo.getStreams().getFirst().getHeight()};
+        GetVideoInfoResult videoInfo = getVideoInfo(path, GET_VIDEO_DIMENSIONS_EXEC, videoPlayTimeout);
+        int[] originalDimensions = new int[]{videoInfo.getStreams().getFirst().getWidth(), videoInfo.getStreams().getFirst().getHeight()};
         List<Variant> variantList = Arrays.stream(VideoAttribute.Resolution.values())
                 .map(resolution -> {
-                    int[] videoScaleWidthHeight = getVideoScaleWidthHeight(videoWidthHeight, resolution);
+                    int[] targetDimensions = getVideoScaleDimensions(originalDimensions, resolution);
                     return Variant.builder()
                             .bandwidth(resolution.bandwidth() + resolution.audioBandwidth())
-                            .resolution(videoScaleWidthHeight[0], videoScaleWidthHeight[1])
+                            .resolution(targetDimensions[0], targetDimensions[1])
                             .uri(resolution.alias() + URL_SEPARATOR + VideoAttribute.MEDIA_PLAYLIST_NAME)
                             .build();
                 }).toList();
@@ -113,22 +120,25 @@ public final class VideoUtil {
 
     public static String getMediaSegment(Path path, VideoAttribute.Resolution resolution, int segment, Duration videoPlayTimeout)
             throws ReadVideoInfoException, IOException {
-        GetVideoInfoResult videoInfo = getVideoInfo(path, GET_VIDEO_WIDTH_HEIGHT_DURATION_EXEC, videoPlayTimeout);
-        int[] videoWidthHeight = new int[]{videoInfo.getStreams().getFirst().getWidth(), videoInfo.getStreams().getFirst().getHeight()};
-        int[] videoScaleWidthHeight = getVideoScaleWidthHeight(videoWidthHeight, resolution);
-        int width = videoScaleWidthHeight[0];
-        int height = videoScaleWidthHeight[1];
+        GetVideoInfoResult videoInfo = getVideoInfo(path, GET_VIDEO_DIMENSIONS_DURATION_EXEC, videoPlayTimeout);
+        int[] originalDimensions = new int[]{videoInfo.getStreams().getFirst().getWidth(), videoInfo.getStreams().getFirst().getHeight()};
+        int[] targetDimensions = getVideoScaleDimensions(originalDimensions, resolution);
+        int width = targetDimensions[0];
+        int height = targetDimensions[1];
         long bandwidth = resolution.bandwidth();
         long audioBandwidth = resolution.audioBandwidth();
 
-        double videoDuration = videoInfo.getFormat().getDuration();
-        double start = VideoAttribute.MEDIA_SEGMENT_DURATION * segment;
-        double duration = Math.min(VideoAttribute.MEDIA_SEGMENT_DURATION, videoDuration - start);
-        if (duration <= 0) {
+        double totalDuration = videoInfo.getFormat().getDuration();
+        double startTime = VideoAttribute.MEDIA_SEGMENT_DURATION * segment;
+        double segmentDuration = Math.min(VideoAttribute.MEDIA_SEGMENT_DURATION, totalDuration - startTime);
+        if (segmentDuration <= 0) {
             throw new IllegalArgumentException();
         }
-
-        // todo use ffmpeg generate ts segment, params: width/height/bandwidth/audioBandwidth/start/duration
+        String exec = GENERATE_VIDEO_SEGMENT_EXEC.formatted(path, startTime, segmentDuration, width, height, bandwidth, audioBandwidth);
+        ExecUtil.ExecResult execResult = ExecUtil.exec(Arrays.asList(exec.split(" ")), videoPlayTimeout);
+        if (!execResult.isSuccess()) {
+            throw new ReadVideoInfoException();
+        }
         return null;
     }
 
