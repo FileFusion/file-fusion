@@ -22,7 +22,8 @@ public final class FileAttribute {
         FOLDER(MediaType.parseMediaType("custom/folder")),
         ZIP(MediaType.parseMediaType("application/zip")),
         WEBP(MediaType.parseMediaType("image/webp")),
-        M3U8(MediaType.parseMediaType("application/vnd.apple.mpegurl"));
+        M3U8(MediaType.parseMediaType("application/vnd.apple.mpegurl")),
+        TS(MediaType.parseMediaType("video/mp2t"));
 
         private final MediaType value;
 

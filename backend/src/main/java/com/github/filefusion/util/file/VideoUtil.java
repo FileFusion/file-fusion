@@ -19,7 +19,6 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -39,7 +38,7 @@ public final class VideoUtil {
     // params: input/startTime/segmentDuration/width/height/bandwidth/audioBandwidth
     private static final String GENERATE_VIDEO_SEGMENT_EXEC = "ffmpeg -v error -hwaccel auto -i %s -ss %s -t %s -vf scale=%s:%s -c:v "
             + VideoAttribute.VIDEO_CODEC + " -b:v %sk -c:a " + VideoAttribute.AUDIO_CODEC + " -b:a %sk -preset "
-            + VideoAttribute.VIDEO_CODEC_PRESET + " -f " + VideoAttribute.VIDEO_FORMAT + " -y pipe:1";
+            + VideoAttribute.VIDEO_CODEC_PRESET + " -f " + VideoAttribute.VIDEO_FORMAT + " pipe:1";
 
     private static final int M3U8_VERSION = 3;
     private static final String URL_SEPARATOR = "/";

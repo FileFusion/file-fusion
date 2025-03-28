@@ -516,7 +516,7 @@ public class FileDataService {
             throw new HttpException(I18n.get("fileNotSupportPlay"));
         }
         try {
-            return DownloadUtil.download(VideoAttribute.MASTER_PLAYLIST_NAME, FileAttribute.MimeType.M3U8.value(),
+            return DownloadUtil.download(VideoAttribute.MEDIA_PLAYLIST_NAME, FileAttribute.MimeType.M3U8.value(),
                     VideoUtil.getMediaPlaylist(FileUtil.getHashPath(fileProperties.getDir(), file.getHashValue()),
                             fileProperties.getVideoPlayTimeout()));
         } catch (VideoUtil.ReadVideoInfoException | IOException | ExecutionException | InterruptedException e) {
@@ -538,7 +538,7 @@ public class FileDataService {
             throw new HttpException(I18n.get("fileNotSupportPlay"));
         }
         try {
-            return DownloadUtil.download(VideoAttribute.MASTER_PLAYLIST_NAME, FileAttribute.MimeType.M3U8.value(),
+            return DownloadUtil.download(VideoAttribute.MEDIA_SEGMENT_NAME, FileAttribute.MimeType.TS.value(),
                     VideoUtil.getMediaSegment(FileUtil.getHashPath(fileProperties.getDir(), file.getHashValue()),
                             resolution, segment, fileProperties.getVideoPlayTimeout()));
         } catch (VideoUtil.ReadVideoInfoException | VideoUtil.SegmentDurationException | IOException |
