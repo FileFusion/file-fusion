@@ -1,27 +1,18 @@
 <template>
   <n-modal v-model:show="show" class="!h-80vh !w-80vw">
-    <media-player
-      :plays-inline="true"
-      :cross-origin="true"
-      :title="name"
-      :src="<string>fileUrl"
-      @provider-change="onProviderChange">
-      <media-provider></media-provider>
-      <media-video-layout></media-video-layout>
-    </media-player>
+    <div id="player"></div>
   </n-modal>
 </template>
 
 <script lang="ts" setup>
 import type { MediaProviderChangeEvent } from 'vidstack';
-import { computed, ref, watch } from 'vue';
+import type { MediaPlayerElement } from 'vidstack/elements';
+import 'vidstack/player/styles/base.css';
+import 'vidstack/player/styles/plyr/theme.css';
+import HLS from 'hls.js';
+import { VidstackPlayer, PlyrLayout } from 'vidstack/global/player';
 import { isHLSProvider } from 'vidstack';
-import 'vidstack/player/styles/default/theme.css';
-import 'vidstack/player/styles/default/layouts/audio.css';
-import 'vidstack/player/styles/default/layouts/video.css';
-import 'vidstack/player';
-import 'vidstack/player/layouts';
-import 'vidstack/player/ui';
+import { computed, nextTick, ref, watch } from 'vue';
 import { mainStore } from '@/store';
 
 const http = window.$http;
@@ -34,11 +25,12 @@ const props = defineProps({
 });
 
 const token = computed(() => mStore.getToken);
-const fileUrl = ref<string | null>(null);
+const player = ref<MediaPlayerElement>();
 
 function onProviderChange(event: MediaProviderChangeEvent) {
   const provider = event.detail;
   if (isHLSProvider(provider)) {
+    provider.library = HLS;
     provider.config = {
       xhrSetup(xhr) {
         xhr.setRequestHeader('Authorization', <string>token.value);
@@ -49,10 +41,19 @@ function onProviderChange(event: MediaProviderChangeEvent) {
 
 watch(show, async (newShow) => {
   if (newShow) {
-    fileUrl.value =
-      http.options.baseURL + '/file_data/' + props.id + '/master.m3u8';
-  } else {
-    fileUrl.value = null;
+    await nextTick();
+    player.value = await VidstackPlayer.create({
+      target: '#player',
+      title: props.name,
+      src: http.options.baseURL + '/file_data/' + props.id + '/master.m3u8',
+      layout: new PlyrLayout(),
+      playsInline: true,
+      crossOrigin: true,
+      viewType: 'video',
+      streamType: 'on-demand',
+      storage: 'media-player-config'
+    });
+    player.value.addEventListener('provider-change', onProviderChange);
   }
 });
 </script>

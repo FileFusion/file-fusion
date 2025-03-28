@@ -66,6 +66,6 @@ export default defineConfig({
         lintCommand: 'stylelint **/*.{css,vue}'
       }
     }),
-    vidstack({ include: /AudioPreview/ })
+    vidstack({ include: /VideoPreview/ })
   ]
 });
