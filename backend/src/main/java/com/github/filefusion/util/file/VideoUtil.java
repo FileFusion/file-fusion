@@ -37,7 +37,7 @@ public final class VideoUtil {
     // params: input
     private static final String GET_VIDEO_DIMENSIONS_DURATION_EXEC = "ffprobe -v error -select_streams v:0 -show_entries stream=width,height -show_entries format=duration -of json %s";
     // params: input/startTime/segmentDuration/width/height/bandwidth/audioBandwidth
-    private static final String GENERATE_VIDEO_SEGMENT_EXEC = "ffmpeg -i %s -ss %s -t %s -vf scale=%s:%s -c:v "
+    private static final String GENERATE_VIDEO_SEGMENT_EXEC = "ffmpeg -v error -hwaccel auto -i %s -ss %s -t %s -vf scale=%s:%s -c:v "
             + VideoAttribute.VIDEO_CODEC + " -b:v %sk -c:a " + VideoAttribute.AUDIO_CODEC + " -b:a %sk -preset "
             + VideoAttribute.VIDEO_CODEC_PRESET + " -f " + VideoAttribute.VIDEO_FORMAT + " -y pipe:1";
 

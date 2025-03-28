@@ -20,7 +20,7 @@ import java.util.concurrent.ExecutionException;
 public final class ThumbnailUtil {
 
     private static final String GENERATE_IMAGE_THUMBNAIL_EXEC = "vipsthumbnail %s --size 256 --export-profile srgb -o %s[Q=75,keep=none]";
-    private static final String GENERATE_VIDEO_THUMBNAIL_EXEC = "ffmpeg -hwaccel auto -i %s -loglevel error -vf \"thumbnail,scale=256:-1\" -an -quality 75 -vframes 1 -y %s";
+    private static final String GENERATE_VIDEO_THUMBNAIL_EXEC = "ffmpeg -v error -hwaccel auto -i %s -vf \"thumbnail,scale=256:-1\" -an -quality 75 -vframes 1 -y %s";
 
     public static boolean hasThumbnail(String mimeType,
                                        List<String> thumbnailImageMimeType,
