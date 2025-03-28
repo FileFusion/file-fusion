@@ -502,7 +502,7 @@ public class FileDataService {
             return DownloadUtil.download(VideoAttribute.MASTER_PLAYLIST_NAME, FileAttribute.MimeType.M3U8.value(),
                     VideoUtil.getMasterPlaylist(FileUtil.getHashPath(fileProperties.getDir(),
                             file.getHashValue()), fileProperties.getVideoPlayTimeout()));
-        } catch (VideoUtil.VideoReadWidthHeightException | IOException e) {
+        } catch (VideoUtil.ReadVideoInfoException | IOException e) {
             throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("filePlayFailed"));
         }
     }
@@ -517,7 +517,7 @@ public class FileDataService {
             return DownloadUtil.download(VideoAttribute.MASTER_PLAYLIST_NAME, FileAttribute.MimeType.M3U8.value(),
                     VideoUtil.getMediaPlaylist(FileUtil.getHashPath(fileProperties.getDir(), file.getHashValue()),
                             fileProperties.getVideoPlayTimeout()));
-        } catch (VideoUtil.VideoReadDurationException | IOException e) {
+        } catch (VideoUtil.ReadVideoInfoException | IOException e) {
             throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("filePlayFailed"));
         }
     }
@@ -528,11 +528,13 @@ public class FileDataService {
         if (VideoUtil.notSupportM3u8(file.getMimeType())) {
             throw new HttpException(I18n.get("fileNotSupportPlay"));
         }
-        System.out.println(id);
-        System.out.println(resolution);
-        System.out.println(segment);
-        // todo
-        return null;
+        try {
+            VideoUtil.getMediaSegment(FileUtil.getHashPath(fileProperties.getDir(), file.getHashValue()),
+                    resolution, segment, fileProperties.getVideoPlayTimeout());
+            return null;
+        } catch (VideoUtil.ReadVideoInfoException | IOException e) {
+            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("filePlayFailed"));
+        }
     }
 
 }

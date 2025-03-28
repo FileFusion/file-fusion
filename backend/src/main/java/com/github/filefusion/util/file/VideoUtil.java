@@ -25,32 +25,22 @@ import java.util.List;
  */
 public final class VideoUtil {
 
-    private static final String GET_VIDEO_WIDTH_HEIGHT = "ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of json %s";
-    private static final String GET_VIDEO_DURATION = "ffprobe -v error -show_entries format=duration -of json %s";
+    private static final String GET_VIDEO_WIDTH_HEIGHT_EXEC = "ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of json %s";
+    private static final String GET_VIDEO_DURATION_EXEC = "ffprobe -v error -show_entries format=duration -of json %s";
+    private static final String GET_VIDEO_WIDTH_HEIGHT_DURATION_EXEC = "ffprobe -v error -select_streams v:0 -show_entries stream=width,height -show_entries format=duration -of json %s";
 
     private static final int M3U8_VERSION = 3;
     private static final String URL_SEPARATOR = "/";
     private static final MasterPlaylistParser MASTER_PLAYLIST_PARSER = new MasterPlaylistParser();
     private static final MediaPlaylistParser MEDIA_PLAYLIST_PARSER = new MediaPlaylistParser();
 
-    private static int[] getVideoWidthHeight(Path path, Duration videoPlayTimeout) throws VideoReadWidthHeightException, IOException {
-        String exec = GET_VIDEO_WIDTH_HEIGHT.formatted(path);
+    private static GetVideoInfoResult getVideoInfo(Path path, String exec, Duration videoPlayTimeout) throws ReadVideoInfoException, IOException {
+        exec = exec.formatted(path);
         ExecUtil.ExecResult execResult = ExecUtil.exec(Arrays.asList(exec.split(" ")), videoPlayTimeout);
         if (!execResult.isSuccess()) {
-            throw new VideoReadWidthHeightException();
+            throw new ReadVideoInfoException();
         }
-        GetVideoWidthHeightResult result = Json.parseObject(String.join("\n", execResult.getStdout()), GetVideoWidthHeightResult.class);
-        return new int[]{result.getStreams().getFirst().getWidth(), result.getStreams().getFirst().getHeight()};
-    }
-
-    private static double getVideoDuration(Path path, Duration videoPlayTimeout) throws VideoReadDurationException, IOException {
-        String exec = GET_VIDEO_DURATION.formatted(path);
-        ExecUtil.ExecResult execResult = ExecUtil.exec(Arrays.asList(exec.split(" ")), videoPlayTimeout);
-        if (!execResult.isSuccess()) {
-            throw new VideoReadDurationException();
-        }
-        GetVideoDurationResult result = Json.parseObject(String.join("\n", execResult.getStdout()), GetVideoDurationResult.class);
-        return result.getFormat().getDuration();
+        return Json.parseObject(String.join("\n", execResult.getStdout()), GetVideoInfoResult.class);
     }
 
     private static int[] getVideoScaleWidthHeight(int[] originalWidthHeight, VideoAttribute.Resolution resolution) {
@@ -79,13 +69,14 @@ public final class VideoUtil {
     }
 
     public static String getMasterPlaylist(Path path, Duration videoPlayTimeout)
-            throws VideoReadWidthHeightException, IOException {
-        int[] videoWidthHeight = getVideoWidthHeight(path, videoPlayTimeout);
+            throws ReadVideoInfoException, IOException {
+        GetVideoInfoResult videoInfo = getVideoInfo(path, GET_VIDEO_WIDTH_HEIGHT_EXEC, videoPlayTimeout);
+        int[] videoWidthHeight = new int[]{videoInfo.getStreams().getFirst().getWidth(), videoInfo.getStreams().getFirst().getHeight()};
         List<Variant> variantList = Arrays.stream(VideoAttribute.Resolution.values())
                 .map(resolution -> {
                     int[] videoScaleWidthHeight = getVideoScaleWidthHeight(videoWidthHeight, resolution);
                     return Variant.builder()
-                            .bandwidth(resolution.bandwidth())
+                            .bandwidth(resolution.bandwidth() + resolution.audioBandwidth())
                             .resolution(videoScaleWidthHeight[0], videoScaleWidthHeight[1])
                             .uri(resolution.alias() + URL_SEPARATOR + VideoAttribute.MEDIA_PLAYLIST_NAME)
                             .build();
@@ -97,8 +88,9 @@ public final class VideoUtil {
     }
 
     public static String getMediaPlaylist(Path path, Duration videoPlayTimeout)
-            throws VideoReadDurationException, IOException {
-        double videoDuration = getVideoDuration(path, videoPlayTimeout);
+            throws ReadVideoInfoException, IOException {
+        GetVideoInfoResult videoInfo = getVideoInfo(path, GET_VIDEO_DURATION_EXEC, videoPlayTimeout);
+        double videoDuration = videoInfo.getFormat().getDuration();
         int segmentCount = (int) (videoDuration + VideoAttribute.MEDIA_SEGMENT_DURATION - 1) / VideoAttribute.MEDIA_SEGMENT_DURATION;
         MediaSegment[] mediaSegmentList = new MediaSegment[segmentCount];
         for (int i = 0; i < segmentCount; i++) {
@@ -119,31 +111,43 @@ public final class VideoUtil {
                 .build());
     }
 
-    @Data
-    private static class GetVideoWidthHeightResult implements Serializable {
-        List<VideoWidthHeight> streams;
+    public static String getMediaSegment(Path path, String resolutionAlias, Integer segment, Duration videoPlayTimeout)
+            throws ReadVideoInfoException, IOException {
+        VideoAttribute.Resolution resolution = VideoAttribute.Resolution.fromAlias(resolutionAlias);
+        GetVideoInfoResult videoInfo = getVideoInfo(path, GET_VIDEO_WIDTH_HEIGHT_DURATION_EXEC, videoPlayTimeout);
+        int[] videoWidthHeight = new int[]{videoInfo.getStreams().getFirst().getWidth(), videoInfo.getStreams().getFirst().getHeight()};
+        int[] videoScaleWidthHeight = getVideoScaleWidthHeight(videoWidthHeight, resolution);
+        int width = videoScaleWidthHeight[0];
+        int height = videoScaleWidthHeight[1];
+        long bandwidth = resolution.bandwidth();
+        long audioBandwidth = resolution.audioBandwidth();
 
-        @Data
-        private static class VideoWidthHeight implements Serializable {
-            private int width;
-            private int height;
-        }
+        double videoDuration = videoInfo.getFormat().getDuration();
+        double start = VideoAttribute.MEDIA_SEGMENT_DURATION * segment;
+        double duration = Math.min(videoDuration - start, VideoAttribute.MEDIA_SEGMENT_DURATION);
+
+        // todo use ffmpeg generate ts segment, params: width/height/bandwidth/audioBandwidth/start/duration
+        return null;
     }
 
     @Data
-    private static class GetVideoDurationResult implements Serializable {
-        VideoDuration format;
+    private static class GetVideoInfoResult implements Serializable {
+        List<Streams> streams;
+        Format format;
 
         @Data
-        private static class VideoDuration implements Serializable {
+        private static class Streams implements Serializable {
+            private int width;
+            private int height;
+        }
+
+        @Data
+        private static class Format implements Serializable {
             private double duration;
         }
     }
 
-    public static class VideoReadWidthHeightException extends Exception {
-    }
-
-    public static class VideoReadDurationException extends Exception {
+    public static class ReadVideoInfoException extends Exception {
     }
 
 }
