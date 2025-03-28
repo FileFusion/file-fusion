@@ -522,7 +522,14 @@ public class FileDataService {
         }
     }
 
-    public ResponseEntity<StreamingResponseBody> getMediaSegment(String userId, String id, String resolution, Integer segment) {
+    public ResponseEntity<StreamingResponseBody> getMediaSegment(String userId, String id, String resolutionAlias, Integer segment) {
+        VideoAttribute.Resolution resolution = VideoAttribute.Resolution.fromAlias(resolutionAlias);
+        if (resolution == null) {
+            throw new IllegalArgumentException();
+        }
+        if (segment == null || segment < 0) {
+            throw new IllegalArgumentException();
+        }
         FileData file = fileDataRepository.findFirstByUserIdAndId(userId, id)
                 .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
         if (VideoUtil.notSupportM3u8(file.getMimeType())) {

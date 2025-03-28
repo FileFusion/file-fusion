@@ -111,9 +111,8 @@ public final class VideoUtil {
                 .build());
     }
 
-    public static String getMediaSegment(Path path, String resolutionAlias, Integer segment, Duration videoPlayTimeout)
+    public static String getMediaSegment(Path path, VideoAttribute.Resolution resolution, int segment, Duration videoPlayTimeout)
             throws ReadVideoInfoException, IOException {
-        VideoAttribute.Resolution resolution = VideoAttribute.Resolution.fromAlias(resolutionAlias);
         GetVideoInfoResult videoInfo = getVideoInfo(path, GET_VIDEO_WIDTH_HEIGHT_DURATION_EXEC, videoPlayTimeout);
         int[] videoWidthHeight = new int[]{videoInfo.getStreams().getFirst().getWidth(), videoInfo.getStreams().getFirst().getHeight()};
         int[] videoScaleWidthHeight = getVideoScaleWidthHeight(videoWidthHeight, resolution);
@@ -124,7 +123,10 @@ public final class VideoUtil {
 
         double videoDuration = videoInfo.getFormat().getDuration();
         double start = VideoAttribute.MEDIA_SEGMENT_DURATION * segment;
-        double duration = Math.min(videoDuration - start, VideoAttribute.MEDIA_SEGMENT_DURATION);
+        double duration = Math.min(VideoAttribute.MEDIA_SEGMENT_DURATION, videoDuration - start);
+        if (duration <= 0) {
+            throw new IllegalArgumentException();
+        }
 
         // todo use ffmpeg generate ts segment, params: width/height/bandwidth/audioBandwidth/start/duration
         return null;
