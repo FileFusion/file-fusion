@@ -1,15 +1,15 @@
 package com.github.filefusion.util;
 
-import lombok.Data;
 import org.apache.commons.exec.*;
+import org.apache.commons.exec.Executor;
 import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Serializable;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
 
 /**
  * ExecUtil
@@ -19,58 +19,62 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public final class ExecUtil {
 
-    public static ExecResult exec(List<String> commandLineList, Duration execTimeout) throws IOException {
-        if (CollectionUtils.isEmpty(commandLineList)) {
-            return ExecResult.fail();
-        }
-        if (execTimeout == null || execTimeout.isNegative()) {
-            return ExecResult.fail();
-        }
+    private static final long TIMEOUT_BUFFER_MS = 1000L;
+    private static final ExecutorService EXECUTOR = Executors.newVirtualThreadPerTaskExecutor();
 
-        CommandLine commandLine = new CommandLine(commandLineList.getFirst());
-        commandLineList.stream().skip(1).forEach(commandLine::addArgument);
+    public static void shutdown() {
+        // todo close
+        EXECUTOR.close();
+    }
+
+    public static ExecResult exec(List<String> commandLineList, Duration execTimeout)
+            throws InterruptedException, ExecutionException, IOException {
+        ConcurrentLinkedQueue<String> stdoutQueue = new ConcurrentLinkedQueue<>();
+        ConcurrentLinkedQueue<String> stderrQueue = new ConcurrentLinkedQueue<>();
+        CompletableFuture<Integer> completable;
+        try (OutputStream outputStream = new CollectingLogOutputStream(stdoutQueue);
+             OutputStream errorOutputStream = new CollectingLogOutputStream(stderrQueue)) {
+            completable = exec(commandLineList, outputStream, errorOutputStream, execTimeout);
+        }
+        return new ExecResult(completable.get() == 0, List.copyOf(stdoutQueue), List.copyOf(stderrQueue));
+    }
+
+    public static CompletableFuture<Integer> exec(List<String> commandLineList, OutputStream outputStream,
+                                                  OutputStream errorOutputStream, Duration execTimeout) {
+        if (CollectionUtils.isEmpty(commandLineList) || execTimeout == null || execTimeout.isNegative()) {
+            return CompletableFuture.completedFuture(-1);
+        }
+        CommandLine commandLine = new CommandLine(commandLineList.getFirst().trim());
+        commandLine.addArguments(commandLineList.stream().skip(1).map(String::trim).toArray(String[]::new));
 
         ExecuteWatchdog watchdog = ExecuteWatchdog.builder().setTimeout(execTimeout).get();
         Executor executor = DefaultExecutor.builder().get();
         executor.setWatchdog(watchdog);
+        executor.setStreamHandler(new PumpStreamHandler(outputStream, errorOutputStream));
 
-        LinkedBlockingQueue<String> stdoutQueue = new LinkedBlockingQueue<>();
-        LinkedBlockingQueue<String> stderrQueue = new LinkedBlockingQueue<>();
-        executor.setStreamHandler(new PumpStreamHandler(
-                new CollectingLogOutputStream(stdoutQueue),
-                new CollectingLogOutputStream(stderrQueue)
-        ));
-
-        ExecResult result = new ExecResult();
-        try {
-            result.setSuccess(executor.execute(commandLine) == 0);
-        } catch (ExecuteException e) {
-            result.setSuccess(false);
-            watchdog.killedProcess();
-        } finally {
-            result.setStdout(new ArrayList<>(stdoutQueue));
-            result.setStderr(new ArrayList<>(stderrQueue));
-        }
-        return result;
+        return CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return executor.execute(commandLine);
+                    } catch (ExecuteException e) {
+                        return e.getExitValue();
+                    } catch (Exception e) {
+                        throw new CompletionException(e);
+                    }
+                }, EXECUTOR)
+                .orTimeout(execTimeout.toMillis() + TIMEOUT_BUFFER_MS, TimeUnit.MILLISECONDS)
+                .exceptionally(ex -> {
+                    watchdog.destroyProcess();
+                    return -1;
+                });
     }
 
-    @Data
-    public static class ExecResult implements Serializable {
-        private boolean success;
-        private List<String> stdout;
-        private List<String> stderr;
-
-        public static ExecResult fail() {
-            ExecResult result = new ExecResult();
-            result.setSuccess(false);
-            return result;
-        }
+    public record ExecResult(boolean success, List<String> stdout, List<String> stderr) implements Serializable {
     }
 
     private static class CollectingLogOutputStream extends LogOutputStream {
-        private final LinkedBlockingQueue<String> queue;
+        private final ConcurrentLinkedQueue<String> queue;
 
-        CollectingLogOutputStream(LinkedBlockingQueue<String> queue) {
+        CollectingLogOutputStream(ConcurrentLinkedQueue<String> queue) {
             this.queue = queue;
         }
 
