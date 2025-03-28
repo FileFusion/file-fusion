@@ -119,7 +119,7 @@ public final class VideoUtil {
     }
 
     public static String getMediaSegment(Path path, VideoAttribute.Resolution resolution, int segment, Duration videoPlayTimeout)
-            throws ReadVideoInfoException, IOException {
+            throws ReadVideoInfoException, SegmentDurationException, IOException {
         GetVideoInfoResult videoInfo = getVideoInfo(path, GET_VIDEO_DIMENSIONS_DURATION_EXEC, videoPlayTimeout);
         int[] originalDimensions = new int[]{videoInfo.getStreams().getFirst().getWidth(), videoInfo.getStreams().getFirst().getHeight()};
         int[] targetDimensions = getVideoScaleDimensions(originalDimensions, resolution);
@@ -132,7 +132,7 @@ public final class VideoUtil {
         double startTime = VideoAttribute.MEDIA_SEGMENT_DURATION * segment;
         double segmentDuration = Math.min(VideoAttribute.MEDIA_SEGMENT_DURATION, totalDuration - startTime);
         if (segmentDuration <= 0) {
-            throw new IllegalArgumentException();
+            throw new SegmentDurationException();
         }
         String exec = GENERATE_VIDEO_SEGMENT_EXEC.formatted(path, startTime, segmentDuration, width, height, bandwidth, audioBandwidth);
         ExecUtil.ExecResult execResult = ExecUtil.exec(Arrays.asList(exec.split(" ")), videoPlayTimeout);
@@ -160,6 +160,9 @@ public final class VideoUtil {
     }
 
     public static class ReadVideoInfoException extends Exception {
+    }
+
+    public static class SegmentDurationException extends Exception {
     }
 
 }

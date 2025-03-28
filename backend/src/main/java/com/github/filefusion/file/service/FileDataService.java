@@ -525,10 +525,10 @@ public class FileDataService {
     public ResponseEntity<StreamingResponseBody> getMediaSegment(String userId, String id, String resolutionAlias, Integer segment) {
         VideoAttribute.Resolution resolution = VideoAttribute.Resolution.fromAlias(resolutionAlias);
         if (resolution == null) {
-            throw new IllegalArgumentException();
+            throw new HttpException(I18n.get("filePlayFailed"));
         }
         if (segment == null || segment < 0) {
-            throw new IllegalArgumentException();
+            throw new HttpException(I18n.get("filePlayFailed"));
         }
         FileData file = fileDataRepository.findFirstByUserIdAndId(userId, id)
                 .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
@@ -539,7 +539,7 @@ public class FileDataService {
             VideoUtil.getMediaSegment(FileUtil.getHashPath(fileProperties.getDir(), file.getHashValue()),
                     resolution, segment, fileProperties.getVideoPlayTimeout());
             return null;
-        } catch (VideoUtil.ReadVideoInfoException | IOException e) {
+        } catch (VideoUtil.ReadVideoInfoException | VideoUtil.SegmentDurationException | IOException e) {
             throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("filePlayFailed"));
         }
     }
