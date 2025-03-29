@@ -20,7 +20,6 @@
     "date-fns": "4.1.0",
     "eventemitter3": "5.0.1",
     "hash-wasm": "4.12.0",
-    "hls.js": "1.5.20",
     "p-queue": "8.1.0",
     "pinia": "3.0.1",
     "ulidx": "2.4.1",

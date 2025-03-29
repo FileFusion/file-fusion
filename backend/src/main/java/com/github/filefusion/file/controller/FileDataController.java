@@ -188,12 +188,14 @@ public class FileDataController {
     /**
      * download file chunked
      *
-     * @param downloadId download id
-     * @param range      file chunked range
+     * @param downloadId  download id
+     * @param range       file chunked range
+     * @param ignoredName file name
      * @return file chunked
      */
-    @GetMapping("/_download_chunked/{downloadId}")
-    public ResponseEntity<StreamingResponseBody> downloadChunked(@PathVariable String downloadId, @RequestHeader String range) {
+    @GetMapping("/_download_chunked/{downloadId}/{name}")
+    public ResponseEntity<StreamingResponseBody> downloadChunked(@PathVariable String downloadId, @RequestHeader String range,
+                                                                 @PathVariable("name") String ignoredName) {
         return fileDataService.downloadChunked(downloadId, range);
     }
 
