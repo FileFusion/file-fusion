@@ -8,15 +8,24 @@
 import type { MediaPlayerElement } from 'vidstack/elements';
 import { computed, ref, watch } from 'vue';
 import { useRequest } from 'alova/client';
+import { mainStore } from '@/store';
 import { supportAudioPreview } from '@/commons/file.ts';
+import { SUPPORT_LANGUAGES } from '@/commons/i18n.ts';
+import enUS from '@/assets/languages/media-player/en-US.ts';
+import zhCN from '@/assets/languages/media-player/zh-CN.ts';
 
+const mStore = mainStore();
 const http = window.$http;
+const language = computed(() => mStore.getLanguage);
 
 const show = defineModel<boolean>('show');
 const props = defineProps({
   id: { type: String, required: true },
   name: { type: String, required: true },
   mimeType: { type: String, required: true }
+});
+const playerLanguage = computed(() => {
+  return language.value === SUPPORT_LANGUAGES.ZH_CN ? zhCN : enUS;
 });
 const isAudio = computed(() => supportAudioPreview(props.mimeType));
 
@@ -48,7 +57,9 @@ watch(show, async (newShow) => {
         fileUrl.value +
         '/' +
         props.name,
-      layout: new VidstackPlayerLayout(),
+      layout: new VidstackPlayerLayout({
+        translations: playerLanguage.value
+      }),
       playsInline: true,
       crossOrigin: true,
       viewType: isAudio.value ? 'audio' : 'video',
