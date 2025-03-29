@@ -23,14 +23,6 @@ import java.util.Optional;
 public interface FileDataRepository extends JpaRepository<FileData, String> {
 
     /**
-     * findAllByIdInAndDeletedFalse
-     *
-     * @param idList id list
-     * @return file list
-     */
-    List<FileData> findAllByIdInAndDeletedFalse(List<String> idList);
-
-    /**
      * findAllByUserIdAndParentIdAndDeletedFalse
      *
      * @param userId   user id

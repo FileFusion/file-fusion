@@ -143,6 +143,19 @@ public class FileDataService {
         return fileDataPage;
     }
 
+    public List<FileData> getAllParent(String userId, String id) {
+        FileData fileData = fileDataRepository.findFirstByUserIdAndIdAndDeletedFalse(userId, id)
+                .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
+        List<FileData> parentList = new ArrayList<>();
+        parentList.add(fileData);
+        while (!FileAttribute.PARENT_ROOT.equals(fileData.getParentId())) {
+            fileData = fileDataRepository.findFirstByUserIdAndIdAndDeletedFalse(userId, fileData.getParentId())
+                    .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
+            parentList.add(fileData);
+        }
+        return parentList;
+    }
+
     @Transactional(rollbackFor = HttpException.class)
     public void recycleOrDelete(String userId, String id) {
         FileData file = fileDataRepository.findFirstByUserIdAndIdAndDeletedFalse(userId, id)

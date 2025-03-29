@@ -16,22 +16,31 @@
 
 <script lang="ts" setup>
 import { useRoute, useRouter } from 'vue-router';
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import IconFolderClose from '~icons/icon-park-outline/folder-close';
+import { useRequest } from 'alova/client';
 
 const router = useRouter();
 const route = useRoute();
+const http = window.$http;
 
-const filePathPattern = computed(() => {
-  const path = route.params.path;
-  if (!path) {
-    return [];
-  }
-  if (Array.isArray(path)) {
-    return path;
-  }
-  return [path];
-});
+const { data: allParentList, send: doGetAllParent } = useRequest(
+  (id: string) => http.Get<any>('/file_data/' + id + '/parent'),
+  { immediate: false }
+);
+
+watch(
+  route,
+  () => {
+    if (route.name === 'files-personal') {
+      const parentId = <string>route.params.parentId;
+      if (parentId) {
+        doGetAllParent(parentId);
+      }
+    }
+  },
+  { immediate: true }
+);
 
 const breadcrumb = computed(() => {
   let b = [];
@@ -43,18 +52,20 @@ const breadcrumb = computed(() => {
       i18n: true
     });
   }
-  if (route.name === 'files-personal') {
-    const filePathList = filePathPattern.value;
-    const filePathParamList = [];
-    for (let i = 0; i < filePathList.length; i++) {
-      filePathParamList.push(filePathList[i]);
+  if (
+    route.name === 'files-personal' &&
+    route.params.parentId &&
+    allParentList.value
+  ) {
+    for (let i = allParentList.value.length - 1; i >= 0; i--) {
+      const parent = allParentList.value[i];
       b.push({
         name: route.name,
-        label: filePathList[i],
+        label: parent.name,
         icon: IconFolderClose,
         i18n: false,
         params: {
-          path: [...filePathParamList]
+          parentId: parent.id
         }
       });
     }

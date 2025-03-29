@@ -67,6 +67,18 @@ public class FileDataController {
     }
 
     /**
+     * get file parent list
+     *
+     * @param id id
+     * @return file parent list
+     */
+    @GetMapping("/{id}/parent")
+    @PreAuthorize("hasAuthority('personal_file:read')")
+    public List<FileData> getAllParent(@PathVariable String id) {
+        return fileDataService.getAllParent(CurrentUser.getId(), id);
+    }
+
+    /**
      * delete file
      *
      * @param id id
