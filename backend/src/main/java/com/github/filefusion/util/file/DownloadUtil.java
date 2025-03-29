@@ -5,7 +5,6 @@ import com.github.filefusion.file.entity.FileData;
 import org.springframework.http.*;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import java.io.OutputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 import java.nio.charset.StandardCharsets;
@@ -48,8 +47,8 @@ public final class DownloadUtil {
         return downloadResponse(name, mimeType,
                 HttpStatus.OK,
                 out -> {
-                    try (OutputStream outputStream = out) {
-                        outputStream.write(content.getBytes(StandardCharsets.UTF_8));
+                    try (out) {
+                        out.write(content.getBytes(StandardCharsets.UTF_8));
                     }
                 },
                 new HttpHeaders());
@@ -58,7 +57,11 @@ public final class DownloadUtil {
     public static ResponseEntity<StreamingResponseBody> download(String name, String mimeType, Path path) {
         return downloadResponse(name, MediaType.valueOf(mimeType),
                 HttpStatus.OK,
-                out -> FileUtil.transferTo(path, Channels.newChannel(out)),
+                out -> {
+                    try (out; WritableByteChannel channel = Channels.newChannel(out)) {
+                        FileUtil.transferTo(path, channel);
+                    }
+                },
                 new HttpHeaders());
     }
 
@@ -70,7 +73,11 @@ public final class DownloadUtil {
         headers.add(HttpHeaders.CONTENT_LENGTH, String.valueOf(end - start + 1));
         return downloadResponse(name, MediaType.valueOf(mimeType),
                 HttpStatus.PARTIAL_CONTENT,
-                out -> FileUtil.transferTo(path, Channels.newChannel(out), true, start, end + 1),
+                out -> {
+                    try (out; WritableByteChannel channel = Channels.newChannel(out)) {
+                        FileUtil.transferTo(path, channel, start, end + 1);
+                    }
+                },
                 headers);
     }
 
@@ -79,12 +86,12 @@ public final class DownloadUtil {
                 FileAttribute.MimeType.ZIP.value(),
                 HttpStatus.OK,
                 out -> {
-                    Map<String, FileData> idToFileMap = fileList.stream()
-                            .collect(Collectors.toMap(FileData::getId, Function.identity()));
-                    Map<String, String> idToZipPath = fileList.stream()
-                            .collect(Collectors.toMap(FileData::getId, file -> buildZipPath(file, idToFileMap)));
-                    try (ZipOutputStream zos = new ZipOutputStream(out, StandardCharsets.UTF_8);
+                    try (out; ZipOutputStream zos = new ZipOutputStream(out, StandardCharsets.UTF_8);
                          WritableByteChannel outChannel = Channels.newChannel(zos)) {
+                        Map<String, FileData> idToFileMap = fileList.stream()
+                                .collect(Collectors.toMap(FileData::getId, Function.identity()));
+                        Map<String, String> idToZipPath = fileList.stream()
+                                .collect(Collectors.toMap(FileData::getId, file -> buildZipPath(file, idToFileMap)));
                         zos.setLevel(Deflater.NO_COMPRESSION);
                         for (FileData file : fileList) {
                             if (FileAttribute.MimeType.FOLDER.value().toString().equals(file.getMimeType())) {
@@ -95,7 +102,7 @@ public final class DownloadUtil {
                         for (FileData file : fileList) {
                             if (!FileAttribute.MimeType.FOLDER.value().toString().equals(file.getMimeType())) {
                                 zos.putNextEntry(new ZipEntry(idToZipPath.get(file.getId())));
-                                FileUtil.transferTo(FileUtil.getHashPath(dir, file.getHashValue()), outChannel, false);
+                                FileUtil.transferTo(FileUtil.getHashPath(dir, file.getHashValue()), outChannel);
                                 zos.closeEntry();
                             }
                         }

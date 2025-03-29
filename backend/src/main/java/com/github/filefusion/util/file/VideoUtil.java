@@ -144,13 +144,13 @@ public final class VideoUtil {
         String exec = GENERATE_VIDEO_SEGMENT_EXEC.formatted(path, startTime, segmentDuration, width, height, bandwidth / 1000, audioBandwidth / 1000);
         PipedOutputStream pos = new PipedOutputStream();
         ExecUtil.exec(Arrays.asList(exec.split(" ")), pos, pos, videoPlayTimeout);
-        return outputStream -> {
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            try (PipedInputStream pis = new PipedInputStream(pos)) {
+        return out -> {
+            try (pos; out; PipedInputStream pis = new PipedInputStream(pos)) {
+                byte[] buffer = new byte[1024];
+                int bytesRead;
                 while ((bytesRead = pis.read(buffer)) != -1) {
-                    outputStream.write(buffer, 0, bytesRead);
-                    outputStream.flush();
+                    out.write(buffer, 0, bytesRead);
+                    out.flush();
                 }
             }
         };

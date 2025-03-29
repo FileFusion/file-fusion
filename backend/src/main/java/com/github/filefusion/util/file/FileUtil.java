@@ -26,16 +26,11 @@ public final class FileUtil {
     private static final int BUFFER_SIZE = 4 * 1024 * 1024;
 
     public static void transferTo(Path path, WritableByteChannel outChannel) throws IOException {
-        transferTo(path, outChannel, true);
+        transferTo(path, outChannel, 0, Long.MAX_VALUE);
     }
 
-    public static void transferTo(Path path, WritableByteChannel outChannel, boolean closeOut) throws IOException {
-        transferTo(path, outChannel, closeOut, 0, Long.MAX_VALUE);
-    }
-
-    public static void transferTo(Path path, WritableByteChannel outChannel, boolean closeOut, long start, long end) throws IOException {
-        try (FileChannel inChannel = FileChannel.open(path, StandardOpenOption.READ);
-             AutoCloseable ignored = closeOut ? outChannel : null) {
+    public static void transferTo(Path path, WritableByteChannel outChannel, long start, long end) throws IOException {
+        try (FileChannel inChannel = FileChannel.open(path, StandardOpenOption.READ)) {
             long total = inChannel.size();
             start = Math.min(Math.max(start, 0), total);
             end = Math.min(end, total);
@@ -91,7 +86,7 @@ public final class FileUtil {
                         .sorted(Comparator.comparing(p -> Integer.parseInt(p.getFileName().toString())))
                         .toList();
                 for (Path chunk : chunkList) {
-                    transferTo(chunk, outChannel, false);
+                    transferTo(chunk, outChannel);
                 }
             }
             delete(chunkDirPath);
