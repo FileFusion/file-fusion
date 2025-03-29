@@ -5,7 +5,7 @@
     :show-icon="false"
     :title="$t('files.personal.folderSelectCheck')"
     preset="dialog">
-    <div class="h-90 overflow-auto whitespace-pre">
+    <div class="h-80 overflow-auto whitespace-pre">
       <n-tree
         :data="folderList"
         :on-load="getChildFolder"

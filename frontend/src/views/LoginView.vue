@@ -16,7 +16,7 @@
             class="absolute left-1/2 top-1/2 w-80 -translate-x-2/4 -translate-y-2/4">
             <div class="text-center">
               <img
-                class="h-10 object-contain"
+                class="h-12 object-contain"
                 :src="
                   theme === SUPPORT_THEMES.DARK ? logoTitleWhite : logoTitle
                 "

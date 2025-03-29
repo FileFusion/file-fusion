@@ -1,5 +1,5 @@
 <template>
-  <n-modal v-model:show="show" class="!h-80vh !w-80vw">
+  <n-modal v-model:show="show" class="w-80">
     <div id="player"></div>
   </n-modal>
 </template>
@@ -31,7 +31,7 @@ watch(show, async (newShow) => {
       'vidstack/global/player'
     );
     await import('vidstack/player/styles/default/theme.css');
-    await import('vidstack/player/styles/default/layouts/video.css');
+    await import('vidstack/player/styles/default/layouts/audio.css');
     player.value = await VidstackPlayer.create({
       target: '#player',
       title: props.name,
@@ -42,10 +42,9 @@ watch(show, async (newShow) => {
         '/' +
         props.name,
       layout: new VidstackPlayerLayout(),
-      playsInline: true,
       crossOrigin: true,
-      viewType: 'video',
-      storage: 'media-player-config'
+      viewType: 'audio',
+      storage: 'audio-player-config'
     });
   } else {
     if (player.value) {

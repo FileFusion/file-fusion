@@ -45,7 +45,7 @@ watch(show, async (newShow) => {
       playsInline: true,
       crossOrigin: true,
       viewType: 'video',
-      storage: 'media-player-config'
+      storage: 'video-player-config'
     });
   } else {
     if (player.value) {

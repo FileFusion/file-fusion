@@ -41,7 +41,7 @@
         selectable>
         <n-spin :show="getLicenseLoading">
           <n-card
-            class="w-128"
+            class="w-120"
             closable
             hoverable
             :title="$t('navigationBar.about')"
