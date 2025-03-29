@@ -50,5 +50,5 @@ security:
     POST:
       - /user/_login
     GET:
-      - /file_data/_download/**
-      - /file_data/_download_chunked/**
+      - /file_data/_download/*
+      - /file_data/_download_chunked/*/*
