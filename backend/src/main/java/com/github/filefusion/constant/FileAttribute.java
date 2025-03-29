@@ -16,14 +16,11 @@ public final class FileAttribute {
     public static final String DOWNLOAD_ZIP_NAME = "download.zip";
     public static final String DOWNLOAD_THUMBNAIL_NAME = "thumbnail.webp";
     public static final String THUMBNAIL_FILE_SUFFIX = ".webp";
-    public static final String VIDEO_MIME_TYPE_PREFIX = "video/";
 
     public enum MimeType {
         FOLDER(MediaType.parseMediaType("custom/folder")),
         ZIP(MediaType.parseMediaType("application/zip")),
-        WEBP(MediaType.parseMediaType("image/webp")),
-        M3U8(MediaType.parseMediaType("application/vnd.apple.mpegurl")),
-        TS(MediaType.parseMediaType("video/mp2t"));
+        WEBP(MediaType.parseMediaType("image/webp"));
 
         private final MediaType value;
 

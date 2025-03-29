@@ -5,7 +5,6 @@ import com.github.filefusion.common.HttpException;
 import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.constant.RedisAttribute;
 import com.github.filefusion.constant.SysConfigKey;
-import com.github.filefusion.constant.VideoAttribute;
 import com.github.filefusion.file.entity.FileData;
 import com.github.filefusion.file.model.FileHashUsageCountModel;
 import com.github.filefusion.file.repository.FileDataRepository;
@@ -17,7 +16,6 @@ import com.github.filefusion.util.ULID;
 import com.github.filefusion.util.file.DownloadUtil;
 import com.github.filefusion.util.file.FileUtil;
 import com.github.filefusion.util.file.ThumbnailUtil;
-import com.github.filefusion.util.file.VideoUtil;
 import org.redisson.api.RList;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -491,59 +489,6 @@ public class FileDataService {
         } catch (ThumbnailUtil.ThumbnailGenerationFailedException | IOException | ExecutionException |
                  InterruptedException e) {
             throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("thumbnailGenerationFailed"));
-        }
-    }
-
-    public ResponseEntity<StreamingResponseBody> getMasterPlaylist(String userId, String id) {
-        FileData file = fileDataRepository.findFirstByUserIdAndId(userId, id)
-                .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
-        if (VideoUtil.notSupportM3u8(file.getMimeType())) {
-            throw new HttpException(I18n.get("fileNotSupportPlay"));
-        }
-        try {
-            return DownloadUtil.download(VideoAttribute.MASTER_PLAYLIST_NAME, FileAttribute.MimeType.M3U8.value(),
-                    VideoUtil.getMasterPlaylist(FileUtil.getHashPath(fileProperties.getDir(),
-                            file.getHashValue()), fileProperties.getVideoPlayTimeout()));
-        } catch (VideoUtil.ReadVideoInfoException | IOException | ExecutionException | InterruptedException e) {
-            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("filePlayFailed"));
-        }
-    }
-
-    public ResponseEntity<StreamingResponseBody> getMediaPlaylist(String userId, String id) {
-        FileData file = fileDataRepository.findFirstByUserIdAndId(userId, id)
-                .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
-        if (VideoUtil.notSupportM3u8(file.getMimeType())) {
-            throw new HttpException(I18n.get("fileNotSupportPlay"));
-        }
-        try {
-            return DownloadUtil.download(VideoAttribute.MEDIA_PLAYLIST_NAME, FileAttribute.MimeType.M3U8.value(),
-                    VideoUtil.getMediaPlaylist(FileUtil.getHashPath(fileProperties.getDir(), file.getHashValue()),
-                            fileProperties.getVideoPlayTimeout()));
-        } catch (VideoUtil.ReadVideoInfoException | IOException | ExecutionException | InterruptedException e) {
-            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("filePlayFailed"));
-        }
-    }
-
-    public ResponseEntity<StreamingResponseBody> getMediaSegment(String userId, String id, String resolutionAlias, Integer segment) {
-        VideoAttribute.Resolution resolution = VideoAttribute.Resolution.fromAlias(resolutionAlias);
-        if (resolution == null) {
-            throw new HttpException(I18n.get("filePlayFailed"));
-        }
-        if (segment == null || segment < 0) {
-            throw new HttpException(I18n.get("filePlayFailed"));
-        }
-        FileData file = fileDataRepository.findFirstByUserIdAndId(userId, id)
-                .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
-        if (VideoUtil.notSupportM3u8(file.getMimeType())) {
-            throw new HttpException(I18n.get("fileNotSupportPlay"));
-        }
-        try {
-            return DownloadUtil.download(VideoAttribute.MEDIA_SEGMENT_NAME, FileAttribute.MimeType.TS.value(),
-                    VideoUtil.getMediaSegment(FileUtil.getHashPath(fileProperties.getDir(), file.getHashValue()),
-                            resolution, segment, fileProperties.getVideoPlayTimeout()));
-        } catch (VideoUtil.ReadVideoInfoException | VideoUtil.SegmentDurationException | IOException |
-                 ExecutionException | InterruptedException e) {
-            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("filePlayFailed"));
         }
     }
 

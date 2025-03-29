@@ -2,7 +2,6 @@ package com.github.filefusion.file.controller;
 
 import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.constant.SorterOrder;
-import com.github.filefusion.constant.VideoAttribute;
 import com.github.filefusion.file.entity.FileData;
 import com.github.filefusion.file.model.CreateFolderModel;
 import com.github.filefusion.file.model.MoveFileModel;
@@ -209,47 +208,6 @@ public class FileDataController {
     @PreAuthorize("hasAnyAuthority('personal_file:read','recycle_bin_file:read')")
     public ResponseEntity<StreamingResponseBody> thumbnail(@PathVariable String id) {
         return fileDataService.thumbnail(CurrentUser.getId(), id);
-    }
-
-    /**
-     * get video file master playlist
-     *
-     * @param id id
-     * @return master playlist
-     */
-    @GetMapping("/{id}/" + VideoAttribute.MASTER_PLAYLIST_NAME)
-    @PreAuthorize("hasAnyAuthority('personal_file:read')")
-    public ResponseEntity<StreamingResponseBody> getMasterPlaylist(@PathVariable String id) {
-        return fileDataService.getMasterPlaylist(CurrentUser.getId(), id);
-    }
-
-    /**
-     * get video file media playlist
-     *
-     * @param id                id
-     * @param ignoredResolution resolution
-     * @return media playlist
-     */
-    @GetMapping("/{id}/{resolution}/" + VideoAttribute.MEDIA_PLAYLIST_NAME)
-    @PreAuthorize("hasAnyAuthority('personal_file:read')")
-    public ResponseEntity<StreamingResponseBody> getMediaPlaylist(
-            @PathVariable String id, @PathVariable("resolution") String ignoredResolution) {
-        return fileDataService.getMediaPlaylist(CurrentUser.getId(), id);
-    }
-
-    /**
-     * get video file media segment
-     *
-     * @param id         id
-     * @param resolution resolution
-     * @param segment    segment
-     * @return media segment
-     */
-    @GetMapping("/{id}/{resolution}/{segment}/" + VideoAttribute.MEDIA_SEGMENT_NAME)
-    @PreAuthorize("hasAnyAuthority('personal_file:read')")
-    public ResponseEntity<StreamingResponseBody> getMediaSegment(
-            @PathVariable String id, @PathVariable String resolution, @PathVariable Integer segment) {
-        return fileDataService.getMediaSegment(CurrentUser.getId(), id, resolution, segment);
     }
 
 }

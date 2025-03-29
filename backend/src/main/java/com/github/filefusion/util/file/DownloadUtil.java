@@ -39,21 +39,6 @@ public final class DownloadUtil {
         return String.join(FileAttribute.SEPARATOR, pathSegments);
     }
 
-    public static ResponseEntity<StreamingResponseBody> download(String name, MediaType mimeType, StreamingResponseBody streamingResponseBody) {
-        return downloadResponse(name, mimeType, HttpStatus.OK, streamingResponseBody, new HttpHeaders());
-    }
-
-    public static ResponseEntity<StreamingResponseBody> download(String name, MediaType mimeType, String content) {
-        return downloadResponse(name, mimeType,
-                HttpStatus.OK,
-                out -> {
-                    try (out) {
-                        out.write(content.getBytes(StandardCharsets.UTF_8));
-                    }
-                },
-                new HttpHeaders());
-    }
-
     public static ResponseEntity<StreamingResponseBody> download(String name, String mimeType, Path path) {
         return downloadResponse(name, MediaType.valueOf(mimeType),
                 HttpStatus.OK,
