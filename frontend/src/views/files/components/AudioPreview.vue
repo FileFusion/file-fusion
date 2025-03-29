@@ -5,13 +5,11 @@
 </template>
 
 <script lang="ts" setup>
-import type { MediaProviderChangeEvent, HLSProvider } from 'vidstack';
 import type { MediaPlayerElement } from 'vidstack/elements';
-import { computed, nextTick, ref, watch } from 'vue';
-import { mainStore } from '@/store';
+import { ref, watch } from 'vue';
+import { useRequest } from 'alova/client';
 
 const http = window.$http;
-const mStore = mainStore();
 
 const show = defineModel<boolean>('show');
 const props = defineProps({
@@ -19,41 +17,42 @@ const props = defineProps({
   name: { type: String, required: true }
 });
 
-const token = computed(() => mStore.getToken);
-const player = ref<MediaPlayerElement>();
+const player = ref<MediaPlayerElement | null>(null);
 
-function onProviderChange(event: MediaProviderChangeEvent) {
-  if (event.detail?.type === 'hls') {
-    const provider = <HLSProvider>event.detail;
-    provider.library = () => import('hls.js');
-    provider.config = {
-      xhrSetup(xhr: any) {
-        xhr.setRequestHeader('Authorization', <string>token.value);
-      }
-    };
-  }
-}
+const { data: fileUrl, send: doGetFile } = useRequest(
+  () => http.Post<any>('/file_data/_submit_download', [props.id]),
+  { immediate: false }
+);
 
 watch(show, async (newShow) => {
   if (newShow) {
-    await nextTick();
-    const { VidstackPlayer, PlyrLayout } = await import(
+    await doGetFile();
+    const { VidstackPlayer, VidstackPlayerLayout } = await import(
       'vidstack/global/player'
     );
-    await import('vidstack/player/styles/base.css');
-    await import('vidstack/player/styles/plyr/theme.css');
+    await import('vidstack/player/styles/default/theme.css');
+    await import('vidstack/player/styles/default/layouts/video.css');
     player.value = await VidstackPlayer.create({
       target: '#player',
       title: props.name,
-      src: http.options.baseURL + '/file_data/' + props.id + '/master.m3u8',
-      layout: new PlyrLayout(),
+      src:
+        http.options.baseURL +
+        '/file_data/_download_chunked/' +
+        fileUrl.value +
+        '/' +
+        props.name,
+      layout: new VidstackPlayerLayout(),
       playsInline: true,
       crossOrigin: true,
       viewType: 'video',
-      streamType: 'on-demand',
       storage: 'media-player-config'
     });
-    player.value.addEventListener('provider-change', onProviderChange);
+  } else {
+    if (player.value) {
+      player.value.destroy();
+      player.value = null;
+      fileUrl.value = null;
+    }
   }
 });
 </script>

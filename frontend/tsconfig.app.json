@@ -21,7 +21,7 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
-    "types": ["naive-ui/volar", "unplugin-icons/types/vue", "vidstack/vue"],
+    "types": ["naive-ui/volar", "unplugin-icons/types/vue"],
     "paths": {
       "@/*": ["./src/*"]
     }
