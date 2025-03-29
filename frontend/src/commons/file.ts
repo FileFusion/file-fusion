@@ -35,7 +35,7 @@ async function getFileHash(file: File | Blob): Promise<string> {
   return hashInstance.digest('hex');
 }
 
-const supportVideoPreviewType = ['video/mp4'];
+const supportVideoPreviewType = ['video/mp4', 'video/webm'];
 function supportVideoPreview(mimeType: string): boolean {
   return supportVideoPreviewType.includes(mimeType);
 }
