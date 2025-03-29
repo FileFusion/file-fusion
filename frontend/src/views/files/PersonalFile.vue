@@ -194,14 +194,11 @@
       v-model:id="imageFileId"
       @preview-prev="imagePreviewPrevNext(true)"
       @preview-next="imagePreviewPrevNext(false)" />
-    <video-preview
-      :id="videoFileId"
-      v-model:show="showVideoFile"
-      :name="videoFileName" />
-    <audio-preview
-      :id="audioFileId"
-      v-model:show="showAudioFile"
-      :name="audioFileName" />
+    <media-preview
+      :id="mediaFileId"
+      v-model:show="showMediaFile"
+      :name="mediaFileName"
+      :mime-type="mediaFileMimeType" />
     <office-preview
       :id="officeFileId"
       v-model:show="showOfficeFile"
@@ -239,10 +236,9 @@ import { useRouter, useRoute } from 'vue-router';
 import { mainStore } from '@/store';
 import FileRename from '@/views/files/components/FileRename.vue';
 import FileThumbnail from '@/views/files/components/FileThumbnail.vue';
-import VideoPreview from '@/views/files/components/VideoPreview.vue';
 import ImagePreview from '@/views/files/components/ImagePreview.vue';
+import MediaPreview from '@/views/files/components/MediaPreview.vue';
 import OfficePreview from '@/views/files/components/OfficePreview.vue';
-import AudioPreview from '@/views/files/components/AudioPreview.vue';
 import FolderSelect from '@/views/files/components/FolderSelect.vue';
 
 const { t } = useI18n();
@@ -290,13 +286,10 @@ const moveFileIds = ref<string[]>([]);
 const showImageFile = ref<boolean>(false);
 const imageFileId = ref<string | null>(null);
 
-const showVideoFile = ref<boolean>(false);
-const videoFileId = ref<string>('');
-const videoFileName = ref<string>('');
-
-const showAudioFile = ref<boolean>(false);
-const audioFileId = ref<string>('');
-const audioFileName = ref<string>('');
+const showMediaFile = ref<boolean>(false);
+const mediaFileId = ref<string>('');
+const mediaFileName = ref<string>('');
+const mediaFileMimeType = ref<string>('');
 
 const showOfficeFile = ref<boolean>(false);
 const officeFileId = ref<string>('');
@@ -810,14 +803,14 @@ function clickFile(file: any) {
   if (supportImagePreview(file.mimeType)) {
     showImageFile.value = true;
     imageFileId.value = file.id;
-  } else if (supportVideoPreview(file.mimeType)) {
-    showVideoFile.value = true;
-    videoFileId.value = file.id;
-    videoFileName.value = file.name;
-  } else if (supportAudioPreview(file.mimeType)) {
-    showAudioFile.value = true;
-    audioFileId.value = file.id;
-    audioFileName.value = file.name;
+  } else if (
+    supportVideoPreview(file.mimeType) ||
+    supportAudioPreview(file.mimeType)
+  ) {
+    showMediaFile.value = true;
+    mediaFileId.value = file.id;
+    mediaFileName.value = file.name;
+    mediaFileMimeType.value = file.mimeType;
   } else if (supportOfficePreview(file.mimeType)) {
     showOfficeFile.value = true;
     officeFileId.value = file.id;

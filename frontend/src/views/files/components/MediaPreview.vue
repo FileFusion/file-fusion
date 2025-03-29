@@ -1,21 +1,24 @@
 <template>
-  <n-modal v-model:show="show" class="!h-80vh !w-80vw">
+  <n-modal v-model:show="show" :class="isAudio ? 'w-80' : '!h-80vh !w-80vw'">
     <div id="player"></div>
   </n-modal>
 </template>
 
 <script lang="ts" setup>
 import type { MediaPlayerElement } from 'vidstack/elements';
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRequest } from 'alova/client';
+import { supportAudioPreview } from '@/commons/file.ts';
 
 const http = window.$http;
 
 const show = defineModel<boolean>('show');
 const props = defineProps({
   id: { type: String, required: true },
-  name: { type: String, required: true }
+  name: { type: String, required: true },
+  mimeType: { type: String, required: true }
 });
+const isAudio = computed(() => supportAudioPreview(props.mimeType));
 
 const player = ref<MediaPlayerElement | null>(null);
 
@@ -31,7 +34,11 @@ watch(show, async (newShow) => {
       'vidstack/global/player'
     );
     await import('vidstack/player/styles/default/theme.css');
-    await import('vidstack/player/styles/default/layouts/video.css');
+    if (isAudio.value) {
+      await import('vidstack/player/styles/default/layouts/audio.css');
+    } else {
+      await import('vidstack/player/styles/default/layouts/video.css');
+    }
     player.value = await VidstackPlayer.create({
       target: '#player',
       title: props.name,
@@ -44,8 +51,8 @@ watch(show, async (newShow) => {
       layout: new VidstackPlayerLayout(),
       playsInline: true,
       crossOrigin: true,
-      viewType: 'video',
-      storage: 'video-player-config'
+      viewType: isAudio.value ? 'audio' : 'video',
+      storage: 'media-player-config'
     });
   } else {
     if (player.value) {
