@@ -20,7 +20,7 @@ const props = defineProps({
 });
 
 const token = computed(() => mStore.getToken);
-const player = ref<MediaPlayerElement>();
+const player = ref<MediaPlayerElement | null>(null);
 
 function onProviderChange(event: MediaProviderChangeEvent) {
   if (event.detail?.type === 'hls') {
@@ -37,16 +37,16 @@ function onProviderChange(event: MediaProviderChangeEvent) {
 watch(show, async (newShow) => {
   if (newShow) {
     await nextTick();
-    const { VidstackPlayer, PlyrLayout } = await import(
+    const { VidstackPlayer, VidstackPlayerLayout } = await import(
       'vidstack/global/player'
     );
-    await import('vidstack/player/styles/base.css');
-    await import('vidstack/player/styles/plyr/theme.css');
+    await import('vidstack/player/styles/default/theme.css');
+    await import('vidstack/player/styles/default/layouts/video.css');
     player.value = await VidstackPlayer.create({
       target: '#player',
       title: props.name,
       src: http.options.baseURL + '/file_data/' + props.id + '/master.m3u8',
-      layout: new PlyrLayout(),
+      layout: new VidstackPlayerLayout(),
       playsInline: true,
       crossOrigin: true,
       viewType: 'video',
@@ -54,6 +54,11 @@ watch(show, async (newShow) => {
       storage: 'media-player-config'
     });
     player.value.addEventListener('provider-change', onProviderChange);
+  } else {
+    if (player.value) {
+      player.value.destroy();
+      player.value = null;
+    }
   }
 });
 </script>
