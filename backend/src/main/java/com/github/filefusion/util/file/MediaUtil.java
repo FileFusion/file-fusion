@@ -98,8 +98,8 @@ public final class MediaUtil {
             long audioBandwidth = resolution.audioBandwidth();
             videoScale.append("[0:v]scale=").append(width).append(":").append(height).append("[v").append(index).append("];");
             audioStream.append("[a").append(index).append("]");
-            outStream.append(" -map \"[v").append(index).append("]\" -c:v:").append(index - 1).append(" ").append(VideoAttribute.VIDEO_CODEC).append(" -preset ").append(VideoAttribute.VIDEO_CODEC_PRESET).append(" -b:v:").append(index - 1).append(" ").append(bandwidth / 1000).append("k");
-            outStream.append(" -map \"[a").append(index).append("]\" -c:a:").append(index - 1).append(" ").append(VideoAttribute.AUDIO_CODEC).append(" -b:a:").append(index - 1).append(" ").append(audioBandwidth / 1000).append("k");
+            outStream.append(" -map \"[v").append(index).append("]\" -c:v:").append(index - 1).append(" ").append(VideoAttribute.VIDEO_CODEC).append(" -preset ").append(VideoAttribute.VIDEO_CODEC_PRESET).append(" -b:v:").append(index - 1).append(" ").append(bandwidth).append("k");
+            outStream.append(" -map \"[a").append(index).append("]\" -c:a:").append(index - 1).append(" ").append(VideoAttribute.AUDIO_CODEC).append(" -b:a:").append(index - 1).append(" ").append(audioBandwidth).append("k");
             index++;
         }
         String exec = GENERATE_VIDEO_DASH_EXEC.formatted(originalPath, videoScale, targetDimensionsMap.size(), audioStream, outStream, targetPath);
