@@ -23,10 +23,11 @@ public class FileProperties {
 
     private Duration lockTimeout;
     private Duration downloadLinkTimeout;
-    private Duration thumbnailGenerateTimeout;
     private Duration videoGenerateTimeout;
+    private Duration thumbnailGenerateTimeout;
     private Path dir;
     private Path tmpDir;
+    private Path videoDir;
     private Path thumbnailDir;
     private List<String> thumbnailImageMimeType;
     private List<String> thumbnailVideoMimeType;
@@ -43,6 +44,13 @@ public class FileProperties {
             Files.createDirectories(tmpDir);
         }
         this.tmpDir = tmpDir;
+    }
+
+    public void setVideoDir(Path videoDir) throws IOException {
+        if (!Files.exists(videoDir)) {
+            Files.createDirectories(videoDir);
+        }
+        this.videoDir = videoDir;
     }
 
     public void setThumbnailDir(Path thumbnailDir) throws IOException {

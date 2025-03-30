@@ -4,6 +4,7 @@ import com.github.filefusion.constant.VideoAttribute;
 import com.github.filefusion.util.ExecUtil;
 import com.github.filefusion.util.Json;
 import lombok.Data;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -27,6 +28,16 @@ public final class MediaUtil {
 
     private static final String GET_VIDEO_DIMENSIONS_EXEC = "ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of json %s";
     private static final String GENERATE_VIDEO_DASH_EXEC = "ffmpeg -v error -hwaccel auto -i %s -filter_complex \"%s[0:a]asplit=%d%s\"%s -f " + VideoAttribute.VIDEO_FORMAT + " -seg_duration " + VideoAttribute.MEDIA_SEGMENT_DURATION + " -init_seg_name \"init-$RepresentationID$.mp4\" -media_seg_name \"seg-$RepresentationID$-$Number%%05d$.m4s\" -y %s";
+    private static final List<String> SUPPORT_DASH_MIME_TYPE = List.of(
+            "video/x-ms-wmv",
+            "video/x-flv",
+            "video/webm",
+            "video/quicktime",
+            "video/mpeg",
+            "video/mp4",
+            "video/avi",
+            "video/3gpp",
+            "application/vnd.rn-realmedia");
 
     private static GetVideoInfoResult getVideoDimensionsInfo(Path path, Duration videoGenerateTimeout)
             throws ReadVideoInfoException, IOException, ExecutionException, InterruptedException {
@@ -80,6 +91,10 @@ public final class MediaUtil {
                 ));
     }
 
+    public static boolean supportGenerateDash(String mimeType) {
+        return StringUtils.hasLength(mimeType) && SUPPORT_DASH_MIME_TYPE.contains(mimeType);
+    }
+
     public static void generateMediaDash(Path originalPath, Path targetPath, Duration videoGenerateTimeout)
             throws ReadVideoInfoException, IOException, ExecutionException, InterruptedException {
         GetVideoInfoResult videoInfo = getVideoDimensionsInfo(originalPath, videoGenerateTimeout);
@@ -103,8 +118,7 @@ public final class MediaUtil {
             index++;
         }
         String exec = GENERATE_VIDEO_DASH_EXEC.formatted(originalPath, videoScale, targetDimensionsMap.size(), audioStream, outStream, targetPath);
-        System.out.println(Arrays.asList(exec.split(" ")));
-        ExecUtil.exec(Arrays.asList(exec.split(" ")), null, null, videoGenerateTimeout);
+        ExecUtil.exec(Arrays.asList(exec.split(" ")), videoGenerateTimeout);
     }
 
     @Data

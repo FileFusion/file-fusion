@@ -15,6 +15,7 @@ import com.github.filefusion.util.I18n;
 import com.github.filefusion.util.ULID;
 import com.github.filefusion.util.file.DownloadUtil;
 import com.github.filefusion.util.file.FileUtil;
+import com.github.filefusion.util.file.MediaUtil;
 import com.github.filefusion.util.file.ThumbnailUtil;
 import org.redisson.api.RList;
 import org.redisson.api.RedissonClient;
@@ -325,6 +326,9 @@ public class FileDataService {
                 fileDataRepository.save(file);
             }
         }, fileProperties.getLockTimeout());
+        if (uploadStatus.get()) {
+            uploadSuccessEvent(hashValue, mimeType);
+        }
         return uploadStatus.get();
     }
 
@@ -378,6 +382,17 @@ public class FileDataService {
                 throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
             }
         }, fileProperties.getLockTimeout());
+    }
+
+    private void uploadSuccessEvent(String hashValue, String mimeType) {
+        try {
+            if (MediaUtil.supportGenerateDash(mimeType)) {
+                MediaUtil.generateMediaDash(FileUtil.getHashPath(fileProperties.getDir(), hashValue),
+                        FileUtil.getHashPath(fileProperties.getVideoDir(), hashValue),
+                        fileProperties.getVideoGenerateTimeout());
+            }
+        } catch (Exception ignored) {
+        }
     }
 
     @Transactional(rollbackFor = HttpException.class)
