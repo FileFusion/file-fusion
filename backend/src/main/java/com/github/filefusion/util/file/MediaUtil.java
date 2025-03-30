@@ -1,9 +1,11 @@
 package com.github.filefusion.util.file;
 
+import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.constant.VideoAttribute;
 import com.github.filefusion.util.ExecUtil;
 import com.github.filefusion.util.Json;
 import lombok.Data;
+import org.springframework.util.MimeType;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
@@ -11,10 +13,7 @@ import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -39,6 +38,11 @@ public final class MediaUtil {
             "video/avi",
             "video/3gpp",
             "application/vnd.rn-realmedia");
+    private static final Map<String, MimeType> DASH_FILE_MIME_TYPE = new HashMap<>() {{
+        put(".mpd", FileAttribute.MimeType.DASH.value());
+        put(".mp4", FileAttribute.MimeType.MP4.value());
+        put(".m4s", FileAttribute.MimeType.MP4.value());
+    }};
 
     private static GetVideoInfoResult getVideoDimensionsInfo(Path path, Duration videoGenerateTimeout)
             throws ReadVideoInfoException, IOException, ExecutionException, InterruptedException {
@@ -94,6 +98,15 @@ public final class MediaUtil {
 
     public static boolean supportGenerateDash(String mimeType) {
         return StringUtils.hasLength(mimeType) && SUPPORT_DASH_MIME_TYPE.contains(mimeType);
+    }
+
+    public static MimeType getDashFileMimeType(String fileName) {
+        for (String extension : DASH_FILE_MIME_TYPE.keySet()) {
+            if (fileName.endsWith(extension)) {
+                return DASH_FILE_MIME_TYPE.get(extension);
+            }
+        }
+        return null;
     }
 
     public static void generateMediaDash(Path originalPath, Path targetPath, Duration videoGenerateTimeout)

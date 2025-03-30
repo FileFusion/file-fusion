@@ -28,6 +28,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.MimeType;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
@@ -480,7 +481,12 @@ public class FileDataService {
     }
 
     private ResponseEntity<StreamingResponseBody> downloadChunked(Path path, String name, String mimeType, String range) {
-        String[] ranges = range.replace("bytes=", "").split("-");
+        String[] ranges;
+        if (StringUtils.hasLength(range)) {
+            ranges = range.replace("bytes=", "").split("-");
+        } else {
+            ranges = new String[]{};
+        }
         long start = 0L;
         long end = Long.MAX_VALUE;
         if (ranges.length > 0) {
@@ -502,9 +508,13 @@ public class FileDataService {
         }
     }
 
-    public ResponseEntity<StreamingResponseBody> playVideo(String downloadId, String range) {
+    public ResponseEntity<StreamingResponseBody> playVideo(String downloadId, String fileName, String range) {
         if (Boolean.FALSE.equals(fileProperties.getVideoPlay())) {
             throw new HttpException(I18n.get("videoPlayNotEnabled"));
+        }
+        MimeType mimeType = MediaUtil.getDashFileMimeType(fileName);
+        if (mimeType == null) {
+            throw new HttpException(I18n.get("fileNotSupportPlay"));
         }
         RList<FileData> fileList = redissonClient.getList(RedisAttribute.DOWNLOAD_ID_PREFIX + downloadId);
         if (CollectionUtils.isEmpty(fileList)) {
@@ -514,12 +524,11 @@ public class FileDataService {
         if (fileList.size() != 1 || !MediaUtil.supportGenerateDash(file.getMimeType())) {
             throw new HttpException(I18n.get("fileNotSupportPlay"));
         }
-        Path videoPath = FileUtil.getHashPath(fileProperties.getVideoDir(), file.getHashValue()).resolve(VideoAttribute.MEDIA_MANIFEST_NAME);
-        if (!Files.exists(videoPath)) {
+        Path path = FileUtil.getHashPath(fileProperties.getVideoDir(), file.getHashValue()).resolve(fileName);
+        if (!Files.exists(path)) {
             throw new HttpException(I18n.get("videoBeingGenerated"));
         }
-        return downloadChunked(videoPath, VideoAttribute.MEDIA_MANIFEST_NAME,
-                FileAttribute.MimeType.DASH.value().toString(), range);
+        return downloadChunked(path, fileName, mimeType.toString(), range);
     }
 
     public ResponseEntity<StreamingResponseBody> thumbnail(String userId, String id) {

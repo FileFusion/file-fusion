@@ -96,13 +96,13 @@ public final class DownloadUtil {
                 new HttpHeaders());
     }
 
-    private static ResponseEntity<StreamingResponseBody> downloadResponse(String filename,
+    private static ResponseEntity<StreamingResponseBody> downloadResponse(String fileName,
                                                                           MediaType mediaType,
                                                                           HttpStatus status,
                                                                           StreamingResponseBody body,
                                                                           HttpHeaders headers) {
         String contentDisposition = ContentDisposition.attachment()
-                .filename(filename, StandardCharsets.UTF_8)
+                .filename(fileName, StandardCharsets.UTF_8)
                 .build().toString();
         return ResponseEntity.status(status)
                 .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)

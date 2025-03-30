@@ -52,3 +52,4 @@ security:
     GET:
       - /file_data/_download/*
       - /file_data/_download_chunked/*/*
+      - /file_data/video/*/*

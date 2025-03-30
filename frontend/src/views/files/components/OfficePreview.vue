@@ -54,7 +54,7 @@ const currentComponent = computed(() =>
 const fileUrl = ref<string | null>(null);
 const fileLoading = ref<boolean>(true);
 
-const { data: previewUrl, send: doGetPreviewFile } = useRequest(
+const { data: downloadId, send: doGetPreviewFile } = useRequest(
   () => http.Post<any>('/file_data/_submit_download', [props.id]),
   { immediate: false }
 );
@@ -74,7 +74,7 @@ watch(show, async (newShow) => {
     try {
       await doGetPreviewFile();
       fileUrl.value =
-        http.options.baseURL + '/file_data/_download/' + previewUrl.value;
+        http.options.baseURL + '/file_data/_download/' + downloadId.value;
     } catch {
       fileLoading.value = false;
       window.$msg.error(t('files.personal.fileReadFailure'));
@@ -82,7 +82,7 @@ watch(show, async (newShow) => {
   } else {
     fileUrl.value = null;
     fileLoading.value = false;
-    previewUrl.value = null;
+    downloadId.value = null;
   }
 });
 </script>

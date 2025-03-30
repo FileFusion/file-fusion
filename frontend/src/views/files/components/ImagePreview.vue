@@ -28,7 +28,7 @@ const downloadMethod = () =>
 
 const {
   loading: imagePreviewFileLoading,
-  data: imagePreviewUrl,
+  data: downloadId,
   send: doGetImagePreviewFile
 } = useRequest(downloadMethod, { immediate: false });
 
@@ -100,7 +100,7 @@ const renderToolbar = computed(() => ({ nodes }: ImageRenderToolbarProps) => [
 function destroyImage() {
   show.value = false;
   id.value = null;
-  imagePreviewUrl.value = null;
+  downloadId.value = null;
   submitDownloadRes.value = null;
 }
 
@@ -120,8 +120,7 @@ watch([show, id], async ([newShow, newId], [oldShow, oldId]) => {
     await doGetImagePreviewFile();
     (<any>(
       document.getElementsByClassName('n-image-preview-wrapper')[0].firstChild
-    )).src =
-      http.options.baseURL + '/file_data/_download/' + imagePreviewUrl.value;
+    )).src = http.options.baseURL + '/file_data/_download/' + downloadId.value;
   }
 });
 </script>

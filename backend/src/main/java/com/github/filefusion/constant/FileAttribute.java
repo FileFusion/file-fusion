@@ -21,7 +21,8 @@ public final class FileAttribute {
         FOLDER(MediaType.parseMediaType("custom/folder")),
         ZIP(MediaType.parseMediaType("application/zip")),
         WEBP(MediaType.parseMediaType("image/webp")),
-        DASH(MediaType.parseMediaType("application/dash+xml"));
+        DASH(MediaType.parseMediaType("application/dash+xml")),
+        MP4(MediaType.parseMediaType("video/mp4"));
 
         private final MediaType value;
 

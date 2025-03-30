@@ -2,7 +2,6 @@ package com.github.filefusion.file.controller;
 
 import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.constant.SorterOrder;
-import com.github.filefusion.constant.VideoAttribute;
 import com.github.filefusion.file.entity.FileData;
 import com.github.filefusion.file.model.CreateFolderModel;
 import com.github.filefusion.file.model.MoveFileModel;
@@ -206,7 +205,8 @@ public class FileDataController {
      * @return file chunked
      */
     @GetMapping("/_download_chunked/{downloadId}/{name}")
-    public ResponseEntity<StreamingResponseBody> downloadChunked(@PathVariable String downloadId, @RequestHeader String range,
+    public ResponseEntity<StreamingResponseBody> downloadChunked(@PathVariable String downloadId,
+                                                                 @RequestHeader(required = false) String range,
                                                                  @PathVariable("name") String ignoredName) {
         return fileDataService.downloadChunked(downloadId, range);
     }
@@ -215,12 +215,14 @@ public class FileDataController {
      * play video file
      *
      * @param downloadId download id
+     * @param fileName   file name
      * @param range      file chunked range
      * @return video chunked
      */
-    @GetMapping("/video/{downloadId}/" + VideoAttribute.MEDIA_MANIFEST_NAME)
-    public ResponseEntity<StreamingResponseBody> playVideo(@PathVariable String downloadId, @RequestHeader String range) {
-        return fileDataService.playVideo(downloadId, range);
+    @GetMapping("/video/{downloadId}/{fileName}")
+    public ResponseEntity<StreamingResponseBody> playVideo(@PathVariable String downloadId, @PathVariable String fileName,
+                                                           @RequestHeader(required = false) String range) {
+        return fileDataService.playVideo(downloadId, fileName, range);
     }
 
     /**

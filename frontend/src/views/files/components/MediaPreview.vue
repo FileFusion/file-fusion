@@ -24,14 +24,32 @@ const props = defineProps({
   name: { type: String, required: true },
   mimeType: { type: String, required: true }
 });
+
+const player = ref<MediaPlayerElement | null>(null);
 const playerLanguage = computed(() => {
   return language.value === SUPPORT_LANGUAGES.ZH_CN ? zhCN : enUS;
 });
 const isAudio = computed(() => supportAudioPreview(props.mimeType));
+const playUrl = computed(() => {
+  if (isAudio.value) {
+    return (
+      http.options.baseURL +
+      '/file_data/_download_chunked/' +
+      downloadId.value +
+      '/' +
+      props.name
+    );
+  } else {
+    return (
+      http.options.baseURL +
+      '/file_data/video/' +
+      downloadId.value +
+      '/stream.mpd'
+    );
+  }
+});
 
-const player = ref<MediaPlayerElement | null>(null);
-
-const { data: fileUrl, send: doGetFile } = useRequest(
+const { data: downloadId, send: doGetFile } = useRequest(
   () => http.Post<any>('/file_data/_submit_download', [props.id]),
   { immediate: false }
 );
@@ -51,25 +69,21 @@ watch(show, async (newShow) => {
     player.value = await VidstackPlayer.create({
       target: '#player',
       title: props.name,
-      src:
-        http.options.baseURL +
-        '/file_data/_download_chunked/' +
-        fileUrl.value +
-        '/' +
-        props.name,
+      src: playUrl.value,
+      viewType: isAudio.value ? 'audio' : 'video',
+      streamType: 'on-demand',
       layout: new VidstackPlayerLayout({
         translations: playerLanguage.value
       }),
-      playsInline: true,
       crossOrigin: true,
-      viewType: isAudio.value ? 'audio' : 'video',
+      playsInline: true,
       storage: 'media-player-config'
     });
   } else {
     if (player.value) {
       player.value.destroy();
       player.value = null;
-      fileUrl.value = null;
+      downloadId.value = null;
     }
   }
 });
