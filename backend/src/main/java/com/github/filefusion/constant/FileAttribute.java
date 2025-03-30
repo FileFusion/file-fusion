@@ -20,7 +20,8 @@ public final class FileAttribute {
     public enum MimeType {
         FOLDER(MediaType.parseMediaType("custom/folder")),
         ZIP(MediaType.parseMediaType("application/zip")),
-        WEBP(MediaType.parseMediaType("image/webp"));
+        WEBP(MediaType.parseMediaType("image/webp")),
+        DASH(MediaType.parseMediaType("application/dash+xml"));
 
         private final MediaType value;
 

@@ -23,6 +23,7 @@ public class FileProperties {
 
     private Duration lockTimeout;
     private Duration downloadLinkTimeout;
+    private Boolean videoPlay;
     private Duration videoGenerateTimeout;
     private Duration thumbnailGenerateTimeout;
     private Path dir;

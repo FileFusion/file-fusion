@@ -8,6 +8,7 @@ import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Arrays;
@@ -118,6 +119,7 @@ public final class MediaUtil {
             index++;
         }
         String exec = GENERATE_VIDEO_DASH_EXEC.formatted(originalPath, videoScale, targetDimensionsMap.size(), audioStream, outStream, targetPath);
+        Files.createDirectories(targetPath.getParent());
         ExecUtil.exec(Arrays.asList(exec.split(" ")), videoGenerateTimeout);
     }
 

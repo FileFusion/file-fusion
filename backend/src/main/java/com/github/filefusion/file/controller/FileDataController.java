@@ -2,6 +2,7 @@ package com.github.filefusion.file.controller;
 
 import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.constant.SorterOrder;
+import com.github.filefusion.constant.VideoAttribute;
 import com.github.filefusion.file.entity.FileData;
 import com.github.filefusion.file.model.CreateFolderModel;
 import com.github.filefusion.file.model.MoveFileModel;
@@ -208,6 +209,18 @@ public class FileDataController {
     public ResponseEntity<StreamingResponseBody> downloadChunked(@PathVariable String downloadId, @RequestHeader String range,
                                                                  @PathVariable("name") String ignoredName) {
         return fileDataService.downloadChunked(downloadId, range);
+    }
+
+    /**
+     * play video file
+     *
+     * @param downloadId download id
+     * @param range      file chunked range
+     * @return video chunked
+     */
+    @GetMapping("/video/{downloadId}/" + VideoAttribute.MEDIA_MANIFEST_NAME)
+    public ResponseEntity<StreamingResponseBody> playVideo(@PathVariable String downloadId, @RequestHeader String range) {
+        return fileDataService.playVideo(downloadId, range);
     }
 
     /**

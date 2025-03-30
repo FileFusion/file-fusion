@@ -5,6 +5,7 @@ import com.github.filefusion.common.HttpException;
 import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.constant.RedisAttribute;
 import com.github.filefusion.constant.SysConfigKey;
+import com.github.filefusion.constant.VideoAttribute;
 import com.github.filefusion.file.entity.FileData;
 import com.github.filefusion.file.model.FileHashUsageCountModel;
 import com.github.filefusion.file.repository.FileDataRepository;
@@ -386,10 +387,10 @@ public class FileDataService {
 
     private void uploadSuccessEvent(String hashValue, String mimeType) {
         try {
-            if (MediaUtil.supportGenerateDash(mimeType)) {
+            if (Boolean.TRUE.equals(fileProperties.getVideoPlay()) && MediaUtil.supportGenerateDash(mimeType)) {
+                Path videoPath = FileUtil.getHashPath(fileProperties.getVideoDir(), hashValue).resolve(VideoAttribute.MEDIA_MANIFEST_NAME);
                 MediaUtil.generateMediaDash(FileUtil.getHashPath(fileProperties.getDir(), hashValue),
-                        FileUtil.getHashPath(fileProperties.getVideoDir(), hashValue),
-                        fileProperties.getVideoGenerateTimeout());
+                        videoPath, fileProperties.getVideoGenerateTimeout());
             }
         } catch (Exception ignored) {
         }
@@ -474,6 +475,11 @@ public class FileDataService {
         if (fileList.size() != 1 || FileAttribute.MimeType.FOLDER.value().toString().equals(file.getMimeType())) {
             throw new HttpException(I18n.get("SegmentedDownloadOnlySupportSingle"));
         }
+        return downloadChunked(FileUtil.getHashPath(fileProperties.getDir(), file.getHashValue()),
+                file.getName(), file.getMimeType(), range);
+    }
+
+    private ResponseEntity<StreamingResponseBody> downloadChunked(Path path, String name, String mimeType, String range) {
         String[] ranges = range.replace("bytes=", "").split("-");
         long start = 0L;
         long end = Long.MAX_VALUE;
@@ -483,7 +489,6 @@ public class FileDataService {
         if (ranges.length > 1) {
             end = Long.parseLong(ranges[1]);
         }
-        Path path = FileUtil.getHashPath(fileProperties.getDir(), file.getHashValue());
         try {
             long size = Files.size(path);
             start = Math.max(start, 0);
@@ -491,10 +496,30 @@ public class FileDataService {
             if (start > end) {
                 throw new HttpException(I18n.get("fileDownloadFailed"));
             }
-            return DownloadUtil.downloadChunked(file.getName(), file.getMimeType(), path, start, end, size);
+            return DownloadUtil.downloadChunked(name, mimeType, path, start, end, size);
         } catch (IOException e) {
             throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileDownloadFailed"));
         }
+    }
+
+    public ResponseEntity<StreamingResponseBody> playVideo(String downloadId, String range) {
+        if (Boolean.FALSE.equals(fileProperties.getVideoPlay())) {
+            throw new HttpException(I18n.get("videoPlayNotEnabled"));
+        }
+        RList<FileData> fileList = redissonClient.getList(RedisAttribute.DOWNLOAD_ID_PREFIX + downloadId);
+        if (CollectionUtils.isEmpty(fileList)) {
+            throw new HttpException(I18n.get("playLinkExpired"));
+        }
+        FileData file = fileList.getFirst();
+        if (fileList.size() != 1 || !MediaUtil.supportGenerateDash(file.getMimeType())) {
+            throw new HttpException(I18n.get("fileNotSupportPlay"));
+        }
+        Path videoPath = FileUtil.getHashPath(fileProperties.getVideoDir(), file.getHashValue()).resolve(VideoAttribute.MEDIA_MANIFEST_NAME);
+        if (!Files.exists(videoPath)) {
+            throw new HttpException(I18n.get("videoBeingGenerated"));
+        }
+        return downloadChunked(videoPath, VideoAttribute.MEDIA_MANIFEST_NAME,
+                FileAttribute.MimeType.DASH.value().toString(), range);
     }
 
     public ResponseEntity<StreamingResponseBody> thumbnail(String userId, String id) {

@@ -34,6 +34,7 @@ task:
 file:
   lock-timeout: ${FF_FILE_LOCK_TIMEOUT:60s}
   download-link-timeout: ${FF_FILE_DOWNLOAD_LINK_TIMEOUT:1h}
+  video-play: ${FF_FILE_VIDEO_PLAY:true}
   video-generate-timeout: ${FF_FILE_VIDEO_GENERATE_TIMEOUT:30m}
   thumbnail-generate-timeout: ${FF_FILE_THUMBNAIL_GENERATE_TIMEOUT:60s}
   dir: ${FF_FILE_DIR:/opt/file_fusion/data/file}
