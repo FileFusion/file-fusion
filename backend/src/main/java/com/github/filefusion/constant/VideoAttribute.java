@@ -12,7 +12,7 @@ import java.util.Map;
 public final class VideoAttribute {
 
     public static final String MEDIA_NAME = "stream.mpd";
-    public static final int MEDIA_SEGMENT_DURATION = 3;
+    public static final int MEDIA_SEGMENT_DURATION = 6;
     public static final String VIDEO_CODEC = "libx264";
     public static final String VIDEO_FORMAT = "dash";
     public static final String AUDIO_CODEC = "aac";
