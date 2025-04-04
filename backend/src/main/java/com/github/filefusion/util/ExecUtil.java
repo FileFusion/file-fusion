@@ -2,7 +2,6 @@ package com.github.filefusion.util;
 
 import org.apache.commons.exec.*;
 import org.apache.commons.exec.Executor;
-import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -28,19 +27,24 @@ public final class ExecUtil {
 
     public static ExecResult exec(String command, Duration execTimeout)
             throws IOException, ExecutionException, InterruptedException {
+        return exec(CommandLine.parse(command), execTimeout);
+    }
+
+    public static ExecResult exec(CommandLine commandLine, Duration execTimeout)
+            throws IOException, ExecutionException, InterruptedException {
         ConcurrentLinkedQueue<String> stdoutQueue = new ConcurrentLinkedQueue<>();
         ConcurrentLinkedQueue<String> stderrQueue = new ConcurrentLinkedQueue<>();
         CompletableFuture<Integer> completable;
         try (OutputStream outputStream = new CollectingLogOutputStream(stdoutQueue);
              OutputStream errorOutputStream = new CollectingLogOutputStream(stderrQueue)) {
-            completable = exec(command, outputStream, errorOutputStream, execTimeout);
+            completable = exec(commandLine, outputStream, errorOutputStream, execTimeout);
         }
         return new ExecResult(completable.get() == 0, List.copyOf(stdoutQueue), List.copyOf(stderrQueue));
     }
 
-    public static CompletableFuture<Integer> exec(String command, OutputStream outputStream,
-                                                  OutputStream errorOutputStream, Duration execTimeout) {
-        if (!StringUtils.hasLength(command) || execTimeout == null || execTimeout.isNegative()) {
+    private static CompletableFuture<Integer> exec(CommandLine commandLine, OutputStream outputStream,
+                                                   OutputStream errorOutputStream, Duration execTimeout) {
+        if (commandLine == null || execTimeout == null || execTimeout.isNegative()) {
             return CompletableFuture.completedFuture(-1);
         }
 
@@ -51,7 +55,7 @@ public final class ExecUtil {
 
         return CompletableFuture.supplyAsync(() -> {
                     try {
-                        return executor.execute(CommandLine.parse(command));
+                        return executor.execute(commandLine);
                     } catch (ExecuteException e) {
                         return e.getExitValue();
                     } catch (Exception e) {

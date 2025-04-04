@@ -4,7 +4,9 @@ import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.constant.VideoAttribute;
 import com.github.filefusion.util.ExecUtil;
 import com.github.filefusion.util.Json;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.apache.commons.exec.CommandLine;
 import org.springframework.util.MimeType;
 import org.springframework.util.StringUtils;
 
@@ -27,18 +29,6 @@ import java.util.stream.Collectors;
 public final class MediaUtil {
 
     private static final String GET_VIDEO_DIMENSIONS_EXEC = "ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of json %s";
-    private static final String GENERATE_VIDEO_DASH_EXEC = "ffmpeg -v error -hwaccel auto -i %s -filter_complex '[0:v]split=%s%s;%s'%s -map 0:a:0? -c:a "
-            + VideoAttribute.AUDIO_CODEC
-            + " -b:a " + VideoAttribute.AUDIO_BANDWIDTH
-            + " -ar " + VideoAttribute.AUDIO_RATE
-            + " -c:v " + VideoAttribute.VIDEO_CODEC
-            + " -pix_fmt " + VideoAttribute.VIDEO_PIX_FORMAT
-            + " -preset " + VideoAttribute.VIDEO_CODEC_PRESET
-            + " -r " + VideoAttribute.VIDEO_FPS + " -fps_mode cfr -g " + (VideoAttribute.VIDEO_FPS * VideoAttribute.MEDIA_SEGMENT_DURATION)
-            + " -keyint_min " + (VideoAttribute.VIDEO_FPS * VideoAttribute.MEDIA_SEGMENT_DURATION)
-            + " -sc_threshold 0 -b_strategy 0"
-            + " -f dash -adaptation_sets 'id=0,streams=v id=1,streams=a' -seg_duration " + VideoAttribute.MEDIA_SEGMENT_DURATION
-            + " -frag_type none -init_seg_name 'init-stream$RepresentationID$.$ext$' -media_seg_name 'chunk-stream$RepresentationID$-$Number%%05d$.$ext$' -y %s";
     private static final List<String> SUPPORT_DASH_MIME_TYPE = List.of(
             "video/x-ms-wmv",
             "video/x-flv",
@@ -54,6 +44,67 @@ public final class MediaUtil {
         put(".mp4", FileAttribute.MimeType.MP4.value());
         put(".m4s", FileAttribute.MimeType.MP4.value());
     }};
+
+    private static CommandLine getGenerateVideoDashExec(Path input, Integer dimensionsSize,
+                                                        StringBuilder videoSplit, StringBuilder videoScale,
+                                                        List<MapStream> mapStreamList, Path output) {
+        CommandLine commandLine = new CommandLine("ffmpeg");
+        commandLine.addArgument("-v");
+        commandLine.addArgument("error");
+        commandLine.addArgument("-hwaccel");
+        commandLine.addArgument("auto");
+        commandLine.addArgument("-i");
+        commandLine.addArgument(input.toString());
+        commandLine.addArgument("-filter_complex");
+        commandLine.addArgument("[0:v]split=%s%s;%s".formatted(dimensionsSize, videoSplit, videoScale));
+        for (MapStream mapStream : mapStreamList) {
+            commandLine.addArgument(mapStream.getMap());
+            commandLine.addArgument(mapStream.getOutName());
+            commandLine.addArgument(mapStream.getOutStream());
+            commandLine.addArgument(mapStream.getBandwidth());
+        }
+        commandLine.addArgument("-map");
+        commandLine.addArgument("0:a:0?");
+        commandLine.addArgument("-c:a");
+        commandLine.addArgument(VideoAttribute.AUDIO_CODEC);
+        commandLine.addArgument("-b:a");
+        commandLine.addArgument(VideoAttribute.AUDIO_BANDWIDTH);
+        commandLine.addArgument("-ar");
+        commandLine.addArgument(VideoAttribute.AUDIO_RATE);
+        commandLine.addArgument("-c:v");
+        commandLine.addArgument(VideoAttribute.VIDEO_CODEC);
+        commandLine.addArgument("-pix_fmt");
+        commandLine.addArgument(VideoAttribute.VIDEO_PIX_FORMAT);
+        commandLine.addArgument("-preset");
+        commandLine.addArgument(VideoAttribute.VIDEO_CODEC_PRESET);
+        commandLine.addArgument("-r");
+        commandLine.addArgument(String.valueOf(VideoAttribute.VIDEO_FPS));
+        commandLine.addArgument("-fps_mode");
+        commandLine.addArgument("cfr");
+        commandLine.addArgument("-g");
+        commandLine.addArgument(String.valueOf(VideoAttribute.VIDEO_FPS * VideoAttribute.MEDIA_SEGMENT_DURATION));
+        commandLine.addArgument("-keyint_min");
+        commandLine.addArgument(String.valueOf(VideoAttribute.VIDEO_FPS * VideoAttribute.MEDIA_SEGMENT_DURATION));
+        commandLine.addArgument("-sc_threshold");
+        commandLine.addArgument("0");
+        commandLine.addArgument("-b_strategy");
+        commandLine.addArgument("0");
+        commandLine.addArgument("-f");
+        commandLine.addArgument("dash");
+        commandLine.addArgument("-adaptation_sets");
+        commandLine.addArgument("id=0,streams=v id=1,streams=a", false);
+        commandLine.addArgument("-seg_duration");
+        commandLine.addArgument(String.valueOf(VideoAttribute.MEDIA_SEGMENT_DURATION));
+        commandLine.addArgument("-frag_type");
+        commandLine.addArgument("none");
+        commandLine.addArgument("-init_seg_name");
+        commandLine.addArgument("init-stream$RepresentationID$.$ext$");
+        commandLine.addArgument("-media_seg_name");
+        commandLine.addArgument("chunk-stream$RepresentationID$-$Number%05d$.$ext$");
+        commandLine.addArgument("-y");
+        commandLine.addArgument(output.toString());
+        return commandLine;
+    }
 
     private static GetVideoInfoResult getVideoDimensionsInfo(Path path, Duration videoGenerateTimeout)
             throws ReadVideoInfoException, IOException, ExecutionException, InterruptedException {
@@ -129,7 +180,7 @@ public final class MediaUtil {
         int index = 1;
         StringBuilder videoSplit = new StringBuilder();
         StringBuilder videoScale = new StringBuilder();
-        StringBuilder mapStream = new StringBuilder();
+        List<MapStream> mapStreamList = new ArrayList<>();
         for (VideoAttribute.Resolution resolution : targetDimensionsMap.keySet()) {
             int[] targetDimensions = targetDimensionsMap.get(resolution);
             int width = targetDimensions[0];
@@ -137,17 +188,26 @@ public final class MediaUtil {
             long bandwidth = resolution.bandwidth();
             videoSplit.append("[v").append(index).append("]");
             videoScale.append("[v").append(index).append("]scale=").append(width).append(":").append(height).append("[v").append(index).append("out];");
-            mapStream.append(" -map '[v").append(index).append("out]' -b:v:").append(index - 1).append(" ").append(bandwidth).append("k");
+            mapStreamList.add(new MapStream("-map", "[v" + index + "out]", "-b:v:" + (index - 1), bandwidth + "k"));
             index++;
         }
-        String exec = GENERATE_VIDEO_DASH_EXEC.formatted(originalPath, targetDimensionsMap.size(), videoSplit, videoScale, mapStream, targetPath);
+        CommandLine commandLine = getGenerateVideoDashExec(originalPath, targetDimensionsMap.size(), videoSplit, videoScale, mapStreamList, targetPath);
         Files.createDirectories(targetPath.getParent());
-        ExecUtil.exec(exec, videoGenerateTimeout);
+        ExecUtil.exec(commandLine, videoGenerateTimeout);
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class MapStream implements Serializable {
+        String map;
+        String outName;
+        String outStream;
+        String bandwidth;
     }
 
     @Data
     private static class GetVideoInfoResult implements Serializable {
-        List<Streams> streams;
+        private List<Streams> streams;
 
         @Data
         private static class Streams implements Serializable {
