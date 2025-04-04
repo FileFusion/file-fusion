@@ -137,10 +137,7 @@ public final class MediaUtil {
             long bandwidth = resolution.bandwidth();
             videoSplit.append("[v").append(index).append("]");
             videoScale.append("[v").append(index).append("]scale=").append(width).append(":").append(height).append("[v").append(index).append("out];");
-            if (index != 1) {
-                mapStream.append(" ");
-            }
-            mapStream.append("-map '[v").append(index).append("out]' -b:v:").append(index - 1).append(" ").append(bandwidth).append("k");
+            mapStream.append(" -map '[v").append(index).append("out]' -b:v:").append(index - 1).append(" ").append(bandwidth).append("k");
             index++;
         }
         String exec = GENERATE_VIDEO_DASH_EXEC.formatted(originalPath, targetDimensionsMap.size(), videoSplit, videoScale, mapStream, targetPath);
