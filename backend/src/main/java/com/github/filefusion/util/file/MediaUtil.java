@@ -55,8 +55,27 @@ public final class MediaUtil {
         commandLine.addArgument("auto");
         commandLine.addArgument("-i");
         commandLine.addArgument(input.toString());
+
         commandLine.addArgument("-filter_complex");
         commandLine.addArgument("[0:v]split=%s%s;%s".formatted(dimensionsSize, videoSplit, videoScale));
+
+        commandLine.addArgument("-c:v");
+        commandLine.addArgument(VideoAttribute.VIDEO_CODEC);
+        commandLine.addArgument("-pix_fmt");
+        commandLine.addArgument(VideoAttribute.VIDEO_PIX_FORMAT);
+        commandLine.addArgument("-r");
+        commandLine.addArgument(String.valueOf(VideoAttribute.VIDEO_FPS));
+        commandLine.addArgument("-fps_mode");
+        commandLine.addArgument("cfr");
+        commandLine.addArgument("-g");
+        commandLine.addArgument(String.valueOf(VideoAttribute.VIDEO_FPS * VideoAttribute.MEDIA_SEGMENT_DURATION));
+        commandLine.addArgument("-keyint_min");
+        commandLine.addArgument(String.valueOf(VideoAttribute.VIDEO_FPS * VideoAttribute.MEDIA_SEGMENT_DURATION));
+        commandLine.addArgument("-sc_threshold");
+        commandLine.addArgument("0");
+        commandLine.addArgument("-b_strategy");
+        commandLine.addArgument("0");
+
         for (MapStream mapStream : mapStreamList) {
             commandLine.addArgument(mapStream.getMap());
             commandLine.addArgument(mapStream.getOutName());
@@ -79,22 +98,7 @@ public final class MediaUtil {
         commandLine.addArgument(VideoAttribute.AUDIO_RATE);
         commandLine.addArgument("-ac");
         commandLine.addArgument(VideoAttribute.AUDIO_CHANNEL);
-        commandLine.addArgument("-c:v");
-        commandLine.addArgument(VideoAttribute.VIDEO_CODEC);
-        commandLine.addArgument("-pix_fmt");
-        commandLine.addArgument(VideoAttribute.VIDEO_PIX_FORMAT);
-        commandLine.addArgument("-r");
-        commandLine.addArgument(String.valueOf(VideoAttribute.VIDEO_FPS));
-        commandLine.addArgument("-fps_mode");
-        commandLine.addArgument("cfr");
-        commandLine.addArgument("-g");
-        commandLine.addArgument(String.valueOf(VideoAttribute.VIDEO_FPS * VideoAttribute.MEDIA_SEGMENT_DURATION));
-        commandLine.addArgument("-keyint_min");
-        commandLine.addArgument(String.valueOf(VideoAttribute.VIDEO_FPS * VideoAttribute.MEDIA_SEGMENT_DURATION));
-        commandLine.addArgument("-sc_threshold");
-        commandLine.addArgument("0");
-        commandLine.addArgument("-b_strategy");
-        commandLine.addArgument("0");
+
         commandLine.addArgument("-f");
         commandLine.addArgument("dash");
         commandLine.addArgument("-adaptation_sets");
