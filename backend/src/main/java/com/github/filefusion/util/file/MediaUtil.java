@@ -60,11 +60,13 @@ public final class MediaUtil {
         for (MapStream mapStream : mapStreamList) {
             commandLine.addArgument(mapStream.getMap());
             commandLine.addArgument(mapStream.getOutName());
-            commandLine.addArgument(mapStream.getRateStream());
-            commandLine.addArgument(mapStream.getRate());
-            commandLine.addArgument(mapStream.getMaxRateStream());
+            commandLine.addArgument(mapStream.getPresetName());
+            commandLine.addArgument(mapStream.getPreset());
+            commandLine.addArgument(mapStream.getCrfName());
+            commandLine.addArgument(mapStream.getCrf());
+            commandLine.addArgument(mapStream.getMaxRateName());
             commandLine.addArgument(mapStream.getMaxRate());
-            commandLine.addArgument(mapStream.getBufSizeStream());
+            commandLine.addArgument(mapStream.getBufSizeName());
             commandLine.addArgument(mapStream.getBufSize());
         }
         commandLine.addArgument("-map");
@@ -81,8 +83,6 @@ public final class MediaUtil {
         commandLine.addArgument(VideoAttribute.VIDEO_CODEC);
         commandLine.addArgument("-pix_fmt");
         commandLine.addArgument(VideoAttribute.VIDEO_PIX_FORMAT);
-        commandLine.addArgument("-preset");
-        commandLine.addArgument(VideoAttribute.VIDEO_CODEC_PRESET);
         commandLine.addArgument("-r");
         commandLine.addArgument(String.valueOf(VideoAttribute.VIDEO_FPS));
         commandLine.addArgument("-fps_mode");
@@ -191,12 +191,16 @@ public final class MediaUtil {
             int[] targetDimensions = targetDimensionsMap.get(resolution);
             int width = targetDimensions[0];
             int height = targetDimensions[1];
-            long rate = resolution.rate();
+            String preset = resolution.preset();
+            long crf = resolution.crf();
             long maxRate = resolution.maxRate();
             videoSplit.append("[v").append(index).append("]");
-            videoScale.append("[v").append(index).append("]scale=").append(width).append(":").append(height).append("[v").append(index).append("out];");
+            videoScale.append("[v").append(index).append("]scale=").append(width).append(":").append(height)
+                    .append(":force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2")
+                    .append("[v").append(index).append("out];");
             mapStreamList.add(new MapStream("-map", "[v" + index + "out]",
-                    "-b:v:" + (index - 1), rate + "k",
+                    "-preset", preset,
+                    "-crf", String.valueOf(crf),
                     "-maxrate:v:" + (index - 1), maxRate + "k",
                     "-bufsize:v:" + (index - 1), (maxRate * 2) + "k"));
             index++;
@@ -211,11 +215,13 @@ public final class MediaUtil {
     private static class MapStream implements Serializable {
         String map;
         String outName;
-        String rateStream;
-        String rate;
-        String maxRateStream;
+        String presetName;
+        String preset;
+        String crfName;
+        String crf;
+        String maxRateName;
         String maxRate;
-        String bufSizeStream;
+        String bufSizeName;
         String bufSize;
     }
 
