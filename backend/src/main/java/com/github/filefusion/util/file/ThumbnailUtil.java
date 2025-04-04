@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -48,7 +47,7 @@ public final class ThumbnailUtil {
             throw new FileNotSupportThumbnailException();
         }
         Files.createDirectories(targetPath.getParent());
-        ExecUtil.ExecResult execResult = ExecUtil.exec(Arrays.asList(exec.split(" ")), thumbnailGenerateTimeout);
+        ExecUtil.ExecResult execResult = ExecUtil.exec(exec, thumbnailGenerateTimeout);
         if (!execResult.success() || !Files.exists(targetPath)) {
             throw new ThumbnailGenerationFailedException();
         }

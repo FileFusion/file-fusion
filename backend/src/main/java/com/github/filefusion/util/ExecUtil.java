@@ -2,7 +2,7 @@ package com.github.filefusion.util;
 
 import org.apache.commons.exec.*;
 import org.apache.commons.exec.Executor;
-import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -26,25 +26,23 @@ public final class ExecUtil {
         EXECUTOR.close();
     }
 
-    public static ExecResult exec(List<String> commandLineList, Duration execTimeout)
+    public static ExecResult exec(String command, Duration execTimeout)
             throws IOException, ExecutionException, InterruptedException {
         ConcurrentLinkedQueue<String> stdoutQueue = new ConcurrentLinkedQueue<>();
         ConcurrentLinkedQueue<String> stderrQueue = new ConcurrentLinkedQueue<>();
         CompletableFuture<Integer> completable;
         try (OutputStream outputStream = new CollectingLogOutputStream(stdoutQueue);
              OutputStream errorOutputStream = new CollectingLogOutputStream(stderrQueue)) {
-            completable = exec(commandLineList, outputStream, errorOutputStream, execTimeout);
+            completable = exec(command, outputStream, errorOutputStream, execTimeout);
         }
         return new ExecResult(completable.get() == 0, List.copyOf(stdoutQueue), List.copyOf(stderrQueue));
     }
 
-    public static CompletableFuture<Integer> exec(List<String> commandLineList, OutputStream outputStream,
+    public static CompletableFuture<Integer> exec(String command, OutputStream outputStream,
                                                   OutputStream errorOutputStream, Duration execTimeout) {
-        if (CollectionUtils.isEmpty(commandLineList) || execTimeout == null || execTimeout.isNegative()) {
+        if (!StringUtils.hasLength(command) || execTimeout == null || execTimeout.isNegative()) {
             return CompletableFuture.completedFuture(-1);
         }
-        CommandLine commandLine = new CommandLine(commandLineList.getFirst().trim());
-        commandLine.addArguments(commandLineList.stream().skip(1).map(String::trim).toArray(String[]::new));
 
         ExecuteWatchdog watchdog = ExecuteWatchdog.builder().setTimeout(execTimeout).get();
         Executor executor = DefaultExecutor.builder().get();
@@ -53,7 +51,7 @@ public final class ExecUtil {
 
         return CompletableFuture.supplyAsync(() -> {
                     try {
-                        return executor.execute(commandLine);
+                        return executor.execute(CommandLine.parse(command));
                     } catch (ExecuteException e) {
                         return e.getExitValue();
                     } catch (Exception e) {

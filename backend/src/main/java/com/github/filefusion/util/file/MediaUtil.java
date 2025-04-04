@@ -27,7 +27,18 @@ import java.util.stream.Collectors;
 public final class MediaUtil {
 
     private static final String GET_VIDEO_DIMENSIONS_EXEC = "ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of json %s";
-    private static final String GENERATE_VIDEO_DASH_EXEC = "ffmpeg -v error -hwaccel auto -i %s -filter_complex \"%s[0:a]asplit=%d%s\"%s -f " + VideoAttribute.VIDEO_FORMAT + " -seg_duration " + VideoAttribute.MEDIA_SEGMENT_DURATION + " -init_seg_name \"init-$RepresentationID$.mp4\" -media_seg_name \"seg-$RepresentationID$-$Number%%05d$.m4s\" -y %s";
+    private static final String GENERATE_VIDEO_DASH_EXEC = "ffmpeg -v error -hwaccel auto -i %s -filter_complex '[0:v]split=%s%s;%s'%s -map 0:a:0? -c:a "
+            + VideoAttribute.AUDIO_CODEC
+            + " -b:a " + VideoAttribute.AUDIO_BANDWIDTH
+            + " -ar " + VideoAttribute.AUDIO_RATE
+            + " -c:v " + VideoAttribute.VIDEO_CODEC
+            + " -pix_fmt " + VideoAttribute.VIDEO_PIX_FORMAT
+            + " -preset " + VideoAttribute.VIDEO_CODEC_PRESET
+            + " -r " + VideoAttribute.VIDEO_FPS + " -fps_mode cfr -g " + (VideoAttribute.VIDEO_FPS * VideoAttribute.MEDIA_SEGMENT_DURATION)
+            + " -keyint_min " + (VideoAttribute.VIDEO_FPS * VideoAttribute.MEDIA_SEGMENT_DURATION)
+            + " -sc_threshold 0 -b_strategy 0"
+            + " -f dash -adaptation_sets 'id=0,streams=v id=1,streams=a' -seg_duration " + VideoAttribute.MEDIA_SEGMENT_DURATION
+            + " -frag_type none -init_seg_name 'init-stream$RepresentationID$.$ext$' -media_seg_name 'chunk-stream$RepresentationID$-$Number%%05d$.$ext$' -y %s";
     private static final List<String> SUPPORT_DASH_MIME_TYPE = List.of(
             "video/x-ms-wmv",
             "video/x-flv",
@@ -47,7 +58,7 @@ public final class MediaUtil {
     private static GetVideoInfoResult getVideoDimensionsInfo(Path path, Duration videoGenerateTimeout)
             throws ReadVideoInfoException, IOException, ExecutionException, InterruptedException {
         String exec = GET_VIDEO_DIMENSIONS_EXEC.formatted(path);
-        ExecUtil.ExecResult execResult = ExecUtil.exec(Arrays.asList(exec.split(" ")), videoGenerateTimeout);
+        ExecUtil.ExecResult execResult = ExecUtil.exec(exec, videoGenerateTimeout);
         if (!execResult.success()) {
             throw new ReadVideoInfoException();
         }
@@ -61,7 +72,7 @@ public final class MediaUtil {
 
         return Arrays.stream(VideoAttribute.Resolution.values())
                 .filter(resolution -> {
-                    if (resolution == VideoAttribute.Resolution.P480) {
+                    if (resolution == VideoAttribute.Resolution.P720) {
                         return true;
                     }
                     return isPortrait ?
@@ -116,24 +127,25 @@ public final class MediaUtil {
         Map<VideoAttribute.Resolution, int[]> targetDimensionsMap = getVideoScaleDimensions(originalDimensions);
 
         int index = 1;
+        StringBuilder videoSplit = new StringBuilder();
         StringBuilder videoScale = new StringBuilder();
-        StringBuilder audioStream = new StringBuilder();
-        StringBuilder outStream = new StringBuilder();
+        StringBuilder mapStream = new StringBuilder();
         for (VideoAttribute.Resolution resolution : targetDimensionsMap.keySet()) {
             int[] targetDimensions = targetDimensionsMap.get(resolution);
             int width = targetDimensions[0];
             int height = targetDimensions[1];
             long bandwidth = resolution.bandwidth();
-            long audioBandwidth = resolution.audioBandwidth();
-            videoScale.append("[0:v]scale=").append(width).append(":").append(height).append("[v").append(index).append("];");
-            audioStream.append("[a").append(index).append("]");
-            outStream.append(" -map \"[v").append(index).append("]\" -c:v:").append(index - 1).append(" ").append(VideoAttribute.VIDEO_CODEC).append(" -preset ").append(VideoAttribute.VIDEO_CODEC_PRESET).append(" -b:v:").append(index - 1).append(" ").append(bandwidth).append("k");
-            outStream.append(" -map \"[a").append(index).append("]\" -c:a:").append(index - 1).append(" ").append(VideoAttribute.AUDIO_CODEC).append(" -b:a:").append(index - 1).append(" ").append(audioBandwidth).append("k");
+            videoSplit.append("[v").append(index).append("]");
+            videoScale.append("[v").append(index).append("]scale=").append(width).append(":").append(height).append("[v").append(index).append("out];");
+            if (index != 1) {
+                mapStream.append(" ");
+            }
+            mapStream.append("-map '[v").append(index).append("out]' -b:v:").append(index - 1).append(" ").append(bandwidth).append("k");
             index++;
         }
-        String exec = GENERATE_VIDEO_DASH_EXEC.formatted(originalPath, videoScale, targetDimensionsMap.size(), audioStream, outStream, targetPath);
+        String exec = GENERATE_VIDEO_DASH_EXEC.formatted(originalPath, targetDimensionsMap.size(), videoSplit, videoScale, mapStream, targetPath);
         Files.createDirectories(targetPath.getParent());
-        ExecUtil.exec(Arrays.asList(exec.split(" ")), videoGenerateTimeout);
+        ExecUtil.exec(exec, videoGenerateTimeout);
     }
 
     @Data
