@@ -60,8 +60,12 @@ public final class MediaUtil {
         for (MapStream mapStream : mapStreamList) {
             commandLine.addArgument(mapStream.getMap());
             commandLine.addArgument(mapStream.getOutName());
-            commandLine.addArgument(mapStream.getOutStream());
-            commandLine.addArgument(mapStream.getBandwidth());
+            commandLine.addArgument(mapStream.getRateStream());
+            commandLine.addArgument(mapStream.getRate());
+            commandLine.addArgument(mapStream.getMaxRateStream());
+            commandLine.addArgument(mapStream.getMaxRate());
+            commandLine.addArgument(mapStream.getBufSizeStream());
+            commandLine.addArgument(mapStream.getBufSize());
         }
         commandLine.addArgument("-map");
         commandLine.addArgument("0:a:0?");
@@ -71,6 +75,8 @@ public final class MediaUtil {
         commandLine.addArgument(VideoAttribute.AUDIO_BANDWIDTH);
         commandLine.addArgument("-ar");
         commandLine.addArgument(VideoAttribute.AUDIO_RATE);
+        commandLine.addArgument("-ac");
+        commandLine.addArgument(VideoAttribute.AUDIO_CHANNEL);
         commandLine.addArgument("-c:v");
         commandLine.addArgument(VideoAttribute.VIDEO_CODEC);
         commandLine.addArgument("-pix_fmt");
@@ -93,10 +99,10 @@ public final class MediaUtil {
         commandLine.addArgument("dash");
         commandLine.addArgument("-adaptation_sets");
         commandLine.addArgument("id=0,streams=v id=1,streams=a", false);
-        commandLine.addArgument("-seg_duration");
-        commandLine.addArgument(String.valueOf(VideoAttribute.MEDIA_SEGMENT_DURATION));
         commandLine.addArgument("-frag_type");
         commandLine.addArgument("none");
+        commandLine.addArgument("-seg_duration");
+        commandLine.addArgument(String.valueOf(VideoAttribute.MEDIA_SEGMENT_DURATION));
         commandLine.addArgument("-init_seg_name");
         commandLine.addArgument("init-stream$RepresentationID$.$ext$");
         commandLine.addArgument("-media_seg_name");
@@ -123,7 +129,7 @@ public final class MediaUtil {
 
         return Arrays.stream(VideoAttribute.Resolution.values())
                 .filter(resolution -> {
-                    if (resolution == VideoAttribute.Resolution.P720) {
+                    if (resolution == VideoAttribute.Resolution.P480) {
                         return true;
                     }
                     return isPortrait ?
@@ -185,10 +191,14 @@ public final class MediaUtil {
             int[] targetDimensions = targetDimensionsMap.get(resolution);
             int width = targetDimensions[0];
             int height = targetDimensions[1];
-            long bandwidth = resolution.bandwidth();
+            long rate = resolution.rate();
+            long maxRate = resolution.maxRate();
             videoSplit.append("[v").append(index).append("]");
             videoScale.append("[v").append(index).append("]scale=").append(width).append(":").append(height).append("[v").append(index).append("out];");
-            mapStreamList.add(new MapStream("-map", "[v" + index + "out]", "-b:v:" + (index - 1), bandwidth + "k"));
+            mapStreamList.add(new MapStream("-map", "[v" + index + "out]",
+                    "-b:v:" + (index - 1), rate + "k",
+                    "-maxrate:v:" + (index - 1), maxRate + "k",
+                    "-bufsize:v:" + (index - 1), (maxRate * 2) + "k"));
             index++;
         }
         CommandLine commandLine = getGenerateVideoDashExec(originalPath, targetDimensionsMap.size(), videoSplit, videoScale, mapStreamList, targetPath);
@@ -201,8 +211,12 @@ public final class MediaUtil {
     private static class MapStream implements Serializable {
         String map;
         String outName;
-        String outStream;
-        String bandwidth;
+        String rateStream;
+        String rate;
+        String maxRateStream;
+        String maxRate;
+        String bufSizeStream;
+        String bufSize;
     }
 
     @Data
