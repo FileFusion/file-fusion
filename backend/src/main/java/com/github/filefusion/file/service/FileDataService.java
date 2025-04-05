@@ -171,59 +171,62 @@ public class FileDataService {
         FileData file = fileDataRepository.findFirstByUserIdAndIdAndDeletedFalse(userId, id)
                 .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
         List<FileData> childrenList = findAllChildren(file.getId());
-
-        List<String> lockKeyList = new ArrayList<>(List.of(
-                userId + RedisAttribute.SEPARATOR + file.getPath()
-        ));
-        childrenList.stream()
-                .map(child -> userId + RedisAttribute.SEPARATOR + child.getPath())
-                .forEach(lockKeyList::add);
-
         SysConfig config = sysConfigService.get(SysConfigKey.RECYCLE_BIN);
         if (Boolean.parseBoolean(config.getConfigValue())) {
-            distributedLock.tryMultiLock(RedisAttribute.LockType.file, lockKeyList,
-                    () -> batchRecycle(file, childrenList), fileProperties.getLockTimeout());
+            batchRecycle(file, childrenList);
         } else {
-            lockKeyList.add(file.getHashValue());
-            childrenList.stream().map(FileData::getHashValue).forEach(lockKeyList::add);
-            distributedLock.tryMultiLock(RedisAttribute.LockType.file, lockKeyList,
-                    () -> batchDelete(file, childrenList), fileProperties.getLockTimeout());
+            childrenList.addFirst(file);
+            batchDelete(childrenList);
         }
     }
 
     private void batchRecycle(FileData file, List<FileData> childrenList) {
-        LocalDateTime deletedDate = LocalDateTime.now();
-        file.setParentId(FileAttribute.RECYCLE_BIN_ROOT);
-        List<FileData> allFiles = Stream.concat(Stream.of(file), childrenList.stream()).peek(f -> {
-            f.setDeleted(true);
-            f.setDeletedDate(deletedDate);
-        }).toList();
-        fileDataRepository.saveAll(allFiles);
+        List<String> lockKeyList = new ArrayList<>(List.of(
+                file.getUserId() + RedisAttribute.SEPARATOR + file.getPath()
+        ));
+        childrenList.stream()
+                .map(child -> child.getUserId() + RedisAttribute.SEPARATOR + child.getPath())
+                .forEach(lockKeyList::add);
+
+        distributedLock.tryMultiLock(RedisAttribute.LockType.file, lockKeyList, () -> {
+            LocalDateTime deletedDate = LocalDateTime.now();
+            file.setParentId(FileAttribute.RECYCLE_BIN_ROOT);
+            List<FileData> allFiles = Stream.concat(Stream.of(file), childrenList.stream()).peek(f -> {
+                f.setDeleted(true);
+                f.setDeletedDate(deletedDate);
+            }).toList();
+            fileDataRepository.saveAll(allFiles);
+        }, fileProperties.getLockTimeout());
     }
 
-    private void batchDelete(FileData file, List<FileData> childrenList) {
-        List<FileData> allFiles = new ArrayList<>(childrenList.size() + 1);
-        allFiles.add(file);
-        allFiles.addAll(childrenList);
-        fileDataRepository.deleteAllInBatch(allFiles);
-        List<String> hashList = allFiles.stream().map(FileData::getHashValue)
-                .filter(StringUtils::hasLength).distinct().toList();
-        if (hashList.isEmpty()) {
-            return;
-        }
-        Map<String, Long> hashCounts = fileDataRepository.countByHashValueList(hashList)
-                .stream().collect(Collectors.toMap(
-                        FileHashUsageCountModel::getHashValue,
-                        FileHashUsageCountModel::getCount
-                ));
-        List<Path> deletePaths = hashList.stream()
-                .filter(hash -> hashCounts.getOrDefault(hash, 0L) == 0)
-                .map(hash -> FileUtil.getHashPath(fileProperties.getDir(), hash)).toList();
-        try {
-            FileUtil.delete(deletePaths);
-        } catch (FileUtil.FileDeletionFailedException e) {
-            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileDeleteFailed"));
-        }
+    public void batchDelete(List<FileData> fileList) {
+        List<String> lockKeyList = new ArrayList<>(fileList.size() * 2);
+        fileList.forEach(child -> {
+            lockKeyList.add(child.getHashValue());
+            lockKeyList.add(child.getUserId() + RedisAttribute.SEPARATOR + child.getPath());
+        });
+
+        distributedLock.tryMultiLock(RedisAttribute.LockType.file, lockKeyList, () -> {
+            fileDataRepository.deleteAllInBatch(fileList);
+            List<String> hashList = fileList.stream().map(FileData::getHashValue)
+                    .filter(StringUtils::hasLength).distinct().toList();
+            if (hashList.isEmpty()) {
+                return;
+            }
+            Map<String, Long> hashCounts = fileDataRepository.countByHashValueList(hashList)
+                    .stream().collect(Collectors.toMap(
+                            FileHashUsageCountModel::getHashValue,
+                            FileHashUsageCountModel::getCount
+                    ));
+            List<Path> deletePaths = hashList.stream()
+                    .filter(hash -> hashCounts.getOrDefault(hash, 0L) == 0)
+                    .map(hash -> FileUtil.getHashPath(fileProperties.getDir(), hash)).toList();
+            try {
+                FileUtil.delete(deletePaths);
+            } catch (FileUtil.FileDeletionFailedException e) {
+                throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileDeleteFailed"));
+            }
+        }, fileProperties.getLockTimeout());
     }
 
     public List<FileData> getFolderList(String userId, String parentId) {
