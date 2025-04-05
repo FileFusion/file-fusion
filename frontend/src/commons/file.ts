@@ -50,11 +50,6 @@ function supportImagePreview(mimeType: string): boolean {
   return supportImagePreviewType.includes(mimeType);
 }
 
-const supportVideoPreviewType = ['video/mp4', 'video/webm'];
-function supportVideoPreview(mimeType: string): boolean {
-  return supportVideoPreviewType.includes(mimeType);
-}
-
 const supportAudioPreviewType = [
   'application/ogg',
   'audio/ogg',
@@ -100,7 +95,6 @@ export {
   getFileRelativePath,
   getFileHash,
   supportImagePreview,
-  supportVideoPreview,
   supportAudioPreview,
   supportOfficePreview,
   getFileChunks

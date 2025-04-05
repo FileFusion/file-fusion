@@ -80,4 +80,10 @@ public class FileData extends BaseEntity {
     @Transient
     private Boolean hasThumbnail;
 
+    /**
+     * can play
+     */
+    @Transient
+    private Boolean canPlay;
+
 }

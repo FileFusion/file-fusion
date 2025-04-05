@@ -139,11 +139,15 @@ public class FileDataService {
         }
         Page<FileData> fileDataPage = fileDataRepository.findAllByUserIdAndParentIdAndNameLikeAndDeleted(
                 userId, parentId, name, deleted, page);
-        fileDataPage.getContent().forEach(fileData ->
-                fileData.setHasThumbnail(ThumbnailUtil.hasThumbnail(fileData.getMimeType(),
-                        fileProperties.getThumbnailImageMimeType(),
-                        fileProperties.getThumbnailVideoMimeType())
-                )
+        fileDataPage.getContent().forEach(fileData -> {
+                    fileData.setHasThumbnail(ThumbnailUtil.hasThumbnail(fileData.getMimeType(),
+                            fileProperties.getThumbnailImageMimeType(),
+                            fileProperties.getThumbnailVideoMimeType())
+                    );
+                    fileData.setCanPlay(MediaUtil.isDashSupported(fileData.getMimeType(),
+                            fileProperties.getVideoPlayMimeType())
+                    );
+                }
         );
         return fileDataPage;
     }

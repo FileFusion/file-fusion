@@ -226,7 +226,6 @@ import { useRequest, usePagination } from 'alova/client';
 import { hasPermission } from '@/commons/permission';
 import {
   formatFileSize,
-  supportVideoPreview,
   supportImagePreview,
   supportOfficePreview,
   supportAudioPreview
@@ -803,10 +802,7 @@ function clickFile(file: any) {
   if (supportImagePreview(file.mimeType)) {
     showImageFile.value = true;
     imageFileId.value = file.id;
-  } else if (
-    supportVideoPreview(file.mimeType) ||
-    supportAudioPreview(file.mimeType)
-  ) {
+  } else if (file.canPlay || supportAudioPreview(file.mimeType)) {
     showMediaFile.value = true;
     mediaFileId.value = file.id;
     mediaFileName.value = file.name;
