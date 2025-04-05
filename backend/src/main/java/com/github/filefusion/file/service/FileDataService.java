@@ -166,20 +166,24 @@ public class FileDataService {
         FileData file = fileDataRepository.findFirstByUserIdAndIdAndDeletedFalse(userId, id)
                 .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
         List<FileData> childrenList = findAllChildren(file.getId());
+
         List<String> lockKeyList = new ArrayList<>(Collections.singletonList(
                 userId + RedisAttribute.SEPARATOR + file.getPath()
         ));
         childrenList.stream()
                 .map(child -> userId + RedisAttribute.SEPARATOR + child.getPath())
                 .forEach(lockKeyList::add);
-        distributedLock.tryMultiLock(RedisAttribute.LockType.file, lockKeyList, () -> {
-            SysConfig config = sysConfigService.get(SysConfigKey.RECYCLE_BIN);
-            if (Boolean.parseBoolean(config.getConfigValue())) {
-                batchRecycle(file, childrenList);
-            } else {
-                batchDelete(file, childrenList);
-            }
-        }, fileProperties.getLockTimeout());
+
+        SysConfig config = sysConfigService.get(SysConfigKey.RECYCLE_BIN);
+        if (Boolean.parseBoolean(config.getConfigValue())) {
+            distributedLock.tryMultiLock(RedisAttribute.LockType.file, lockKeyList,
+                    () -> batchRecycle(file, childrenList), fileProperties.getLockTimeout());
+        } else {
+            lockKeyList.add(file.getHashValue());
+            childrenList.stream().map(FileData::getHashValue).forEach(lockKeyList::add);
+            distributedLock.tryMultiLock(RedisAttribute.LockType.file, lockKeyList,
+                    () -> batchDelete(file, childrenList), fileProperties.getLockTimeout());
+        }
     }
 
     private void batchRecycle(FileData file, List<FileData> childrenList) {
