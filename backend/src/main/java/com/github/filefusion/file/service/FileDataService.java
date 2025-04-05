@@ -341,7 +341,7 @@ public class FileDataService {
     }
 
     private boolean chunkMerge(String hashValue, boolean fastUpload) throws IOException {
-        Path chunkDirPath = FileUtil.getHashPath(fileProperties.getTmpDir(), hashValue);
+        Path chunkDirPath = FileUtil.getHashPath(fileProperties.getUploadDir(), hashValue);
         Path filePath = FileUtil.getHashPath(fileProperties.getDir(), hashValue);
         if (hashValue.equals(FileUtil.calculateHash(filePath))) {
             return true;
@@ -365,7 +365,7 @@ public class FileDataService {
     public void uploadChunk(MultipartFile file, Integer chunkIndex, String chunkHashValue, String hashValue) {
         hashFormatCheck(chunkHashValue);
         hashFormatCheck(hashValue);
-        Path chunkDirPath = FileUtil.getHashPath(fileProperties.getTmpDir(), hashValue);
+        Path chunkDirPath = FileUtil.getHashPath(fileProperties.getUploadDir(), hashValue);
         Path chunkPath = chunkDirPath.resolve(String.valueOf(chunkIndex));
         distributedLock.tryLock(RedisAttribute.LockType.file, hashValue + RedisAttribute.SEPARATOR + chunkIndex, () -> {
             try {

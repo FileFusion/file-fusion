@@ -27,7 +27,7 @@ public class FileProperties {
     private Duration videoGenerateTimeout;
     private Duration thumbnailGenerateTimeout;
     private Path dir;
-    private Path tmpDir;
+    private Path uploadDir;
     private Path videoPlayDir;
     private List<String> videoPlayMimeType;
     private Path thumbnailDir;
@@ -41,11 +41,11 @@ public class FileProperties {
         this.dir = dir;
     }
 
-    public void setTmpDir(Path tmpDir) throws IOException {
-        if (!Files.exists(tmpDir)) {
-            Files.createDirectories(tmpDir);
+    public void setTmpDir(Path uploadDir) throws IOException {
+        if (!Files.exists(uploadDir)) {
+            Files.createDirectories(uploadDir);
         }
-        this.tmpDir = tmpDir;
+        this.uploadDir = uploadDir;
     }
 
     public void setVideoPlayDir(Path videoPlayDir) throws IOException {

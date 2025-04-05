@@ -38,7 +38,7 @@ file:
   video-generate-timeout: ${FF_FILE_VIDEO_GENERATE_TIMEOUT:30m}
   thumbnail-generate-timeout: ${FF_FILE_THUMBNAIL_GENERATE_TIMEOUT:60s}
   dir: ${FF_FILE_DIR:/opt/file_fusion/data/file}
-  tmp-dir: ${FF_FILE_TMP_DIR:/opt/file_fusion/data/tmp}
+  upload-dir: ${FF_FILE_UPLOAD_DIR:/opt/file_fusion/data/upload}
   video-play-dir: ${FF_FILE_VIDEO_PLAY_DIR:/opt/file_fusion/data/video}
   video-play-mime-type: "${FF_FILE_VIDEO_PLAY_MIME_TYPE:application/vnd.rn-realmedia,\
     video/3gpp,\
