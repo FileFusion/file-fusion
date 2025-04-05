@@ -76,8 +76,7 @@ public final class FileUtil {
                 buffer.clear();
             }
             return EncryptUtil.bytesToHex(digest.digest());
-        } catch (IOException e) {
-            log.error("Error calculating hash", e);
+        } catch (IOException ignored) {
             return null;
         }
     }
