@@ -17,6 +17,7 @@ import com.github.filefusion.util.file.DownloadUtil;
 import com.github.filefusion.util.file.FileUtil;
 import com.github.filefusion.util.file.MediaUtil;
 import com.github.filefusion.util.file.ThumbnailUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RBlockingDeque;
 import org.redisson.api.RList;
 import org.redisson.api.RedissonClient;
@@ -53,6 +54,7 @@ import java.util.stream.Stream;
  * @author hackyo
  * @since 2022/4/1
  */
+@Slf4j
 @Service
 public class FileDataService {
 
@@ -374,9 +376,11 @@ public class FileDataService {
                 try {
                     file.transferTo(chunkPath);
                     if (!chunkHashValue.equals(FileUtil.calculateHash(chunkPath))) {
+                        log.error("Error uploading chunk");
                         throw new IOException();
                     }
                 } catch (IOException e) {
+                    log.error("Error uploading chunk", e);
                     FileUtil.delete(chunkPath);
                     throw new IOException(e);
                 }
