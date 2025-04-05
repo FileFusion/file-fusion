@@ -18,8 +18,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@Component
 @Slf4j
+@Component
 public class FileUploadSuccessEvent {
 
     private static final ExecutorService EXECUTOR = Executors.newVirtualThreadPerTaskExecutor();
@@ -47,7 +47,7 @@ public class FileUploadSuccessEvent {
                     FileData file = queue.takeLast();
                     generateMediaDash(file.getHashValue(), file.getMimeType());
                 } catch (InterruptedException e) {
-                    log.warn("File upload success event listener interrupted");
+                    log.error("File upload success event listener interrupted");
                     Thread.currentThread().interrupt();
                     break;
                 } catch (Exception e) {
