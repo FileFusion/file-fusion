@@ -15,8 +15,8 @@ import org.springframework.context.annotation.Configuration;
 public class ServerContextListener implements ServletContextListener {
 
     @Override
-    public void contextDestroyed(ServletContextEvent event) {
-        ExecUtil.shutdown();
+    public void contextDestroyed(ServletContextEvent sce) {
+        ExecUtil.close();
     }
 
 }

@@ -5,7 +5,6 @@ import com.github.filefusion.common.HttpException;
 import com.github.filefusion.constant.FileAttribute;
 import com.github.filefusion.constant.RedisAttribute;
 import com.github.filefusion.constant.SysConfigKey;
-import com.github.filefusion.constant.VideoAttribute;
 import com.github.filefusion.file.entity.FileData;
 import com.github.filefusion.file.model.FileHashUsageCountModel;
 import com.github.filefusion.file.repository.FileDataRepository;
@@ -18,6 +17,7 @@ import com.github.filefusion.util.file.DownloadUtil;
 import com.github.filefusion.util.file.FileUtil;
 import com.github.filefusion.util.file.MediaUtil;
 import com.github.filefusion.util.file.ThumbnailUtil;
+import org.redisson.api.RBlockingDeque;
 import org.redisson.api.RList;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -326,11 +326,11 @@ public class FileDataService {
                 file.setFileLastModifiedDate(lastModifiedDate);
                 file.setDeleted(false);
                 fileDataRepository.save(file);
+
+                RBlockingDeque<FileData> queue = redissonClient.getBlockingDeque(RedisAttribute.EVENT_PREFIX + RedisAttribute.EventType.file_upload_success);
+                queue.offerFirst(file);
             }
         }, fileProperties.getLockTimeout());
-        if (uploadStatus.get()) {
-            uploadSuccessEvent(hashValue, mimeType);
-        }
         return uploadStatus.get();
     }
 
@@ -384,17 +384,6 @@ public class FileDataService {
                 throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("fileUploadFailed"));
             }
         }, fileProperties.getLockTimeout());
-    }
-
-    private void uploadSuccessEvent(String hashValue, String mimeType) {
-        try {
-            if (Boolean.TRUE.equals(fileProperties.getVideoPlay()) && MediaUtil.supportGenerateDash(mimeType, fileProperties.getVideoPlayMimeType())) {
-                Path videoPath = FileUtil.getHashPath(fileProperties.getVideoPlayDir(), hashValue).resolve(VideoAttribute.MEDIA_MANIFEST_NAME);
-                MediaUtil.generateMediaDash(FileUtil.getHashPath(fileProperties.getDir(), hashValue),
-                        videoPath, fileProperties.getVideoGenerateTimeout());
-            }
-        } catch (Exception ignored) {
-        }
     }
 
     @Transactional(rollbackFor = HttpException.class)

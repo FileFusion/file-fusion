@@ -21,7 +21,7 @@ public final class ExecUtil {
     private static final long TIMEOUT_BUFFER_MS = 1000L;
     private static final ExecutorService EXECUTOR = Executors.newVirtualThreadPerTaskExecutor();
 
-    public static void shutdown() {
+    public static void close() {
         EXECUTOR.close();
     }
 
