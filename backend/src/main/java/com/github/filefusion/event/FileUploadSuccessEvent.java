@@ -18,6 +18,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * FileUploadSuccessEvent
+ *
+ * @author hackyo
+ * @since 2022/4/1
+ */
 @Slf4j
 @Component
 public class FileUploadSuccessEvent {

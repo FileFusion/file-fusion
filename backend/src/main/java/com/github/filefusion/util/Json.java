@@ -3,6 +3,7 @@ package com.github.filefusion.util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -14,6 +15,7 @@ import java.util.List;
  * @author hackyo
  * @since 2022/4/1
  */
+@Slf4j
 @Component
 public class Json {
 
@@ -46,6 +48,7 @@ public class Json {
         try {
             return OBJECT_MAPPER.readValue(json, clazz);
         } catch (JsonProcessingException e) {
+            log.error("Error parsing json", e);
             throw new RuntimeException(e);
         }
     }
@@ -55,6 +58,7 @@ public class Json {
             return OBJECT_MAPPER.readValue(json,
                     OBJECT_MAPPER.getTypeFactory().constructCollectionType(List.class, clazz));
         } catch (JsonProcessingException e) {
+            log.error("Error parsing json", e);
             throw new RuntimeException(e);
         }
     }
@@ -63,6 +67,7 @@ public class Json {
         try {
             return OBJECT_MAPPER.writeValueAsString(object);
         } catch (JsonProcessingException e) {
+            log.error("Error converting object to json", e);
             throw new RuntimeException(e);
         }
     }

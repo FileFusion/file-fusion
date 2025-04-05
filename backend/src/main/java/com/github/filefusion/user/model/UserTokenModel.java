@@ -14,8 +14,19 @@ import java.util.Date;
 @Data
 public class UserTokenModel implements Serializable {
 
+    /**
+     * user agent
+     */
     private String userAgent;
+
+    /**
+     * client ip
+     */
     private String clientIp;
+
+    /**
+     * issued at
+     */
     private Date issuedAt;
 
 }

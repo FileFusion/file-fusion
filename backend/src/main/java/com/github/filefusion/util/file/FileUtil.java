@@ -2,6 +2,7 @@ package com.github.filefusion.util.file;
 
 import com.github.filefusion.util.EncryptUtil;
 import jakarta.annotation.Nonnull;
+import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.jcajce.provider.digest.Blake3;
 
 import java.io.IOException;
@@ -21,6 +22,7 @@ import java.util.stream.Stream;
  * @author hackyo
  * @since 2022/4/1
  */
+@Slf4j
 public final class FileUtil {
 
     private static final int BUFFER_SIZE = 4 * 1024 * 1024;
@@ -35,6 +37,7 @@ public final class FileUtil {
             start = Math.min(Math.max(start, 0), total);
             end = Math.min(end, total);
             if (start >= end) {
+                log.error("File read index exceeded");
                 return;
             }
             while (start < end) {
@@ -44,6 +47,7 @@ public final class FileUtil {
                     if (currentPosition >= total) {
                         break;
                     }
+                    log.error("File read index exceeded");
                     throw new IOException();
                 }
                 start += transferred;
@@ -73,6 +77,7 @@ public final class FileUtil {
             }
             return EncryptUtil.bytesToHex(digest.digest());
         } catch (IOException e) {
+            log.error("Error calculating hash", e);
             return null;
         }
     }
@@ -102,6 +107,7 @@ public final class FileUtil {
             try {
                 delete(path);
             } catch (Exception e) {
+                log.error("Error deleting file", e);
                 success.set(false);
             }
         });
@@ -123,6 +129,7 @@ public final class FileUtil {
                     try {
                         Files.deleteIfExists(file);
                     } catch (IOException e) {
+                        log.error("Error deleting file", e);
                         success.set(false);
                     }
                     return FileVisitResult.CONTINUE;
@@ -134,12 +141,14 @@ public final class FileUtil {
                     try {
                         Files.deleteIfExists(dir);
                     } catch (IOException e) {
+                        log.error("Error deleting file", e);
                         success.set(false);
                     }
                     return FileVisitResult.CONTINUE;
                 }
             });
         } catch (Exception e) {
+            log.error("Error deleting file", e);
             success.set(false);
         }
         if (!success.get()) {

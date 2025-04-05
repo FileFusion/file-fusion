@@ -1,5 +1,6 @@
 package com.github.filefusion.util;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.exec.*;
 import org.apache.commons.exec.Executor;
 
@@ -16,6 +17,7 @@ import java.util.concurrent.*;
  * @author hackyo
  * @since 2022/4/1
  */
+@Slf4j
 public final class ExecUtil {
 
     private static final long TIMEOUT_BUFFER_MS = 1000L;
@@ -57,8 +59,10 @@ public final class ExecUtil {
                     try {
                         return executor.execute(commandLine);
                     } catch (ExecuteException e) {
+                        log.error("Error executing command", e);
                         return e.getExitValue();
                     } catch (Exception e) {
+                        log.error("Error executing command", e);
                         throw new CompletionException(e);
                     }
                 }, EXECUTOR)

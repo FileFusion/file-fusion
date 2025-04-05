@@ -3,6 +3,7 @@ package com.github.filefusion.util;
 import com.github.filefusion.common.BaseEntity;
 import com.github.filefusion.constant.RedisAttribute;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 
@@ -16,6 +17,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author hackyo
  * @since 2022/4/1
  */
+@Slf4j
 public abstract class BaseCacheService<T extends BaseEntity> {
 
     private static final Duration CACHE_EXPIRATION = Duration.ofHours(2);
@@ -66,7 +68,8 @@ public abstract class BaseCacheService<T extends BaseEntity> {
         String cacheKey = buildCacheKey(id);
         try {
             redissonClient.getBucket(cacheKey).delete();
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            log.error("Error deleting cache", e);
         }
     }
 

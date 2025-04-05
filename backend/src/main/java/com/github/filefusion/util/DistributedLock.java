@@ -1,6 +1,7 @@
 package com.github.filefusion.util;
 
 import com.github.filefusion.constant.RedisAttribute;
+import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ import java.util.concurrent.TimeUnit;
  * @author hackyo
  * @since 2022/4/1
  */
+@Slf4j
 @Component
 public class DistributedLock {
 
@@ -56,6 +58,7 @@ public class DistributedLock {
             }
             task.run();
         } catch (InterruptedException e) {
+            log.error("Error executing command", e);
             Thread.currentThread().interrupt();
         } finally {
             if (isLockAcquired && lock.isHeldByCurrentThread()) {
