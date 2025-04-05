@@ -566,19 +566,24 @@ public class FileDataService {
                 fileProperties.getThumbnailVideoMimeType())) {
             throw new HttpException(I18n.get("fileNotSupportThumbnail"));
         }
-        try {
-            return DownloadUtil.download(FileAttribute.DOWNLOAD_THUMBNAIL_NAME, FileAttribute.MimeType.WEBP.value().toString(),
-                    ThumbnailUtil.generateThumbnail(mimeType,
-                            FileUtil.getHashPath(fileProperties.getDir(), file.getHashValue()),
-                            FileUtil.getHashPath(fileProperties.getThumbnailDir(), file.getHashValue(), FileAttribute.THUMBNAIL_FILE_SUFFIX),
+        AtomicReference<Path> thumbnailPath = new AtomicReference<>(FileUtil.getHashPath(fileProperties.getThumbnailDir(),
+                file.getHashValue(), FileAttribute.THUMBNAIL_FILE_SUFFIX));
+        if (!Files.isRegularFile(thumbnailPath.get())) {
+            distributedLock.tryLock(RedisAttribute.LockType.file, RedisAttribute.GENERATE_THUMBNAIL + file.getHashValue(), () -> {
+                try {
+                    thumbnailPath.set(ThumbnailUtil.generateThumbnail(mimeType,
+                            FileUtil.getHashPath(fileProperties.getDir(), file.getHashValue()), thumbnailPath.get(),
                             fileProperties.getThumbnailImageMimeType(), fileProperties.getThumbnailVideoMimeType(),
                             fileProperties.getThumbnailGenerateTimeout()));
-        } catch (ThumbnailUtil.FileNotSupportThumbnailException e) {
-            throw new HttpException(I18n.get("fileNotSupportThumbnail"));
-        } catch (ThumbnailUtil.ThumbnailGenerationFailedException | IOException | ExecutionException |
-                 InterruptedException e) {
-            throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("thumbnailGenerationFailed"));
+                } catch (ThumbnailUtil.FileNotSupportThumbnailException e) {
+                    throw new HttpException(I18n.get("fileNotSupportThumbnail"));
+                } catch (ThumbnailUtil.ThumbnailGenerationFailedException | IOException | ExecutionException |
+                         InterruptedException e) {
+                    throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, I18n.get("thumbnailGenerationFailed"));
+                }
+            }, null);
         }
+        return DownloadUtil.download(FileAttribute.DOWNLOAD_THUMBNAIL_NAME, FileAttribute.MimeType.WEBP.value().toString(), thumbnailPath.get());
     }
 
 }
