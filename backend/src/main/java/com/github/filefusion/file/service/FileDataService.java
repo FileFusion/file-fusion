@@ -120,7 +120,7 @@ public class FileDataService {
             for (int i = 0; i < levelSize; i++) {
                 currentLevelParentIds.add(queue.poll());
             }
-            List<FileData> currentChildren = fileDataRepository.findAllByParentIdInAndDeletedFalse(currentLevelParentIds);
+            List<FileData> currentChildren = fileDataRepository.findAllByParentIdIn(currentLevelParentIds);
             children.addAll(currentChildren);
             currentChildren.stream()
                     .filter(child -> FileAttribute.MimeType.FOLDER.value().toString().equals(child.getMimeType()))
@@ -413,7 +413,7 @@ public class FileDataService {
         if (sourceId.equals(targetId)) {
             throw new HttpException(I18n.get("fileCannotMoveItself"));
         }
-        FileData sourceFile = fileDataRepository.findFirstByUserIdAndIdAndDeletedFalse(userId, sourceId)
+        FileData sourceFile = fileDataRepository.findFirstByUserIdAndId(userId, sourceId)
                 .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
         if (!StringUtils.hasLength(targetId)) {
             targetId = sourceFile.getParentId();
@@ -436,10 +436,14 @@ public class FileDataService {
         List<FileData> childrenList = findAllChildren(sourceFile.getId());
         for (FileData children : childrenList) {
             children.setPath(targetPath + children.getPath().substring(sourcePath.length()));
+            children.setDeleted(false);
+            children.setDeletedDate(null);
         }
         sourceFile.setParentId(targetId);
         sourceFile.setName(name);
         sourceFile.setPath(targetPath);
+        sourceFile.setDeleted(false);
+        sourceFile.setDeletedDate(null);
         childrenList.add(sourceFile);
         fileDataRepository.saveAll(childrenList);
     }

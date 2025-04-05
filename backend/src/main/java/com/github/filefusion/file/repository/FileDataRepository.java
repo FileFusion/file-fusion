@@ -63,6 +63,15 @@ public interface FileDataRepository extends JpaRepository<FileData, String> {
     Optional<FileData> findFirstByUserIdAndIdAndDeletedFalse(String userId, String id);
 
     /**
+     * findFirstByUserIdAndIdAndDeletedTrue
+     *
+     * @param userId user id
+     * @param id     id
+     * @return file
+     */
+    Optional<FileData> findFirstByUserIdAndIdAndDeletedTrue(String userId, String id);
+
+    /**
      * existsByUserIdAndIdAndDeletedFalse
      *
      * @param userId user id
@@ -72,21 +81,30 @@ public interface FileDataRepository extends JpaRepository<FileData, String> {
     boolean existsByUserIdAndIdAndDeletedFalse(String userId, String id);
 
     /**
-     * findAllByParentIdInAndDeletedFalse
+     * findAllByParentIdIn
      *
      * @param parentIdList parent id list
      * @return file list
      */
-    List<FileData> findAllByParentIdInAndDeletedFalse(List<String> parentIdList);
+    List<FileData> findAllByParentIdIn(List<String> parentIdList);
 
     /**
      * findAllByUserIdAndPathInAndDeletedFalse
      *
      * @param userId   user id
      * @param pathList path list
-     * @return file
+     * @return file list
      */
     List<FileData> findAllByUserIdAndPathInAndDeletedFalse(String userId, List<String> pathList);
+
+    /**
+     * findFirstByUserIdAndPathAndDeletedFalse
+     *
+     * @param userId user id
+     * @param path   path
+     * @return file
+     */
+    Optional<FileData> findFirstByUserIdAndPathAndDeletedFalse(String userId, String path);
 
     /**
      * existsByUserIdAndParentIdAndNameAndDeletedFalse

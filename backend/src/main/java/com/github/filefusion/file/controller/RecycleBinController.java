@@ -5,6 +5,7 @@ import com.github.filefusion.constant.SorterOrder;
 import com.github.filefusion.file.entity.FileData;
 import com.github.filefusion.file.model.MoveFileModel;
 import com.github.filefusion.file.service.FileDataService;
+import com.github.filefusion.file.service.RecycleBinService;
 import com.github.filefusion.util.CurrentUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -24,10 +25,13 @@ import org.springframework.web.bind.annotation.*;
 public class RecycleBinController {
 
     private final FileDataService fileDataService;
+    private final RecycleBinService recycleBinService;
 
     @Autowired
-    public RecycleBinController(FileDataService fileDataService) {
+    public RecycleBinController(FileDataService fileDataService,
+                                RecycleBinService recycleBinService) {
         this.fileDataService = fileDataService;
+        this.recycleBinService = recycleBinService;
     }
 
     /**
@@ -59,12 +63,12 @@ public class RecycleBinController {
     /**
      * restore file
      *
-     * @param restoreFileModel restore file info
+     * @param restoreFileModel restore file
      */
     @PutMapping("/_restore")
     @PreAuthorize("hasAuthority('recycle_bin_file:restore')")
     public void restore(@RequestBody MoveFileModel restoreFileModel) {
-        // todo
+        recycleBinService.restore(CurrentUser.getId(), restoreFileModel.getSourceId(), restoreFileModel.getTargetId());
     }
 
     /**

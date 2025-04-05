@@ -136,6 +136,7 @@
                 <div>
                   <file-thumbnail
                     :id="fileData.id"
+                    :key="fileData.id"
                     :thumbnail="fileData.hasThumbnail"
                     :mime-type="fileData.mimeType" />
                 </div>
@@ -316,6 +317,7 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
             icon: () =>
               h(FileThumbnail, {
                 id: row.id,
+                key: row.id,
                 thumbnail: row.hasThumbnail,
                 mimeType: row.mimeType,
                 size: 18
