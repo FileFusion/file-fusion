@@ -186,6 +186,18 @@ public class FileDataController {
     }
 
     /**
+     * submit preview video
+     *
+     * @param id id
+     * @return preview id
+     */
+    @PostMapping("/video/{id}/_submit_preview")
+    @PreAuthorize("hasAnyAuthority('personal_file:preview')")
+    public String submitPreviewVideo(@PathVariable String id) {
+        return fileDataService.submitPreviewVideo(CurrentUser.getId(), id);
+    }
+
+    /**
      * download file list
      *
      * @param downloadId download id

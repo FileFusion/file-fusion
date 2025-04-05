@@ -43,7 +43,7 @@ const playUrl = computed(() => {
     return (
       http.options.baseURL +
       '/file_data/video/' +
-      downloadId.value +
+      videoDownloadId.value +
       '/stream.mpd'
     );
   }
@@ -54,9 +54,18 @@ const { data: downloadId, send: doGetFile } = useRequest(
   { immediate: false }
 );
 
+const { data: videoDownloadId, send: doGetVideoFile } = useRequest(
+  () => http.Post<any>('/file_data/video/' + props.id + '/_submit_preview'),
+  { immediate: false }
+);
+
 watch(show, async (newShow) => {
   if (newShow) {
-    await doGetFile();
+    if (isAudio.value) {
+      await doGetFile();
+    } else {
+      await doGetVideoFile();
+    }
     const { VidstackPlayer, VidstackPlayerLayout } = await import(
       'vidstack/global/player'
     );
@@ -84,6 +93,7 @@ watch(show, async (newShow) => {
       player.value.destroy();
       player.value = null;
       downloadId.value = null;
+      videoDownloadId.value = null;
     }
   }
 });

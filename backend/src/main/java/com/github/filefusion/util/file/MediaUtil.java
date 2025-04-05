@@ -6,6 +6,7 @@ import com.github.filefusion.util.ExecUtil;
 import com.github.filefusion.util.Json;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.exec.CommandLine;
 import org.springframework.util.MimeType;
 import org.springframework.util.StringUtils;
@@ -26,8 +27,10 @@ import java.util.stream.Collectors;
  * @author hackyo
  * @since 2022/4/1
  */
+@Slf4j
 public final class MediaUtil {
 
+    public static final String STATUS_FILE_NAME = "status";
     private static final String GET_VIDEO_DIMENSIONS_COMMAND = "ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of json %s";
     private static final Map<String, MimeType> DASH_FILE_MIME_TYPE = Collections.unmodifiableMap(new HashMap<>() {{
         put(".mpd", FileAttribute.MimeType.DASH.value());
@@ -171,7 +174,9 @@ public final class MediaUtil {
 
     public static void generateMediaDash(Path originalPath, Path targetPath, Duration videoGenerateTimeout)
             throws ReadVideoInfoException, IOException, ExecutionException, InterruptedException {
-        if (Files.isRegularFile(targetPath)) {
+        Path parent = targetPath.getParent();
+        Path statusFile = parent.resolve(STATUS_FILE_NAME);
+        if (Files.isRegularFile(statusFile)) {
             return;
         }
         GetVideoInfoResult videoInfo = getVideoDimensionsInfo(originalPath, videoGenerateTimeout);
@@ -202,8 +207,24 @@ public final class MediaUtil {
             index++;
         }
         CommandLine commandLine = buildDashGenerationCommand(originalPath, targetDimensionsMap.size(), videoSplit, videoScale, mapStreamList, targetPath);
-        Files.createDirectories(targetPath.getParent());
-        ExecUtil.exec(commandLine, videoGenerateTimeout);
+        Files.createDirectories(parent);
+        try {
+            Files.writeString(statusFile, GenerationStatus.WAITING.name());
+            ExecUtil.ExecResult execResult = ExecUtil.exec(commandLine, videoGenerateTimeout);
+            if (execResult.success()) {
+                Files.writeString(statusFile, GenerationStatus.SUCCESS.name());
+            } else {
+                throw new VideoDashGenerationException();
+            }
+        } catch (Exception e) {
+            log.error("Video dash generation failed", e);
+            FileUtil.delete(parent);
+        }
+    }
+
+    public enum GenerationStatus {
+        WAITING,
+        SUCCESS,
     }
 
     @Data
@@ -233,6 +254,9 @@ public final class MediaUtil {
     }
 
     public static class ReadVideoInfoException extends Exception {
+    }
+
+    public static class VideoDashGenerationException extends Exception {
     }
 
 }

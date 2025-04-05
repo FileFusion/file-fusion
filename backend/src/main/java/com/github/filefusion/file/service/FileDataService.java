@@ -35,6 +35,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -171,7 +172,7 @@ public class FileDataService {
                 .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
         List<FileData> childrenList = findAllChildren(file.getId());
 
-        List<String> lockKeyList = new ArrayList<>(Collections.singletonList(
+        List<String> lockKeyList = new ArrayList<>(List.of(
                 userId + RedisAttribute.SEPARATOR + file.getPath()
         ));
         childrenList.stream()
@@ -455,6 +456,34 @@ public class FileDataService {
         return downloadId;
     }
 
+    public String submitPreviewVideo(String userId, String id) {
+        if (Boolean.FALSE.equals(fileProperties.getVideoPlay())) {
+            throw new HttpException(I18n.get("videoPlayNotEnabled"));
+        }
+        FileData file = fileDataRepository.findFirstByUserIdAndIdAndDeletedFalse(userId, id)
+                .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
+        if (!MediaUtil.isDashSupported(file.getMimeType(), fileProperties.getVideoPlayMimeType())) {
+            throw new HttpException(I18n.get("fileNotSupportPlay"));
+        }
+        Path statusFile = FileUtil.getHashPath(fileProperties.getVideoPlayDir(), file.getHashValue())
+                .resolve(MediaUtil.STATUS_FILE_NAME);
+        if (!Files.exists(statusFile)) {
+            throw new HttpException(I18n.get("videoGeneratedFailed"));
+        }
+        MediaUtil.GenerationStatus generationStatus;
+        try {
+            generationStatus = MediaUtil.GenerationStatus.valueOf(Files.readString(statusFile, StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            throw new HttpException(I18n.get("videoGeneratedFailed"));
+        }
+        if (MediaUtil.GenerationStatus.WAITING.equals(generationStatus)) {
+            throw new HttpException(I18n.get("videoBeingGenerated"));
+        } else if (MediaUtil.GenerationStatus.SUCCESS.equals(generationStatus)) {
+            return submitDownload(userId, List.of(id));
+        }
+        throw new HttpException(I18n.get("videoGeneratedFailed"));
+    }
+
     public ResponseEntity<StreamingResponseBody> download(String downloadId) {
         RList<FileData> fileList = redissonClient.getList(RedisAttribute.DOWNLOAD_ID_PREFIX + downloadId);
         if (CollectionUtils.isEmpty(fileList)) {
@@ -525,11 +554,8 @@ public class FileDataService {
         if (fileList.size() != 1 || !MediaUtil.isDashSupported(file.getMimeType(), fileProperties.getVideoPlayMimeType())) {
             throw new HttpException(I18n.get("fileNotSupportPlay"));
         }
-        Path path = FileUtil.getHashPath(fileProperties.getVideoPlayDir(), file.getHashValue()).resolve(fileName);
-        if (!Files.exists(path)) {
-            throw new HttpException(I18n.get("videoBeingGenerated"));
-        }
-        return downloadChunked(path, fileName, mimeType.toString(), range);
+        return downloadChunked(FileUtil.getHashPath(fileProperties.getVideoPlayDir(), file.getHashValue()).resolve(fileName),
+                fileName, mimeType.toString(), range);
     }
 
     public ResponseEntity<StreamingResponseBody> thumbnail(String userId, String id) {
