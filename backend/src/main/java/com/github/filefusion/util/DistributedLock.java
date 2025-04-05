@@ -54,6 +54,7 @@ public class DistributedLock {
         try {
             isLockAcquired = waitLockTimeout == null ? lock.tryLock() : lock.tryLock(waitLockTimeout.toMillis(), TimeUnit.MILLISECONDS);
             if (!isLockAcquired) {
+                log.warn("Lock acquired by {} failed", lock.getName());
                 return;
             }
             task.run();
