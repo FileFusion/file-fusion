@@ -19,7 +19,7 @@ public final class VideoAttribute {
     public static final String AUDIO_CHANNEL = "2";
 
     public enum Resolution {
-        P480("480P", 854, 480, "faster", 27, 2250),
+        P360("360P", 640, 360, "faster", 27, 2250),
         P720("720P", 1280, 720, "fast", 25, 4500),
         P1080("1080P", 1920, 1080, "medium", 23, 9000),
         K2("2K", 2560, 1440, "slow", 21, 18000),

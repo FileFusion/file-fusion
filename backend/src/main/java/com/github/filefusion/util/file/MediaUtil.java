@@ -133,7 +133,7 @@ public final class MediaUtil {
 
         return Arrays.stream(VideoAttribute.Resolution.values())
                 .filter(resolution -> {
-                    if (resolution == VideoAttribute.Resolution.P480) {
+                    if (resolution == VideoAttribute.Resolution.P360) {
                         return true;
                     }
                     return isPortrait ?
