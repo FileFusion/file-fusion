@@ -171,6 +171,9 @@ public final class MediaUtil {
 
     public static void generateMediaDash(Path originalPath, Path targetPath, Duration videoGenerateTimeout)
             throws ReadVideoInfoException, IOException, ExecutionException, InterruptedException {
+        if (Files.exists(targetPath)) {
+            return;
+        }
         GetVideoInfoResult videoInfo = getVideoDimensionsInfo(originalPath, videoGenerateTimeout);
         int[] originalDimensions = new int[]{videoInfo.getStreams().getFirst().getWidth(), videoInfo.getStreams().getFirst().getHeight()};
         Map<VideoAttribute.Resolution, int[]> targetDimensionsMap = getVideoScaleDimensions(originalDimensions);

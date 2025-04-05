@@ -14,6 +14,7 @@ public final class RedisAttribute {
     public static final String LOCK_PREFIX = "lock:";
     public static final String DOWNLOAD_ID_PREFIX = "download:";
     public static final String EVENT_PREFIX = "event:";
+    public static final String GENERATE_MEDIA_DASH_PREFIX = "generate_media_dash:";
 
     public enum LockType {
         task,

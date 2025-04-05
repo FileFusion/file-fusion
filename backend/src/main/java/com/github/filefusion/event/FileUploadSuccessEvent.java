@@ -4,6 +4,7 @@ import com.github.filefusion.common.FileProperties;
 import com.github.filefusion.constant.RedisAttribute;
 import com.github.filefusion.constant.VideoAttribute;
 import com.github.filefusion.file.entity.FileData;
+import com.github.filefusion.util.DistributedLock;
 import com.github.filefusion.util.file.FileUtil;
 import com.github.filefusion.util.file.MediaUtil;
 import jakarta.annotation.PostConstruct;
@@ -32,11 +33,15 @@ public class FileUploadSuccessEvent {
     private static final AtomicBoolean RUNNING = new AtomicBoolean(false);
 
     private final FileProperties fileProperties;
+    private final DistributedLock distributedLock;
     private final RBlockingDeque<FileData> queue;
 
     @Autowired
-    public FileUploadSuccessEvent(RedissonClient redissonClient, FileProperties fileProperties) {
+    public FileUploadSuccessEvent(RedissonClient redissonClient,
+                                  DistributedLock distributedLock,
+                                  FileProperties fileProperties) {
         this.fileProperties = fileProperties;
+        this.distributedLock = distributedLock;
         this.queue = redissonClient.getBlockingDeque(RedisAttribute.EVENT_PREFIX + RedisAttribute.EventType.file_upload_success);
     }
 
@@ -71,16 +76,18 @@ public class FileUploadSuccessEvent {
     }
 
     private void generateMediaDash(String hashValue, String mimeType) {
-        try {
-            if (Boolean.TRUE.equals(fileProperties.getVideoPlay()) && MediaUtil.isDashSupported(mimeType, fileProperties.getVideoPlayMimeType())) {
-                log.info("Generating dash file {}", hashValue);
-                MediaUtil.generateMediaDash(FileUtil.getHashPath(fileProperties.getDir(), hashValue),
-                        FileUtil.getHashPath(fileProperties.getVideoPlayDir(), hashValue).resolve(VideoAttribute.MEDIA_MANIFEST_NAME),
-                        fileProperties.getVideoGenerateTimeout());
-                log.info("Dash file generated {}", hashValue);
-            }
-        } catch (Exception e) {
-            log.error("Error while generating media dash", e);
+        if (Boolean.TRUE.equals(fileProperties.getVideoPlay()) && MediaUtil.isDashSupported(mimeType, fileProperties.getVideoPlayMimeType())) {
+            distributedLock.tryLock(RedisAttribute.LockType.file, RedisAttribute.GENERATE_MEDIA_DASH_PREFIX + hashValue, () -> {
+                try {
+                    log.info("Generating dash file {}", hashValue);
+                    MediaUtil.generateMediaDash(FileUtil.getHashPath(fileProperties.getDir(), hashValue),
+                            FileUtil.getHashPath(fileProperties.getVideoPlayDir(), hashValue).resolve(VideoAttribute.MEDIA_MANIFEST_NAME),
+                            fileProperties.getVideoGenerateTimeout());
+                    log.info("Dash file generated {}", hashValue);
+                } catch (Exception e) {
+                    log.error("Failed to generate dash file {}", hashValue, e);
+                }
+            }, null);
         }
     }
 
