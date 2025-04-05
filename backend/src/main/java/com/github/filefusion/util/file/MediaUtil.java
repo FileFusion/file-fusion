@@ -171,7 +171,7 @@ public final class MediaUtil {
 
     public static void generateMediaDash(Path originalPath, Path targetPath, Duration videoGenerateTimeout)
             throws ReadVideoInfoException, IOException, ExecutionException, InterruptedException {
-        if (Files.exists(targetPath)) {
+        if (Files.isRegularFile(targetPath)) {
             return;
         }
         GetVideoInfoResult videoInfo = getVideoDimensionsInfo(originalPath, videoGenerateTimeout);
