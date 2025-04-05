@@ -24,7 +24,7 @@ public final class ExecUtil {
     private static final ExecutorService EXECUTOR = Executors.newVirtualThreadPerTaskExecutor();
 
     public static void close() {
-        EXECUTOR.close();
+        EXECUTOR.shutdownNow();
     }
 
     public static ExecResult exec(String command, Duration execTimeout)
