@@ -39,7 +39,16 @@ file:
   thumbnail-generate-timeout: ${FF_FILE_THUMBNAIL_GENERATE_TIMEOUT:60s}
   dir: ${FF_FILE_DIR:/opt/file_fusion/data/file}
   tmp-dir: ${FF_FILE_TMP_DIR:/opt/file_fusion/data/tmp}
-  video-dir: ${FF_FILE_VIDEO_DIR:/opt/file_fusion/data/video}
+  video-play-dir: ${FF_FILE_VIDEO_PLAY_DIR:/opt/file_fusion/data/video}
+  video-play-mime-type: "${FF_FILE_VIDEO_PLAY_MIME_TYPE:application/vnd.rn-realmedia,\
+    video/3gpp,\
+    video/avi,\
+    video/mp4,\
+    video/mpeg,\
+    video/quicktime,\
+    video/webm,\
+    video/x-flv,\
+    video/x-ms-wmv}"
   thumbnail-dir: ${FF_FILE_THUMBNAIL_DIR:/opt/file_fusion/data/thumbnail}
   thumbnail-image-mime-type: "${FF_FILE_THUMBNAIL_IMAGE_MIME_TYPE:application/pdf,\
     application/postscript,\
@@ -57,14 +66,12 @@ file:
     image/vnd.adobe.photoshop,\
     image/webp,\
     image/x-xbitmap}"
-  thumbnail-video-mime-type: "${FF_FILE_THUMBNAIL_VIDEO_MIME_TYPE:application/vnd.rn-realmedia,\
-    video/x-ms-wmv,\
+  thumbnail-video-mime-type: "${FF_FILE_VIDEO_PLAY_MIME_TYPE:application/vnd.rn-realmedia,\
+    video/3gpp,\
+    video/avi,\
     video/mp4,\
     video/mpeg,\
-    video/3gpp,\
-    video/x-flv,\
     video/quicktime,\
-    video/mp4,\
-    video/x-flv,\
     video/webm,\
-    video/avi}"
+    video/x-flv,\
+    video/x-ms-wmv}"

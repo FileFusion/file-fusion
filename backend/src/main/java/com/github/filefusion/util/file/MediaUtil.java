@@ -29,19 +29,8 @@ import java.util.stream.Collectors;
 public final class MediaUtil {
 
     private static final String GET_VIDEO_DIMENSIONS_EXEC = "ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of json %s";
-    private static final List<String> SUPPORT_DASH_MIME_TYPE = List.of(
-            "video/x-ms-wmv",
-            "video/x-flv",
-            "video/webm",
-            "video/quicktime",
-            "video/mpeg",
-            "video/mp4",
-            "video/avi",
-            "video/3gpp",
-            "application/vnd.rn-realmedia");
     private static final Map<String, MimeType> DASH_FILE_MIME_TYPE = new HashMap<>() {{
         put(".mpd", FileAttribute.MimeType.DASH.value());
-        put(".mp4", FileAttribute.MimeType.MP4.value());
         put(".m4s", FileAttribute.MimeType.MP4.value());
     }};
 
@@ -168,8 +157,8 @@ public final class MediaUtil {
                 ));
     }
 
-    public static boolean supportGenerateDash(String mimeType) {
-        return StringUtils.hasLength(mimeType) && SUPPORT_DASH_MIME_TYPE.contains(mimeType);
+    public static boolean supportGenerateDash(String mimeType, List<String> videoPlayMimeType) {
+        return StringUtils.hasLength(mimeType) && videoPlayMimeType.contains(mimeType);
     }
 
     public static MimeType getDashFileMimeType(String fileName) {

@@ -388,8 +388,8 @@ public class FileDataService {
 
     private void uploadSuccessEvent(String hashValue, String mimeType) {
         try {
-            if (Boolean.TRUE.equals(fileProperties.getVideoPlay()) && MediaUtil.supportGenerateDash(mimeType)) {
-                Path videoPath = FileUtil.getHashPath(fileProperties.getVideoDir(), hashValue).resolve(VideoAttribute.MEDIA_MANIFEST_NAME);
+            if (Boolean.TRUE.equals(fileProperties.getVideoPlay()) && MediaUtil.supportGenerateDash(mimeType, fileProperties.getVideoPlayMimeType())) {
+                Path videoPath = FileUtil.getHashPath(fileProperties.getVideoPlayDir(), hashValue).resolve(VideoAttribute.MEDIA_MANIFEST_NAME);
                 MediaUtil.generateMediaDash(FileUtil.getHashPath(fileProperties.getDir(), hashValue),
                         videoPath, fileProperties.getVideoGenerateTimeout());
             }
@@ -521,10 +521,10 @@ public class FileDataService {
             throw new HttpException(I18n.get("playLinkExpired"));
         }
         FileData file = fileList.getFirst();
-        if (fileList.size() != 1 || !MediaUtil.supportGenerateDash(file.getMimeType())) {
+        if (fileList.size() != 1 || !MediaUtil.supportGenerateDash(file.getMimeType(), fileProperties.getVideoPlayMimeType())) {
             throw new HttpException(I18n.get("fileNotSupportPlay"));
         }
-        Path path = FileUtil.getHashPath(fileProperties.getVideoDir(), file.getHashValue()).resolve(fileName);
+        Path path = FileUtil.getHashPath(fileProperties.getVideoPlayDir(), file.getHashValue()).resolve(fileName);
         if (!Files.exists(path)) {
             throw new HttpException(I18n.get("videoBeingGenerated"));
         }
