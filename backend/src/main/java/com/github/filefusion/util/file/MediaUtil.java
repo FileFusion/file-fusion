@@ -28,15 +28,15 @@ import java.util.stream.Collectors;
  */
 public final class MediaUtil {
 
-    private static final String GET_VIDEO_DIMENSIONS_EXEC = "ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of json %s";
-    private static final Map<String, MimeType> DASH_FILE_MIME_TYPE = new HashMap<>() {{
+    private static final String GET_VIDEO_DIMENSIONS_COMMAND = "ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of json %s";
+    private static final Map<String, MimeType> DASH_FILE_MIME_TYPE = Collections.unmodifiableMap(new HashMap<>() {{
         put(".mpd", FileAttribute.MimeType.DASH.value());
         put(".m4s", FileAttribute.MimeType.MP4.value());
-    }};
+    }});
 
-    private static CommandLine getGenerateVideoDashExec(Path input, Integer dimensionsSize,
-                                                        StringBuilder videoSplit, StringBuilder videoScale,
-                                                        List<MapStream> mapStreamList, Path output) {
+    private static CommandLine buildDashGenerationCommand(Path input, Integer dimensionsSize,
+                                                          StringBuilder videoSplit, StringBuilder videoScale,
+                                                          List<MapStream> mapStreamList, Path output) {
         CommandLine commandLine = new CommandLine("ffmpeg");
         commandLine.addArgument("-v");
         commandLine.addArgument("error");
@@ -107,8 +107,8 @@ public final class MediaUtil {
 
     private static GetVideoInfoResult getVideoDimensionsInfo(Path path, Duration videoGenerateTimeout)
             throws ReadVideoInfoException, IOException, ExecutionException, InterruptedException {
-        String exec = GET_VIDEO_DIMENSIONS_EXEC.formatted(path);
-        ExecUtil.ExecResult execResult = ExecUtil.exec(exec, videoGenerateTimeout);
+        String command = GET_VIDEO_DIMENSIONS_COMMAND.formatted(path);
+        ExecUtil.ExecResult execResult = ExecUtil.exec(command, videoGenerateTimeout);
         if (!execResult.success()) {
             throw new ReadVideoInfoException();
         }
@@ -157,17 +157,16 @@ public final class MediaUtil {
                 ));
     }
 
-    public static boolean supportGenerateDash(String mimeType, List<String> videoPlayMimeType) {
-        return StringUtils.hasLength(mimeType) && videoPlayMimeType.contains(mimeType);
+    public static boolean isDashSupported(String mimeType, List<String> supportedMimeTypes) {
+        return StringUtils.hasLength(mimeType) && supportedMimeTypes.contains(mimeType);
     }
 
     public static MimeType getDashFileMimeType(String fileName) {
-        for (String extension : DASH_FILE_MIME_TYPE.keySet()) {
-            if (fileName.endsWith(extension)) {
-                return DASH_FILE_MIME_TYPE.get(extension);
-            }
-        }
-        return null;
+        return DASH_FILE_MIME_TYPE.entrySet().stream()
+                .filter(entry -> fileName.endsWith(entry.getKey()))
+                .findFirst()
+                .map(Map.Entry::getValue)
+                .orElse(null);
     }
 
     public static void generateMediaDash(Path originalPath, Path targetPath, Duration videoGenerateTimeout)
@@ -180,8 +179,9 @@ public final class MediaUtil {
         StringBuilder videoSplit = new StringBuilder();
         StringBuilder videoScale = new StringBuilder();
         List<MapStream> mapStreamList = new ArrayList<>();
-        for (VideoAttribute.Resolution resolution : targetDimensionsMap.keySet()) {
-            int[] targetDimensions = targetDimensionsMap.get(resolution);
+        for (Map.Entry<VideoAttribute.Resolution, int[]> entry : targetDimensionsMap.entrySet()) {
+            VideoAttribute.Resolution resolution = entry.getKey();
+            int[] targetDimensions = entry.getValue();
             int width = targetDimensions[0];
             int height = targetDimensions[1];
             String preset = resolution.preset();
@@ -198,7 +198,7 @@ public final class MediaUtil {
                     "-bufsize:v:" + (index - 1), (maxRate * 2) + "k"));
             index++;
         }
-        CommandLine commandLine = getGenerateVideoDashExec(originalPath, targetDimensionsMap.size(), videoSplit, videoScale, mapStreamList, targetPath);
+        CommandLine commandLine = buildDashGenerationCommand(originalPath, targetDimensionsMap.size(), videoSplit, videoScale, mapStreamList, targetPath);
         Files.createDirectories(targetPath.getParent());
         ExecUtil.exec(commandLine, videoGenerateTimeout);
     }

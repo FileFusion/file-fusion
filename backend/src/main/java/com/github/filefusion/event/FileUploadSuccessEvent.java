@@ -72,7 +72,7 @@ public class FileUploadSuccessEvent {
 
     private void generateMediaDash(String hashValue, String mimeType) {
         try {
-            if (Boolean.TRUE.equals(fileProperties.getVideoPlay()) && MediaUtil.supportGenerateDash(mimeType, fileProperties.getVideoPlayMimeType())) {
+            if (Boolean.TRUE.equals(fileProperties.getVideoPlay()) && MediaUtil.isDashSupported(mimeType, fileProperties.getVideoPlayMimeType())) {
                 log.info("Generating dash file {}", hashValue);
                 MediaUtil.generateMediaDash(FileUtil.getHashPath(fileProperties.getDir(), hashValue),
                         FileUtil.getHashPath(fileProperties.getVideoPlayDir(), hashValue).resolve(VideoAttribute.MEDIA_MANIFEST_NAME),

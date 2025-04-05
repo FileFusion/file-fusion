@@ -514,7 +514,7 @@ public class FileDataService {
             throw new HttpException(I18n.get("playLinkExpired"));
         }
         FileData file = fileList.getFirst();
-        if (fileList.size() != 1 || !MediaUtil.supportGenerateDash(file.getMimeType(), fileProperties.getVideoPlayMimeType())) {
+        if (fileList.size() != 1 || !MediaUtil.isDashSupported(file.getMimeType(), fileProperties.getVideoPlayMimeType())) {
             throw new HttpException(I18n.get("fileNotSupportPlay"));
         }
         Path path = FileUtil.getHashPath(fileProperties.getVideoPlayDir(), file.getHashValue()).resolve(fileName);
