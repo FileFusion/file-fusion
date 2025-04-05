@@ -31,6 +31,7 @@ security:
     private-key: ${FF_SECRET_PRIVATE_KEY:/opt/file_fusion/secret/id_ed25519}
 task:
   clear-thumbnail-file: ${FF_TASK_CLEAR_THUMBNAIL_FILE:0 0 1 * * ?}
+  clear-video-file: ${FF_TASK_CLEAR_VIDEO_FILE:0 0 2 * * ?}
 file:
   lock-timeout: ${FF_FILE_LOCK_TIMEOUT:60s}
   download-link-timeout: ${FF_FILE_DOWNLOAD_LINK_TIMEOUT:1h}
