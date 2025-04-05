@@ -18,8 +18,8 @@ import java.util.concurrent.ExecutionException;
  */
 public final class ThumbnailUtil {
 
-    private static final String GENERATE_IMAGE_THUMBNAIL_EXEC = "vipsthumbnail %s --size 256 --export-profile srgb -o %s[Q=75,keep=none]";
-    private static final String GENERATE_VIDEO_THUMBNAIL_EXEC = "ffmpeg -v error -hwaccel auto -i %s -vf 'thumbnail,scale=256:-1' -an -quality 75 -vframes 1 -y %s";
+    private static final String GENERATE_IMAGE_THUMBNAIL_COMMAND = "vipsthumbnail %s --size 256 --export-profile srgb -o %s[Q=75,keep=none]";
+    private static final String GENERATE_VIDEO_THUMBNAIL_COMMAND = "ffmpeg -v error -hwaccel auto -i %s -vf 'thumbnail,scale=256:-1' -an -quality 75 -vframes 1 -y %s";
 
     public static boolean hasThumbnail(String mimeType,
                                        List<String> thumbnailImageMimeType,
@@ -38,16 +38,16 @@ public final class ThumbnailUtil {
         if (Files.isRegularFile(targetPath)) {
             return targetPath;
         }
-        String exec;
+        String command;
         if (thumbnailImageMimeType.contains(mimeType)) {
-            exec = GENERATE_IMAGE_THUMBNAIL_EXEC.formatted(originalPath, targetPath);
+            command = GENERATE_IMAGE_THUMBNAIL_COMMAND.formatted(originalPath, targetPath);
         } else if (thumbnailVideoMimeType.contains(mimeType)) {
-            exec = GENERATE_VIDEO_THUMBNAIL_EXEC.formatted(originalPath, targetPath);
+            command = GENERATE_VIDEO_THUMBNAIL_COMMAND.formatted(originalPath, targetPath);
         } else {
             throw new FileNotSupportThumbnailException();
         }
         Files.createDirectories(targetPath.getParent());
-        ExecUtil.ExecResult execResult = ExecUtil.exec(exec, thumbnailGenerateTimeout);
+        ExecUtil.ExecResult execResult = ExecUtil.exec(command, thumbnailGenerateTimeout);
         if (!execResult.success() || !Files.exists(targetPath)) {
             throw new ThumbnailGenerationFailedException();
         }
