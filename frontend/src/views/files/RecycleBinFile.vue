@@ -197,7 +197,7 @@ import type {
   DataTableSortState,
   PaginationInfo
 } from 'naive-ui';
-import { NButton, NDropdown, NTime } from 'naive-ui';
+import { NButton, NDropdown, NTime, NEllipsis } from 'naive-ui';
 import { computed, h, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import IconCheck from '~icons/icon-park-outline/check';
@@ -324,6 +324,29 @@ const fileTableColumns = computed<DataTableColumn[]>(() => {
               }),
             default: () => row.name
           }
+        );
+      }
+    },
+    {
+      title: t('files.personal.originalPath'),
+      key: 'path',
+      resizable: true,
+      width: 200,
+      sorter: true,
+      sortOrder: fileTableSorter.value.size,
+      render: (row: any) => {
+        return h(
+          'div',
+          {
+            class: 'flex'
+          },
+          h(
+            NEllipsis,
+            {
+              lineClamp: 1
+            },
+            { default: () => '/' + row.path }
+          )
         );
       }
     },

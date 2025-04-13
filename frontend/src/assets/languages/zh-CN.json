@@ -147,6 +147,7 @@
       "upload": "上传",
       "fileName": "文件名",
       "folderName": "文件夹名",
+      "originalPath": "原路径",
       "size": "大小",
       "modifiedDate": "修改时间",
       "deletedDate": "删除时间",

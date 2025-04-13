@@ -1,5 +1,5 @@
 <template>
-  <n-breadcrumb>
+  <n-breadcrumb class="overflow-y-auto">
     <n-breadcrumb-item
       v-for="(b, index) in breadcrumb"
       :key="index"

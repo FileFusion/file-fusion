@@ -147,6 +147,7 @@
       "upload": "Upload",
       "fileName": "Filename",
       "folderName": "Folder name",
+      "originalPath": "Original path",
       "size": "Size",
       "modifiedDate": "Modified date",
       "deletedDate": "Deleted date",
