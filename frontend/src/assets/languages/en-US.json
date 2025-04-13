@@ -155,6 +155,7 @@
       "share": "Share",
       "move": "Move",
       "moveSuccess": "Move success",
+      "restoreSuccess": "Restore success",
       "fileSelectCheck": "Please select the file you want to work on",
       "uploadFile": "Upload file",
       "uploadFolder": "Upload folder",

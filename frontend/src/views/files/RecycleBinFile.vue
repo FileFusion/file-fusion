@@ -283,7 +283,7 @@ function getFileDropdownOptions(file: any) {
     {
       icon: renderIconMethod(IconDelete),
       key: 'delete',
-      label: t('common.delete'),
+      label: t('files.recycleBin.completelyDelete'),
       props: {
         onClick: () => {
           file.showOperateMenu = false;
@@ -657,7 +657,7 @@ async function restoreFiles(fileIdList: string[]) {
       sourceId: fileId
     });
   }
-  window.$msg.success(t('files.personal.moveSuccess'));
+  window.$msg.success(t('files.personal.restoreSuccess'));
   fileTableReload();
 }
 
@@ -677,14 +677,14 @@ async function submitRestoreFiles(targetFileId: string) {
       targetId: targetFileId
     });
   }
-  window.$msg.success(t('files.personal.moveSuccess'));
+  window.$msg.success(t('files.personal.restoreSuccess'));
   fileTableReload();
 }
 
 function deleteFile(file: any) {
   window.$dialog.warning({
     title: t('common.warning'),
-    content: t('common.deleteConfirm'),
+    content: t('files.recycleBin.completelyDeleteConfirm'),
     positiveText: t('common.confirm'),
     negativeText: t('common.cancel'),
     onPositiveClick: () => {

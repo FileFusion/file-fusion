@@ -155,6 +155,7 @@
       "share": "分享",
       "move": "移动",
       "moveSuccess": "移动成功",
+      "restoreSuccess": "还原成功",
       "fileSelectCheck": "请选择需要操作的文件",
       "uploadFile": "上传文件",
       "uploadFolder": "上传文件夹",
