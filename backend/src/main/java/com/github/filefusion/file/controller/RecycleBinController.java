@@ -79,7 +79,7 @@ public class RecycleBinController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('recycle_bin_file:delete')")
     public void delete(@PathVariable String id) {
-        // todo
+        fileDataService.recycleOrDelete(CurrentUser.getId(), id, false);
     }
 
     /**
@@ -88,7 +88,7 @@ public class RecycleBinController {
     @DeleteMapping("/all")
     @PreAuthorize("hasAuthority('recycle_bin_file:delete')")
     public void deleteAll() {
-        // todo
+        recycleBinService.deleteAll(CurrentUser.getId());
     }
 
 }

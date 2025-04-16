@@ -13,6 +13,8 @@ import org.springframework.util.StringUtils;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * RecycleBinService
@@ -51,5 +53,14 @@ public class RecycleBinService {
         fileDataService.move(userId, sourceId, targetId, null);
     }
 
+    @Transactional(rollbackFor = HttpException.class)
+    public void deleteAll(String userId) {
+        List<FileData> fileDataList = fileDataRepository.findAllByUserIdAndParentIdAndDeletedTrue(userId, FileAttribute.RECYCLE_BIN_ROOT);
+        List<FileData> allFileList = new ArrayList<>(fileDataList);
+        for (FileData fileData : fileDataList) {
+            allFileList.addAll(fileDataService.findAllChildren(fileData.getId()));
+        }
+        fileDataService.batchDelete(allFileList);
+    }
 
 }

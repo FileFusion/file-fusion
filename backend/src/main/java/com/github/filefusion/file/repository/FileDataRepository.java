@@ -45,6 +45,15 @@ public interface FileDataRepository extends JpaRepository<FileData, String> {
     List<FileData> findAllByUserIdAndParentIdAndMimeTypeAndDeletedFalse(String userId, String parentId, String mimeType);
 
     /**
+     * findAllByUserIdAndParentIdAndDeletedTrue
+     *
+     * @param userId   user id
+     * @param parentId parent id
+     * @return file list
+     */
+    List<FileData> findAllByUserIdAndParentIdAndDeletedTrue(String userId, String parentId);
+
+    /**
      * findFirstByUserIdAndId
      *
      * @param userId user id

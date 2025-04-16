@@ -86,7 +86,7 @@ public class FileDataController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('personal_file:delete')")
     public void delete(@PathVariable String id) {
-        fileDataService.recycleOrDelete(CurrentUser.getId(), id);
+        fileDataService.recycleOrDelete(CurrentUser.getId(), id, true);
     }
 
     /**

@@ -8,7 +8,6 @@ import com.github.filefusion.constant.SysConfigKey;
 import com.github.filefusion.file.entity.FileData;
 import com.github.filefusion.file.model.FileHashUsageCountModel;
 import com.github.filefusion.file.repository.FileDataRepository;
-import com.github.filefusion.sys_config.entity.SysConfig;
 import com.github.filefusion.sys_config.service.SysConfigService;
 import com.github.filefusion.util.DistributedLock;
 import com.github.filefusion.util.I18n;
@@ -110,7 +109,7 @@ public class FileDataService {
         }
     }
 
-    private List<FileData> findAllChildren(String id) {
+    public List<FileData> findAllChildren(String id) {
         List<FileData> children = new ArrayList<>();
         Queue<String> queue = new ArrayDeque<>();
         queue.add(id);
@@ -167,12 +166,17 @@ public class FileDataService {
     }
 
     @Transactional(rollbackFor = HttpException.class)
-    public void recycleOrDelete(String userId, String id) {
-        FileData file = fileDataRepository.findFirstByUserIdAndIdAndDeletedFalse(userId, id)
-                .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
+    public void recycleOrDelete(String userId, String id, boolean recycle) {
+        FileData file;
+        if (recycle) {
+            file = fileDataRepository.findFirstByUserIdAndIdAndDeletedFalse(userId, id)
+                    .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
+        } else {
+            file = fileDataRepository.findFirstByUserIdAndIdAndDeletedTrue(userId, id)
+                    .orElseThrow(() -> new HttpException(I18n.get("fileNotExist")));
+        }
         List<FileData> childrenList = findAllChildren(file.getId());
-        SysConfig config = sysConfigService.get(SysConfigKey.RECYCLE_BIN);
-        if (Boolean.parseBoolean(config.getConfigValue())) {
+        if (recycle && Boolean.parseBoolean(sysConfigService.get(SysConfigKey.RECYCLE_BIN).getConfigValue())) {
             batchRecycle(file, childrenList);
         } else {
             childrenList.addFirst(file);
