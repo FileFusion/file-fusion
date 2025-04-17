@@ -18,6 +18,7 @@ declare module 'vue-router' {
     icon?: Component;
     permission?: PermissionType;
     permissionOr?: boolean;
+    show?: () => Promise<boolean>;
   }
 }
 

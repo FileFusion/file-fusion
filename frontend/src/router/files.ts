@@ -20,7 +20,13 @@ export default [
       requiresAuth: true,
       title: 'files.recycleBinFile',
       icon: IconDeleteThemes,
-      permission: 'recycle_bin_file:read'
+      permission: 'recycle_bin_file:read',
+      show: async (): Promise<boolean> => {
+        const response = await window.$http.Get<any>(
+          '/sys-config?configKey=RECYCLE_BIN'
+        );
+        return response.configValue === 'true';
+      }
     },
     component: () => import('@/views/files/RecycleBinFile.vue')
   }

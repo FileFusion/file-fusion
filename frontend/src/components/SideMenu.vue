@@ -47,43 +47,6 @@ const activeMenu = computed((): string => {
   return '';
 });
 
-const allSideMenus = computed(() => {
-  let newAllSideMenus: any = {};
-  for (const route of router.options.routes) {
-    if (route.name !== 'home' || !route.children) {
-      continue;
-    }
-    for (const ro of route.children) {
-      if (!ro.children) {
-        continue;
-      }
-      for (const r of ro.children) {
-        if (!r.meta) {
-          continue;
-        }
-        if (
-          r.meta.permission &&
-          !hasPermission(r.meta.permission, r.meta.permissionOr)
-        ) {
-          continue;
-        }
-        const roName = <string>ro.name;
-        if (!newAllSideMenus[roName]) {
-          newAllSideMenus[roName] = [];
-        }
-        const rTitle = r.meta.title;
-        newAllSideMenus[roName].push({
-          key: r.name,
-          label: rTitle,
-          customIcon: r.meta.icon
-        });
-      }
-    }
-    break;
-  }
-  return newAllSideMenus;
-});
-
 const currentSideMenus = ref<any[]>([]);
 
 const renderMenuLabel = (option: MenuOption) => {
@@ -103,22 +66,61 @@ const renderMenuIcon = (option: MenuOption) => {
 
 watchEffect(async () => {
   if (route.matched.length === 2 || currentSideMenus.value.length === 0) {
-    currentSideMenus.value = getCurrentSideMenus();
+    if (!route.matched || route.matched.length < 2) {
+      currentSideMenus.value = [];
+    } else {
+      const parentName = <string>route.matched[1].name;
+      const allSideMenus = await getAllSideMenus();
+      if (!Object.prototype.hasOwnProperty.call(allSideMenus, parentName)) {
+        currentSideMenus.value = [];
+      } else {
+        currentSideMenus.value = allSideMenus[parentName];
+      }
+    }
   }
   if (route.matched.length === 2 && currentSideMenus.value.length > 0) {
     await router.push({ name: currentSideMenus.value[0].key });
   }
 });
 
-function getCurrentSideMenus() {
-  if (!route.matched || route.matched.length < 2) {
-    return [];
+async function getAllSideMenus() {
+  let newAllSideMenus: any = {};
+  for (const route of router.options.routes) {
+    if (route.name !== 'home' || !route.children) {
+      continue;
+    }
+    for (const ro of route.children) {
+      if (!ro.children) {
+        continue;
+      }
+      for (const r of ro.children) {
+        if (!r.meta) {
+          continue;
+        }
+        if (
+          r.meta.permission &&
+          !hasPermission(r.meta.permission, r.meta.permissionOr)
+        ) {
+          continue;
+        }
+        if (r.meta.show && !(await r.meta.show())) {
+          continue;
+        }
+        const roName = <string>ro.name;
+        if (!newAllSideMenus[roName]) {
+          newAllSideMenus[roName] = [];
+        }
+        const rTitle = r.meta.title;
+        newAllSideMenus[roName].push({
+          key: r.name,
+          label: rTitle,
+          customIcon: r.meta.icon
+        });
+      }
+    }
+    break;
   }
-  const parentName = <string>route.matched[1].name;
-  if (!Object.prototype.hasOwnProperty.call(allSideMenus.value, parentName)) {
-    return [];
-  }
-  return allSideMenus.value[parentName];
+  return newAllSideMenus;
 }
 
 function switchSideMenuCollapsed(value: boolean) {
