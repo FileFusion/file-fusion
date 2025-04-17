@@ -104,7 +104,8 @@
       "recycleBinRetentionDaysPlaceholder": "Recycle bin retention days (Set to 0 to never expire)",
       "validator": {
         "recycleBinRetentionDaysEmpty": "Please enter recycle bin retention day"
-      }
+      },
+      "closeRecycleBinTips": "Closing the Recycle Bin will empty all Recycle Bin files, sure you want to close it?"
     }
   },
   "userSettings": {

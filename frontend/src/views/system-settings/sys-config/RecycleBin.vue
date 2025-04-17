@@ -127,11 +127,27 @@ function validateSysConfigForm() {
   if (sysConfigFormRef.value) {
     sysConfigFormRef.value.validate(async (errors: any) => {
       if (!errors) {
-        await doSaveSysConfigRecycleBinRetentionDays();
-        await doSaveSysConfigRecycleBin();
-        window.$msg.success(t('common.saveSuccess'));
+        if (sysConfigForm.value.recycleBin === 'true') {
+          await saveSysConfig();
+        } else {
+          window.$dialog.warning({
+            title: t('common.info'),
+            content: t('systemSettings.sysConfig.closeRecycleBinTips'),
+            positiveText: t('common.confirm'),
+            negativeText: t('common.cancel'),
+            onPositiveClick: async () => {
+              await saveSysConfig();
+            }
+          });
+        }
       }
     });
   }
+}
+
+async function saveSysConfig() {
+  await doSaveSysConfigRecycleBinRetentionDays();
+  await doSaveSysConfigRecycleBin();
+  window.$msg.success(t('common.saveSuccess'));
 }
 </script>

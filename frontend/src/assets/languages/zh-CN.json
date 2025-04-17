@@ -104,7 +104,8 @@
       "recycleBinRetentionDaysPlaceholder": "回收站保留天数（设置为0则永不过期）",
       "validator": {
         "recycleBinRetentionDaysEmpty": "请输入回收站保留天数"
-      }
+      },
+      "closeRecycleBinTips": "关闭回收站会清空所有回收站文件，确定要关闭吗？"
     }
   },
   "userSettings": {
