@@ -63,4 +63,14 @@ public class RecycleBinService {
         fileDataService.batchDelete(allFileList);
     }
 
+    @Transactional(rollbackFor = HttpException.class)
+    public void deleteAll() {
+        List<FileData> fileDataList = fileDataRepository.findAllByParentIdAndDeletedTrue(FileAttribute.RECYCLE_BIN_ROOT);
+        List<FileData> allFileList = new ArrayList<>(fileDataList);
+        for (FileData fileData : fileDataList) {
+            allFileList.addAll(fileDataService.findAllChildren(fileData.getId()));
+        }
+        fileDataService.batchDelete(allFileList);
+    }
+
 }
